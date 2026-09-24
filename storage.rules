@@ -1,0 +1,131 @@
+rules_version = '2';
+
+// =============================================================================
+// Ehrenweg — Cloud Storage Güvenlik Kuralları
+//
+// İlkeler:
+//   - Varsayılan her şey kapalı.
+//   - Yükleme boyutu ve MIME türü HER zaman kısıtlanır (maliyet + kötüye
+//     kullanım koruması).
+//   - Kişisel belge niteliğindeki dosyalar (dil sertifikası, kanıt fotoğrafı)
+//     yalnızca sahibine ve admine açıktır — CLAUDE.md Bölüm 10, veri
+//     minimizasyonu.
+//   - Kurum yetkisi custom claim'deki `orgs` haritasından okunur; bu yüzden
+//     kurum dosyaları YOLA orgId gömülerek saklanır.
+// =============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function isSelf(userId) {
+      return signedIn() && uid() == userId;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.get('role', 'participant') == 'platform_admin';
+    }
+
+    function orgRole(orgId) {
+      return request.auth.token.get('orgs', {}).get(orgId, 'none');
+    }
+
+    function orgStaff(orgId) {
+      return isAdmin() || (signedIn() && orgRole(orgId) in ['org_admin', 'org_staff']);
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/(jpeg|png|webp|heic)');
+    }
+
+    function isDocument() {
+      return request.resource.contentType.matches('(image/(jpeg|png|webp|heic)|application/pdf)');
+    }
+
+    function underMB(mb) {
+      return request.resource.size < mb * 1024 * 1024;
+    }
+
+    // -----------------------------------------------------------------------
+    // Profil fotoğrafı
+    // Giriş yapmış herkes görebilir (etkinlik listelerinde ve vezne ekranında
+    // kimlik eşleştirme için gerekli — CLAUDE.md Bölüm 9, vezne ekranı).
+    // -----------------------------------------------------------------------
+    match /users/{userId}/avatar/{fileName} {
+      allow read: if signedIn();
+      allow write: if isSelf(userId) && isImage() && underMB(5);
+      allow delete: if isSelf(userId) || isAdmin();
+    }
+
+    // -----------------------------------------------------------------------
+    // Aktivite kapak görselleri — kurum personeli yükler
+    // -----------------------------------------------------------------------
+    match /orgs/{orgId}/activities/{activityId}/{fileName} {
+      allow read: if signedIn();
+      allow write: if orgStaff(orgId) && isImage() && underMB(8);
+      allow delete: if orgStaff(orgId);
+    }
+
+    // Kurum logosu — doğrulanmış kurum rozeti yanında görünür
+    match /orgs/{orgId}/logo/{fileName} {
+      allow read: if signedIn();
+      allow write: if orgStaff(orgId) && isImage() && underMB(2);
+      allow delete: if orgStaff(orgId);
+    }
+
+    // -----------------------------------------------------------------------
+    // "Katıldım" iddiası kanıt fotoğrafı (pendingClaims)
+    // Sahibi yükler, sahibi ve admin okur. Kurum personeli GÖREMEZ —
+    // fotoğraf başkalarını da içerebilir.
+    // -----------------------------------------------------------------------
+    match /claims/{userId}/{claimId}/{fileName} {
+      allow read: if isSelf(userId) || isAdmin();
+      allow create: if isSelf(userId) && isImage() && underMB(10);
+      allow update, delete: if false;  // kanıt sonradan değiştirilemez
+    }
+
+    // -----------------------------------------------------------------------
+    // Eğitmen başvurusu belgeleri (ör. B2 dil sertifikası)
+    // HASSAS: yalnızca sahibi + admin. Kurum bile göremez.
+    // -----------------------------------------------------------------------
+    match /trainerApplications/{userId}/{fileName} {
+      allow read: if isSelf(userId) || isAdmin();
+      allow create: if isSelf(userId) && isDocument() && underMB(10);
+      allow update: if false;
+      allow delete: if isSelf(userId) || isAdmin();
+    }
+
+    // -----------------------------------------------------------------------
+    // Sunucunun ürettiği PDF'ler (pasaport, katılım belgesi, mutabakat raporu)
+    // Yazma HER ZAMAN sunucudan (Admin SDK kuralları atlar).
+    // -----------------------------------------------------------------------
+    match /certificates/{userId}/{fileName} {
+      allow read: if isSelf(userId) || isAdmin();
+      allow write: if false;
+    }
+
+    match /passports/{userId}/{fileName} {
+      allow read: if isSelf(userId) || isAdmin();
+      allow write: if false;
+    }
+
+    match /reports/{orgId}/{fileName} {
+      allow read: if orgStaff(orgId);
+      allow write: if false;
+    }
+
+    // -----------------------------------------------------------------------
+    // Geri kalan her şey kapalı.
+    // -----------------------------------------------------------------------
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

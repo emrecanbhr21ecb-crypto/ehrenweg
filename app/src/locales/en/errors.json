@@ -1,0 +1,23 @@
+{
+  "generic": "Something went wrong. Please try again.",
+  "network": "No connection. Check your internet.",
+  "permissionDenied": "You do not have permission for this.",
+  "notFound": "Not found.",
+  "appCheckFailed": "Security check failed. Please restart the app.",
+
+  "scan": {
+    "wrongCode": "This QR code does not belong to Ehrenweg.",
+    "expired": "The code has expired. Ask for a new one.",
+    "inactive": "Attendance is not running right now.",
+    "activityMissing": "The activity could not be found.",
+    "geoTooFar": "You are too far from the venue.",
+    "alreadyScanned": "You have already checked in here."
+  },
+
+  "voucher": {
+    "invalid": "Voucher is invalid.",
+    "expired": "Voucher has expired.",
+    "alreadyRedeemed": "Voucher has already been redeemed.",
+    "wrongOrganisation": "This voucher belongs to a different organisation."
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+  "network": "Keine Verbindung. Prüfe dein Internet.",
+  "permissionDenied": "Dafür fehlt dir die Berechtigung.",
+  "notFound": "Nicht gefunden.",
+  "appCheckFailed": "Sicherheitsprüfung fehlgeschlagen. Bitte App neu starten.",
+
+  "scan": {
+    "wrongCode": "Dieser QR-Code gehört nicht zu Ehrenweg.",
+    "expired": "Der Code ist abgelaufen. Lass dir einen neuen zeigen.",
+    "inactive": "Die Anwesenheitserfassung läuft gerade nicht.",
+    "activityMissing": "Die Aktivität wurde nicht gefunden.",
+    "geoTooFar": "Du bist zu weit vom Veranstaltungsort entfernt.",
+    "alreadyScanned": "Du hast dich hier schon eingetragen."
+  },
+
+  "voucher": {
+    "invalid": "Gutschein ungültig.",
+    "expired": "Gutschein abgelaufen.",
+    "alreadyRedeemed": "Gutschein wurde bereits eingelöst.",
+    "wrongOrganisation": "Dieser Gutschein gehört zu einer anderen Organisation."
+  }
+}

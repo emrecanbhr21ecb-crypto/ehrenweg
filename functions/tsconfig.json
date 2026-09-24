@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    // Cloud Functions CommonJS bekliyor; 'node10' TS 7'de kalkıyor, bu yüzden
+    // modern 'node16' çözümleyicisi kullanılıyor (CommonJS çıktısı korunur).
+    "module": "node16",
+    "moduleResolution": "node16",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "types": ["node"],
+    "outDir": "lib",
+    "rootDir": "src",
+    "sourceMap": true,
+    "declaration": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    /* STRICT — istemcideki kadar sıkı. Para ve yetki kodu burada. */
+    "strict": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "lib", "**/*.test.ts"]
+}

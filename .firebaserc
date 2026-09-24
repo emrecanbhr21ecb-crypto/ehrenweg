@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "ehrenweg-dev",
+    "dev": "ehrenweg-dev",
+    "prod": "ehrenweg-prod"
+  }
+}

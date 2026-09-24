@@ -1,0 +1,43 @@
+{
+  "appName": "Ehrenweg",
+  "slogan": "Your path through volunteering – into the heart of the community.",
+  "nav": {
+    "home": "Home",
+    "activities": "Activities",
+    "scan": "Scan",
+    "learn": "Learn",
+    "wallet": "Wallet",
+    "profile": "Profile",
+    "org": "Organisation",
+    "admin": "Admin"
+  },
+  "action": {
+    "continue": "Continue",
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save",
+    "retry": "Try again",
+    "close": "Close",
+    "confirm": "Confirm"
+  },
+  "state": {
+    "loading": "Loading …",
+    "empty": "Nothing here yet.",
+    "offline": "You are offline. Your input is saved and will be sent later."
+  },
+  "language": {
+    "label": "Language",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "theme": {
+    "label": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "a11y": {
+    "skipToContent": "Skip to content",
+    "mainNavigation": "Main navigation"
+  }
+}

@@ -6,7 +6,7 @@ Son güncelleme: 2026-09-24
 
 | Faz | İçerik | Durum |
 |---|---|---|
-| **0** | Ortam, Firebase projeleri, monorepo iskeleti, CI, emülatör, seed | 🟡 devam ediyor |
+| **0** | Ortam, Firebase projeleri, monorepo iskeleti, CI, emülatör, seed | 🟡 ~%60 |
 | 1 | Auth, onboarding, i18n, profil, roller/claim | ⬜ |
 | 2 | Kurumlar ve aktiviteler | ⬜ |
 | 3 | QR yoklama, pasaport, IP, seviye, rozet | ⬜ |
@@ -21,21 +21,61 @@ Son güncelleme: 2026-09-24
 
 ## Faz 0 — detay
 
-### Bitti
-- Ortam kontrolü: node v24.12.0, npm 11.6.2, git 2.50.1, java 17.0.16
-  (Homebrew openjdk@17), firebase-tools 15.22.4, gh 2.98.0 — **eksik yok**
-- Kararlar alındı ve `docs/DECISIONS.md`'ye yazıldı
-- `docs/LEGAL_OPEN_QUESTIONS.md` açıldı (8 madde)
-- `.gitignore` kuruldu (ilk commit'ten önce)
+### ✅ Bitti
 
-### Devam ediyor
-- Monorepo iskeleti (`/app`, `/functions`, kurallar, `/scripts`)
+**0.1 Kararlar ve git**
+- Ortam doğrulandı: node v24.12.0, npm 11.6.2, git 2.50.1, firebase-tools 15.22.4,
+  gh 2.98.0, JDK 21 (`/opt/homebrew/opt/openjdk@21`)
+- `.gitignore` ilk commit'ten önce kuruldu — hiçbir sır git'e girmedi
+- `docs/DECISIONS.md`, `docs/LEGAL_OPEN_QUESTIONS.md` (8 madde)
 
-### Kaldı
-- GitHub private repo + CI
-- Firebase projeleri (`ehrenweg-dev`, `ehrenweg-prod`)
-- Emülatör + seed ile uçtan uca açılış (Faz 0 bitiş ölçütü)
-- Android upload keystore üretimi
+**0.2 `/app` — React + Vite + TS + Tailwind**
+- React 19.2, Vite 8, TypeScript 6 (`strict` + `noUncheckedIndexedAccess` +
+  `exactOptionalPropertyTypes`), Tailwind 4
+- `src/config/brand.ts` — marka tek kaynağı (ad, slogan, renk, URL, QR ön ekleri)
+- `src/styles/theme.css` — petrol yeşili/amber paleti, WCAG odak halkası,
+  `prefers-reduced-motion`, güvenli alan (çentik) desteği
+- i18n: DE/EN, `common` + `errors` ad alanları, **tip güvenli `t()`**
+  (olmayan anahtar derlemeyi kırar), otomatik `<html lang/dir>`, RTL hazır
+- `src/lib/firebase.ts` — emülatör otomatik bağlantısı, Firestore çevrimdışı
+  kalıcılığı, App Check kancası
+- Tema deposu (açık/koyu/sistem), PWA manifest, router + alt gezinti kabuğu
+- `capacitor.config.ts` — `de.ehrenweg.app`
+- `npm run build` ✅ · `tsc` ✅
+
+**0.3 `/functions` — Cloud Functions v2**
+- `europe-west3`, **`nodejs24`**, `setGlobalOptions` + `maxInstances: 10`
+  (kaçak fatura koruması)
+- Sır tanımları: `ANTHROPIC_API_KEY`, `VOUCHER_HMAC_SECRET`,
+  `ATTENDANCE_HMAC_SECRET` (değer yok, yalnızca tanım)
+- `common/roles.ts` — 7 rol, claim okuma/doğrulama, 1000 baytlık claim sınırı notu
+- `common/guards.ts` — App Check zorunlu, claim kontrolü, zod doğrulama,
+  hata mesajları **i18n anahtarı** olarak döner
+- `common/admin.ts` — koleksiyon adları tek yerde
+- `common/audit.ts` — denetim kaydı
+- `healthCheck` onCall · `npm run build` ✅
+
+**0.4 Güvenlik kuralları**
+- `firestore.rules` — deny-all tabanlı, claim'den yetki, sunucu alanları kilitli
+- `storage.rules` — boyut + MIME sınırı, hassas belgeler yalnız sahibi + admin
+- `firestore.indexes.json` — 17 bileşik indeks
+- `firebase.json` — emülatörler + güvenlik başlıklı hosting
+- `.firebaserc` — `dev` / `prod` alias
+- **`tests/firestore.rules.test.ts` — 49 test, hepsi geçiyor** ✅
+  Kanıtlananlar: kullanıcı kendi puanını artıramıyor, kendine kupon basamıyor,
+  pasaport girdisi uyduramıyor, ledger'a satır ekleyemiyor/değiştiremiyor,
+  **dönen QR kodunu hiç kimse (admin dahil) okuyamıyor**
+- `scripts/with-jdk.sh` — JDK 21+ otomatik bulunuyor, emülatör komutları
+  makineye özel ayar istemiyor
+
+### 🔜 Kaldı
+- `scripts/seed.ts` — demo içerik **yalnızca Firestore'a**, `seed: true` işaretli
+- `scripts/unseed.ts` — demo içeriği tek komutla silme
+- `scripts/grantAdmin.ts`
+- Prettier + Husky + GitHub Actions CI + i18n eksik anahtar scripti
+- GitHub private repo
+- Firebase projeleri (`ehrenweg-dev`, `ehrenweg-prod`) + konsol adımları
+- Android upload keystore
 
 ---
 
@@ -43,7 +83,8 @@ Son güncelleme: 2026-09-24
 
 | # | Konu | Durum |
 |---|---|---|
-| 1 | Firebase CLI'da `ehrenwegde@gmail.com` hesabı kayıtlı değil. `firebase login:add` gerekiyor. | 🔴 kullanıcı bekleniyor |
-| 2 | `JAVA_HOME` sistemde ayarlı değil; emülatör komutlarında elle veriliyor (`/opt/homebrew/opt/openjdk@17`). | 🟢 çözüldü (geçici) |
-| 3 | Keystore için tam yasal ad + şehir henüz alınmadı (üretimden sonra değiştirilemez). | 🟡 Faz 0 sonunda sorulacak |
-| 4 | Firestore konumu `eur3` kararı, veritabanı oluşturulmadan önce son kez teyit edilecek. | 🟡 açık |
+| 1 | `ehrenwegde@gmail.com` firebase CLI'ya eklendi | 🟢 çözüldü |
+| 2 | firebase-tools JDK 21+ istiyor, sistem varsayılanı 17'ydi | 🟢 çözüldü — `scripts/with-jdk.sh` |
+| 3 | Keystore için tam yasal ad + şehir alınmadı (üretimden sonra değiştirilemez) | 🟡 Faz 0 sonunda sorulacak |
+| 4 | Firebase build'i 606 kB (179 kB gzip) — Faz 1'de tembel yükleme | 🟡 planlı |
+| 5 | `attendanceSessions` ve `attendanceRecords`'a `orgId` eklendi (CLAUDE.md şemasında yoktu) — kuralların kurum yetkisini ek okuma yapmadan kontrol edebilmesi için gerekli | 🟢 bilinçli ekleme |

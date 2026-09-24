@@ -1,0 +1,329 @@
+rules_version = '2';
+
+// =============================================================================
+// Ehrenweg — Firestore Güvenlik Kuralları
+//
+// CLAUDE.md Bölüm 14 ilkeleri:
+//   1. Varsayılan HER ŞEY KAPALI, sonra tek tek açılır.
+//   2. Yetki custom claim'den okunur (Firestore'daki rol alanı görüntüleme
+//      amaçlıdır ve BURADA ASLA kullanılmaz — kullanıcı onu değiştirebilseydi
+//      kendini admin yapardı).
+//   3. stats / passportEntries / vouchers / ledger / attendanceRecords /
+//      bütçe alanları: istemciden YAZMA YOK. Yalnızca Cloud Functions.
+//   4. Her kural için rules-unit-testing testi vardır; CI'da testler geçmeden
+//      deploy edilmez.
+//
+// NOT: Cloud Functions Admin SDK bu kuralları HİÇ görmez — onlar için asıl
+// koruma functions/src/common/guards.ts içindeki claim kontrolleridir.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------------------------
+    // Yardımcılar
+    // ---------------------------------------------------------------------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function isSelf(userId) {
+      return signedIn() && uid() == userId;
+    }
+
+    function claims() {
+      return request.auth.token;
+    }
+
+    function platformRole() {
+      return signedIn() ? claims().get('role', 'participant') : 'none';
+    }
+
+    function isAdmin() {
+      return platformRole() == 'platform_admin';
+    }
+
+    function isTrainer() {
+      return platformRole() == 'trainer';
+    }
+
+    // Kurum rolü haritası: { orgId: 'org_admin'|'org_staff'|... }
+    function orgs() {
+      return claims().get('orgs', {});
+    }
+
+    function orgRole(orgId) {
+      return orgs().get(orgId, 'none');
+    }
+
+    // Admin her kurumda yetkilidir.
+    function inOrg(orgId, allowedRoles) {
+      return isAdmin() || (signedIn() && orgRole(orgId) in allowedRoles);
+    }
+
+    function orgStaff(orgId) {
+      return inOrg(orgId, ['org_admin', 'org_staff']);
+    }
+
+    function orgAdmin(orgId) {
+      return inOrg(orgId, ['org_admin']);
+    }
+
+    // E-posta doğrulanmış mı? (Kayıt sonrası bazı işlemler için şart.)
+    function verified() {
+      return signedIn() && claims().get('email_verified', false) == true;
+    }
+
+    // Güncellemede yalnızca izin verilen alanlara dokunulmuş mu?
+    function onlyFields(allowed) {
+      return request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(allowed);
+    }
+
+    // Bir alanın değeri hiç değişmemiş mi? (sunucu alanlarını kilitler)
+    function unchanged(field) {
+      return !(field in request.resource.data.diff(resource.data).affectedKeys());
+    }
+
+    // ---------------------------------------------------------------------
+    // users — kullanıcı profili
+    // ---------------------------------------------------------------------
+    match /users/{userId} {
+
+      // Kendi profilini ve adminler herkesinkini okur.
+      // Kurum personelinin katılımcı görmesi Faz 2'de aktivite bağlamıyla
+      // açılacak (şimdi kapalı — veri minimizasyonu, CLAUDE.md Bölüm 10).
+      allow get: if isSelf(userId) || isAdmin();
+      allow list: if isAdmin();
+
+      // Belgeyi Cloud Function (onUserCreate) oluşturur; istemci OLUŞTURAMAZ.
+      allow create: if false;
+      allow delete: if false;
+
+      // Kullanıcı yalnızca şu alanları değiştirebilir (CLAUDE.md Bölüm 14).
+      // stats, trainerStatus, orgId, roleDisplay, createdAt → SUNUCU ALANLARI.
+      allow update: if isSelf(userId)
+                    && onlyFields([
+                         'displayName', 'bio', 'skills', 'interests',
+                         'languages', 'locale', 'photoURL', 'city',
+                         'lastActiveAt'
+                       ]);
+
+      // users/{uid}/private/** — bildirim tercihleri, push token'ları
+      match /private/{docId} {
+        allow read, write: if isSelf(userId);
+      }
+
+      // users/{uid}/applications/{activityId} — başvurular
+      // Başvuru applyToActivity onCall fonksiyonuyla yapılır (kapasite ve
+      // son başvuru tarihi kontrolü transaction gerektirir).
+      match /applications/{activityId} {
+        allow read: if isSelf(userId) || isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // organizations — kurumlar
+    // ---------------------------------------------------------------------
+    match /organizations/{orgId} {
+      // Doğrulanmış kurumları giriş yapmış herkes görür; doğrulanmamışı
+      // yalnızca kendi personeli ve admin görür.
+      allow get: if signedIn() && (resource.data.verified == true
+                                   || orgStaff(orgId));
+      allow list: if signedIn();
+
+      // Kurum kaydı/doğrulaması Cloud Function ile (CLAUDE.md Bölüm 4:
+      // "Bir kurum kendi başına kayıt olamaz").
+      allow write: if false;
+
+      match /members/{memberUid} {
+        allow read: if isSelf(memberUid) || orgStaff(orgId);
+        allow write: if false;  // rol değişimi = claim değişimi = sunucu işi
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // categories — sabit kategori sözlüğü
+    // ---------------------------------------------------------------------
+    match /categories/{categoryId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // activities — aktiviteler ve eğitimler
+    // ---------------------------------------------------------------------
+    match /activities/{activityId} {
+      // Yayınlananı giriş yapmış herkes görür.
+      // Taslak / incelemedeki yalnızca ilgili kurum personeline ve admine açık.
+      allow get: if signedIn() && (
+                    resource.data.status == 'published'
+                    || resource.data.status == 'completed'
+                    || orgStaff(resource.data.orgId)
+                    || (isTrainer() && resource.data.get('trainerUid', '') == uid())
+                  );
+      allow list: if signedIn();
+
+      // Oluşturma/güncelleme submitActivity + reviewActivity onCall ile.
+      // Sebep: çok dilli alan doğrulaması, moderasyon durumu ve stats
+      // (applicants/attendees) sunucu denetiminde olmalı.
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // attendanceSessions — yoklama oturumları
+    // ---------------------------------------------------------------------
+    match /attendanceSessions/{sessionId} {
+      // Katılımcının oturumun AÇIK olduğunu görmesi yeterli; kodu GÖRMEZ.
+      allow get: if signedIn();
+      allow list: if signedIn() && orgStaff(resource.data.orgId);
+      allow write: if false;
+
+      // 🔒 KRİTİK: dönen QR kodları HİÇBİR istemciye okunmaz.
+      // Okunabilseydi, etkinliğe hiç gitmeden yoklama verilebilirdi.
+      // Kod yalnızca getCurrentCode onCall ile, oturumu başlatan personele
+      // döner; katılımcı submitScan ile taradığını sunucuya gönderir.
+      match /codes/{codeId} {
+        allow read, write: if false;
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // attendanceRecords — yoklama kayıtları
+    // ---------------------------------------------------------------------
+    match /attendanceRecords/{recordId} {
+      allow get: if signedIn() && (resource.data.uid == uid()
+                                   || orgStaff(resource.data.orgId)
+                                   || isAdmin());
+      allow list: if signedIn() && isAdmin();
+      allow write: if false;  // yalnızca submitScan / approveLateScans
+    }
+
+    // ---------------------------------------------------------------------
+    // passportEntries — Integrationspass girdileri
+    // ---------------------------------------------------------------------
+    match /passportEntries/{entryId} {
+      // "Kullanıcı bunu ASLA doğrudan yazamaz" (CLAUDE.md Bölüm 5).
+      allow get: if signedIn() && (resource.data.uid == uid()
+                                   || orgStaff(resource.data.orgId)
+                                   || isAdmin());
+      allow list: if signedIn();
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // pendingClaims — "katıldım" iddiaları (kanıt fotoğraflı)
+    // ---------------------------------------------------------------------
+    match /pendingClaims/{claimId} {
+      allow get, list: if signedIn() && (resource.data.uid == uid() || isAdmin());
+
+      // Kullanıcı kendi iddiasını oluşturabilir; sonrasında DEĞİŞTİREMEZ.
+      // Onay/red admin tarafında (sunucu) yapılır.
+      allow create: if verified()
+                    && request.resource.data.uid == uid()
+                    && request.resource.data.status == 'pending';
+      allow update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // rewardTemplates — ödül şablonları
+    // ---------------------------------------------------------------------
+    match /rewardTemplates/{templateId} {
+      allow get, list: if signedIn();
+      // Bütçe alanları (totalBudgetCents, issuedCount) sunucu alanıdır.
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // vouchers — verilmiş kuponlar  💶
+    // ---------------------------------------------------------------------
+    match /vouchers/{voucherId} {
+      // Kullanıcı kendi kuponunu görür. Kupon QR'ı BU BELGEDEN üretilmez —
+      // getVoucherQr onCall 60 sn ömürlü imzalı token döndürür (Bölüm 7.4),
+      // böylece ekran görüntüsü tekrar kullanılamaz.
+      allow get: if signedIn() && (resource.data.uid == uid()
+                                   || orgStaff(resource.data.orgId)
+                                   || isAdmin());
+      allow list: if signedIn() && (isAdmin() || orgStaff(resource.data.orgId));
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // ledger — DEĞİŞMEZ muhasebe defteri  💶
+    // ---------------------------------------------------------------------
+    match /ledger/{txId} {
+      // Yalnızca ekleme (sunucudan). Silme/güncelleme hiçbir koşulda yok —
+      // tutarlılık scripti defterden bakiye yeniden hesaplayabilmeli.
+      allow get, list: if signedIn() && (resource.data.uid == uid()
+                                         || orgAdmin(resource.data.get('orgId', ''))
+                                         || isAdmin());
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // trainerApplications — eğitmen başvuruları
+    // ---------------------------------------------------------------------
+    match /trainerApplications/{userId} {
+      allow get: if isSelf(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow write: if false;  // başvuru + inceleme onCall ile
+    }
+
+    // ---------------------------------------------------------------------
+    // İçerik: duyurular, slider, sertifikalar
+    // ---------------------------------------------------------------------
+    match /announcements/{announcementId} {
+      allow get, list: if signedIn();
+      allow write: if false;
+    }
+
+    match /slider/{slideId} {
+      allow get, list: if signedIn();
+      allow write: if false;
+    }
+
+    match /certificates/{certificateId} {
+      allow get: if signedIn() && (resource.data.uid == uid() || isAdmin());
+      allow list: if isAdmin();
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // feedback — kullanıcı geri bildirimi
+    // ---------------------------------------------------------------------
+    match /feedback/{feedbackId} {
+      allow get, list: if isAdmin();
+      allow create: if signedIn() && request.resource.data.uid == uid();
+      allow update, delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // auditLog — denetim kaydı
+    // ---------------------------------------------------------------------
+    match /auditLog/{entryId} {
+      allow get, list: if isAdmin();
+      allow write: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // config — puan kuralları vb.
+    // ---------------------------------------------------------------------
+    match /config/{docId} {
+      allow get, list: if signedIn();
+      allow write: if false;  // admin panelinden → setScoringConfig onCall
+    }
+
+    // ---------------------------------------------------------------------
+    // Yukarıda açıkça izin verilmeyen HER ŞEY kapalı.
+    // ---------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

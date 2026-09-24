@@ -7,8 +7,16 @@
 # --- Sırlar / kimlik bilgileri (ASLA commit edilmez) ---
 .env
 .env.*
-!.env.example
 *.env
+# İstisna: bu ikisi SIR İÇERMEZ ve commit edilir.
+#  - .env.example        : boş şablon
+#  - .env.development    : yalnızca 'demo-ehrenweg' emülatör değerleri.
+#                          Gerçek dev projesinin anahtarları .env.development.local'e
+#                          yazılır ve o dosya aşağıdaki kuralla git dışında kalır.
+!.env.example
+!.env.development
+.env.*.local
+.env.local
 service-account*.json
 serviceAccount*.json
 *-firebase-adminsdk-*.json

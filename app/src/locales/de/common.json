@@ -1,0 +1,43 @@
+{
+  "appName": "Ehrenweg",
+  "slogan": "Dein Weg durchs Ehrenamt – mitten in die Gesellschaft.",
+  "nav": {
+    "home": "Start",
+    "activities": "Aktivitäten",
+    "scan": "Scannen",
+    "learn": "Lernen",
+    "wallet": "Wallet",
+    "profile": "Profil",
+    "org": "Organisation",
+    "admin": "Verwaltung"
+  },
+  "action": {
+    "continue": "Weiter",
+    "back": "Zurück",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "retry": "Erneut versuchen",
+    "close": "Schließen",
+    "confirm": "Bestätigen"
+  },
+  "state": {
+    "loading": "Wird geladen …",
+    "empty": "Hier ist noch nichts.",
+    "offline": "Keine Internetverbindung. Deine Eingaben werden gespeichert und später gesendet."
+  },
+  "language": {
+    "label": "Sprache",
+    "de": "Deutsch",
+    "en": "English"
+  },
+  "theme": {
+    "label": "Darstellung",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "Systemeinstellung"
+  },
+  "a11y": {
+    "skipToContent": "Zum Inhalt springen",
+    "mainNavigation": "Hauptnavigation"
+  }
+}

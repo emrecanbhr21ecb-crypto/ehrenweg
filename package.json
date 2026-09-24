@@ -1,0 +1,60 @@
+{
+  "name": "ehrenweg",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Ehrenweg — Dein Weg durchs Ehrenamt. Freiwilligenarbeit und Kurse für Geflüchtete und Zugewanderte in Deutschland.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm --prefix app run dev",
+    "build": "npm --prefix app run build && npm --prefix functions run build",
+    "typecheck": "npm --prefix app run typecheck && npm --prefix functions run typecheck",
+    "lint": "npm --prefix app run lint && npm --prefix functions run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run test:app && npm run test:rules",
+    "test:app": "npm --prefix app run test",
+    "test:rules": "sh scripts/with-jdk.sh firebase emulators:exec --only firestore,storage --project demo-ehrenweg \"vitest run --config tests/vitest.config.ts\"",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "emu": "sh scripts/with-jdk.sh firebase emulators:start --project demo-ehrenweg --import ./emulator-data --export-on-exit ./emulator-data",
+    "emu:clean": "sh scripts/with-jdk.sh firebase emulators:start --project demo-ehrenweg",
+    "seed": "sh scripts/with-jdk.sh firebase emulators:exec --project demo-ehrenweg \"tsx scripts/seed.ts\"",
+    "grant-admin": "tsx scripts/grantAdmin.ts",
+    "ledger:check": "tsx scripts/ledgerConsistencyCheck.ts",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "firebase": "^12.19.0",
+    "firebase-admin": "^14.5.0",
+    "firebase-tools": "^15.22.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "~6.0.2",
+    "vitest": "^5.0.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "prettier --write"
+    ],
+    "*.{json,md,css,html,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.rules": [
+      "prettier --ignore-unknown --write"
+    ]
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "printWidth": 88,
+    "tabWidth": 2,
+    "arrowParens": "always",
+    "endOfLine": "lf"
+  }
+}
