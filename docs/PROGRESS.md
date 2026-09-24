@@ -113,7 +113,7 @@ Bu adımda yapılan düzeltmeler:
 
 | # | Konu | Durum |
 |---|---|---|
-| 0 | **firebase CLI'da aktif hesap `info.valeontr@gmail.com`** (VALEON). `ehrenwegde@gmail.com` kayıtlı ama aktif değil → P02'de proje oluşturmadan önce `firebase login:use ehrenwegde@gmail.com` yapılmalı, yoksa projeler yanlış hesaba açılır | 🔴 P02'de ilk iş |
+| 0 | firebase CLI'da aktif hesap VALEON'du; projeler yanlış hesaba açılabilirdi | 🟢 çözüldü (25 Eyl) — `firebase login:use ehrenwegde@gmail.com`. Ayar **klasöre özel** yazıldı: ehrenweg klasöründe ehrenwegde@, dışarıda VALEON. Diğer projeler etkilenmedi. `projects:list` → "No projects found" (temiz başlangıç doğrulandı) |
 | 1 | `ehrenwegde@gmail.com` firebase CLI'ya eklendi | 🟢 çözüldü |
 | 2 | firebase-tools JDK 21+ istiyor, sistem varsayılanı 17'ydi | 🟢 çözüldü — `scripts/with-jdk.sh` |
 | 3 | Keystore için tam yasal ad + şehir alınmadı (üretimden sonra değiştirilemez) | 🟡 P11'e ertelendi (proje sahibi kararı) |
