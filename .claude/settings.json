@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(node:*)",
+      "Bash(git:*)",
+      "Bash(gh:*)",
+      "Bash(firebase:*)",
+      "Bash(sh scripts/*)",
+      "Bash(./gradlew:*)",
+      "Bash(adb:*)",
+      "Bash(keytool:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(java:*)",
+      "Bash(sw_vers:*)",
+      "Bash(which:*)"
+    ],
+    "deny": [
+      "Read(./app/.env.*.local)",
+      "Read(./**/*serviceAccount*.json)",
+      "Read(./android/keystore.properties)"
+    ]
+  }
+}

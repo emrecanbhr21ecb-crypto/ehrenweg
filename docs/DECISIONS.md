@@ -3,7 +3,7 @@
 Bu dosya, proje sahibinin verdiği bağlayıcı kararları tutar. Bir karar değişirse
 burası güncellenir ve değişikliğin nedeni "Değişiklik günlüğü"ne yazılır.
 
-Son güncelleme: 2026-09-24
+Son güncelleme: 2026-09-25
 
 ---
 
@@ -15,14 +15,32 @@ Son güncelleme: 2026-09-24
 | Firebase / destek hesabı | **ehrenwegde@gmail.com** | Firebase projeleri bu hesap altında açılır; CLI'ya eklendi ✅ |
 | Destek e-postası | **ehrenwegde@gmail.com** | `support@ehrenweg.de` yerine; alan adı alınırsa yönlendirme kurulabilir |
 | **Play Console geliştirici hesabı** | **ehrenwegde@gmail.com** | Firebase ile AYNI hesap (proje sahibi 24 Eyl 2026'da netleştirdi) |
+| **Play Console hesabının ülkesi** | **Türkiye** | Proje sahibi 25 Eyl 2026'da netleştirdi. Hesap Türkiye'den açılacak; uygulama yine Almanya'da yayınlanacak |
 | Tüzel kimlik | **Şahıs** (dernek/şirket değil) | Play Console ve Apple Developer hesabı şahıs adına açılacak |
 | GitHub hesabı | `emrecanbhr21ecb-crypto` | Repo: **private** `ehrenweg` |
 | Android applicationId | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) | |
 | iOS bundle ID | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) | |
 
-**AÇIK:** İmza anahtarındaki (`keytool -dname`) tam yasal ad ve şehir henüz
-verilmedi. Keystore üretilmeden önce sorulacak — anahtar üretildikten sonra
-bu alanlar değiştirilemez.
+**AÇIK (P11 / Faz 8'e ertelendi, 25 Eyl 2026):** İmza anahtarındaki
+(`keytool -dname`) tam yasal ad ve şehir. Proje sahibi "keystore üretilirken
+sorarsın" dedi — anahtar zaten o fazda üretiliyor, şimdi üretmenin faydası yok.
+Anahtar üretildikten sonra bu alanlar **değiştirilemez** (10.000 gün geçerli).
+Ülke kodu hesabın ülkesine göre **`C=TR`** olacak (CLAUDE.md Bölüm 16.1'deki
+örnek `C=DE` diyor; hesap Türkiye'den açıldığı için tutarlılık adına TR).
+
+### ⚠️ Türkiye'den açılan hesabın iki sonucu (P13'te ele alınacak)
+
+1. **Geliştirici adresi mağazada görünür.** Google Play, tüketici uygulamalarında
+   geliştiricinin ülke/adres bilgisini uygulama sayfasında gösterir. Alman
+   belediyelerine sunulan bir uygulamada "Türkiye" adresi güven açısından
+   sorulabilir. Çözüm zor değil — kurum sayfasında pilot belediyeyi ve doğrulanmış
+   kurumları öne çıkarmak yeterli — ama pilot görüşmesinde sürpriz olmasın diye
+   buraya yazıldı.
+2. **Şahıs hesabı = kapalı test şartı.** Kasım 2023'ten sonra açılan **şahıs**
+   Play Console hesapları, üretime çıkmadan önce **en az 12 test kullanıcısıyla
+   14 gün kesintisiz kapalı test** yapmak zorunda. Bu ülkeden bağımsız bir kural
+   ama takvimi etkiler: P13'te iç test kanalına yükledikten sonra üretime geçiş
+   iki hafta bekler. Pilot planlanırken bu süre hesaba katılmalı.
 
 ---
 
@@ -101,7 +119,36 @@ altında. `.gitignore` ilk commit'ten önce kuruldu. CI: GitHub Actions
 
 ---
 
-## 6. Otomatik uygulanan, sorulmayan teknik kararlar
+## 6. Alan adı — `ehrenweg.de` PİLOT SONRASI alınacak
+
+**Karar (25 Eyl 2026): şimdilik alan adı alınmıyor.** Pilot oturduktan sonra
+değerlendirilecek. Bu bir "sonra bakarız" değil, bilinçli erteleme.
+
+Gerekçe: alan adı üç yerde gerekiyor ve üçünün de bedava karşılığı var —
+
+| Nerede gerekiyor | Alan adı olmadan | Not |
+|---|---|---|
+| Play Console gizlilik politikası URL'si (**zorunlu alan**) | `https://ehrenweg-prod.web.app/privacy` | Firebase Hosting her projeye bedava veriyor |
+| App Links (linke tıklayınca uygulama açılsın) | `https://ehrenweg-prod.web.app/a/{activityId}` | `assetlinks.json` bu adresten de yayınlanabilir |
+| PDF pasaport doğrulama QR'ı | `https://ehrenweg-prod.web.app/verify/{id}` | |
+
+Yani teknik hiçbir şey alan adı yüzünden beklemiyor. Tek kayıp kurumsal
+görünüm: bir belediyeye `.web.app` adresi vermek zayıf durur. O yüzden pilot
+ciddiye binince alınacak.
+
+**Kod tarafındaki karşılığı (bağlayıcı):** hiçbir adres koda gömülmez. Tüm
+URL'ler `app/src/config/brand.ts` içinde tek kaynaktan gelir. Alan adı
+alındığında yalnız o dosya + `assetlinks.json` + Play Console alanı değişir.
+`.env` dosyalarında `VITE_PUBLIC_BASE_URL` olarak tutulur ki dev/prod ayrışsın.
+
+**Bağlı açık madde:** "Ehrenweg" adının DPMA (Almanya) ve EUIPO (AB) marka
+kayıtlarındaki durumu kontrol edilmedi. Alan adı alınmadan önce bakılmalı —
+ad kullanılamaz çıkarsa alan adı da boşa gider.
+Bkz. `docs/LEGAL_OPEN_QUESTIONS.md`.
+
+---
+
+## 7. Otomatik uygulanan, sorulmayan teknik kararlar
 
 Bunlar iş kuralı değil, teknik zorunluluk olduğu için sorulmadan uygulandı.
 İtirazın varsa söyle, değiştiririm.
@@ -134,5 +181,12 @@ v24.12.0 ile birebir aynı → emülatör ile üretim arasında sürüm farkı y
 
 ## Değişiklik günlüğü
 
-- **2026-09-24** — İlk sürüm. Firestore `eur3`, parasal kupon kapalı, pilot
-  Berlin-Neukölln, GitHub private repo, şahıs kimliği, `ehrenwegde@gmail.com`.
+- **2026-09-24** — İlk sürüm. Firestore `europe-west3`, parasal kupon kapalı,
+  pilot Berlin-Neukölln, GitHub private repo, şahıs kimliği,
+  `ehrenwegde@gmail.com`.
+  *(Not: bu satır ilk yazımda sehven `eur3` diyordu; Bölüm 2'deki karar
+  `europe-west3`'tür, 25 Eyl 2026'da düzeltildi.)*
+- **2026-09-25** — P00 tamamlandı. Bölüm 17'de açık kalan son iki soru
+  cevaplandı: **alan adı pilot sonrası** (Bölüm 6, yeni), **Play Console hesabı
+  Türkiye'den** açılacak (Bölüm 1). Keystore'daki tam yasal ad ve şehir bilinçli
+  olarak P11'e (Faz 8) ertelendi; ülke kodu `C=TR` olacak.
