@@ -1,0 +1,105 @@
+# ---------------------------------------------------------------------------
+# Ehrenweg — .gitignore
+# Bu dosya ilk commit'ten ÖNCE kuruldu (CLAUDE.md Bölüm 0, kural 4).
+# Sır içeren hiçbir dosya git'e girmez.
+# ---------------------------------------------------------------------------
+
+# --- Sırlar / kimlik bilgileri (ASLA commit edilmez) ---
+.env
+.env.*
+!.env.example
+*.env
+service-account*.json
+serviceAccount*.json
+*-firebase-adminsdk-*.json
+google-services.json
+GoogleService-Info.plist
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+keystore.properties
+android/keystore.properties
+.runtimeconfig.json
+functions/.secret.local
+
+# --- Bağımlılıklar ---
+node_modules/
+.pnp
+.pnp.js
+
+# --- Derleme çıktıları ---
+dist/
+dist-ssr/
+build/
+out/
+*.local
+app/dist/
+functions/lib/
+.vite/
+
+# --- Firebase ---
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+database-debug.log
+pubsub-debug.log
+*-debug.log
+emulator-data/
+.firebaserc.local
+
+# --- Capacitor / native ---
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+android/captures/
+android/.idea/
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+ios/App/App/public/
+android/app/src/main/assets/public/
+*.apk
+*.aab
+*.ipa
+
+# --- Test / kapsam ---
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+.vitest/
+
+# --- Editör / işletim sistemi ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.sample.json
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Log / geçici ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.tmp/
+tmp/
+.cache/
+.eslintcache
+
+# --- Claude Code yerel ayarları ---
+.claude/settings.local.json
