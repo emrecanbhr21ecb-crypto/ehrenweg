@@ -1,6 +1,6 @@
 # Ehrenweg — İlerleme (PROGRESS)
 
-Son güncelleme: 2026-09-24
+Son güncelleme: 2026-09-25
 
 ## Faz durumu
 
@@ -24,10 +24,40 @@ Son güncelleme: 2026-09-24
 ### ✅ Bitti
 
 **0.1 Kararlar ve git**
-- Ortam doğrulandı: node v24.12.0, npm 11.6.2, git 2.50.1, firebase-tools 15.22.4,
-  gh 2.98.0, JDK 21 (`/opt/homebrew/opt/openjdk@21`)
 - `.gitignore` ilk commit'ten önce kuruldu — hiçbir sır git'e girmedi
 - `docs/DECISIONS.md`, `docs/LEGAL_OPEN_QUESTIONS.md` (8 madde)
+- **P00 kapandı (25 Eyl):** Bölüm 17'deki 6 sorunun hepsi cevaplı. Son ikisi —
+  alan adı pilot sonrası (DECISIONS §6), Play Console hesabı Türkiye'den
+  (DECISIONS §1). Keystore `dname` bilinçli olarak P11'e ertelendi.
+
+**0.1b Geliştirme ortamı (P01, 25 Eyl) — DOĞRULANDI**
+
+macOS 26.2 · Apple M2 (arm64)
+
+| Araç | Sürüm | Durum |
+|---|---|---|
+| Node.js / npm | v24.12.0 / 11.6.2 | ✅ arm64 |
+| Git | 2.50.1 (Apple Git-155) | ✅ |
+| JDK | 21.0.12.1 kurulu; PATH varsayılanı 17 | ✅ `with-jdk.sh` çözüyor |
+| firebase-tools | 15.22.4 | ✅ |
+| GitHub CLI | 2.98.0, giriş: `emrecanbhr21ecb-crypto` | ✅ |
+| Android Studio | kurulu | ✅ |
+| Android SDK | platform 31/34/35/36 · build-tools 36.1.0 · NDK · platform-tools | ✅ |
+
+Bu adımda yapılan düzeltmeler:
+- **Git kimliği kuruldu** (eskiden hiç ayarlı değildi, commit'ler
+  `emrecanbuhur@Emre-MacBook-Air.local` adresine yazılıyordu):
+  `Emre Can Buhur <273773889+emrecanbhr21ecb-crypto@users.noreply.github.com>`.
+  GitHub'ın gizli adresi seçildi → commit'ler hesapla eşleşir ama gerçek e-posta
+  hiçbir yerde açığa çıkmaz. **Global** ayarlandı; BazaltGo'nun kendi yerel
+  kimliği (`BazaltGo <ahmetgokhankahraman@gmail.com>`) olduğu için o etkilenmedi.
+- **Mevcut commit'lerin yazarı yeniden yazıldı** (`filter-branch`), böylece
+  makine adı GitHub'a hiç gitmeyecek. Tarihler korundu. Uzak depo henüz
+  olmadığı için bu işlem risksizdi — push'tan sonra mümkün olmayacaktı.
+- **`ANDROID_HOME` / `ANDROID_SDK_ROOT`** `~/.zshrc`'ye eklendi (ikisi de boştu),
+  `platform-tools` + `emulator` PATH'e alındı. `adb` artık doğrudan çalışıyor.
+- **`.claude/settings.json`** — proje izin listesi; sır dosyaları (`.env.*.local`,
+  servis hesabı JSON'ları, `keystore.properties`) okuma engeline alındı.
 
 **0.2 `/app` — React + Vite + TS + Tailwind**
 - React 19.2, Vite 8, TypeScript 6 (`strict` + `noUncheckedIndexedAccess` +
@@ -83,8 +113,11 @@ Son güncelleme: 2026-09-24
 
 | # | Konu | Durum |
 |---|---|---|
+| 0 | **firebase CLI'da aktif hesap `info.valeontr@gmail.com`** (VALEON). `ehrenwegde@gmail.com` kayıtlı ama aktif değil → P02'de proje oluşturmadan önce `firebase login:use ehrenwegde@gmail.com` yapılmalı, yoksa projeler yanlış hesaba açılır | 🔴 P02'de ilk iş |
 | 1 | `ehrenwegde@gmail.com` firebase CLI'ya eklendi | 🟢 çözüldü |
 | 2 | firebase-tools JDK 21+ istiyor, sistem varsayılanı 17'ydi | 🟢 çözüldü — `scripts/with-jdk.sh` |
-| 3 | Keystore için tam yasal ad + şehir alınmadı (üretimden sonra değiştirilemez) | 🟡 Faz 0 sonunda sorulacak |
+| 3 | Keystore için tam yasal ad + şehir alınmadı (üretimden sonra değiştirilemez) | 🟡 P11'e ertelendi (proje sahibi kararı) |
+| 6 | Şahıs Play Console hesabı → üretime çıkmadan önce **12 test kullanıcısı / 14 gün kapalı test** şartı; pilot takvimini iki hafta uzatır | 🟡 P13'te |
+| 7 | `package.json` henüz var olmayan dosyalara script tanımlıyor (`seed.ts`, `grantAdmin.ts`, `check-i18n.mjs`, `ledgerConsistencyCheck.ts`). Husky kurulu ama kanca yok, CI ve Prettier yapılandırması yok | 🟡 P03'te yazılacak |
 | 4 | Firebase build'i 606 kB (179 kB gzip) — Faz 1'de tembel yükleme | 🟡 planlı |
 | 5 | `attendanceSessions` ve `attendanceRecords`'a `orgId` eklendi (CLAUDE.md şemasında yoktu) — kuralların kurum yetkisini ek okuma yapmadan kontrol edebilmesi için gerekli | 🟢 bilinçli ekleme |
