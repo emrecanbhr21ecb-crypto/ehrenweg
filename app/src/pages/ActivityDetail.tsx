@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router'
 
 import { AttendanceClaim } from '@/components/AttendanceClaim'
+import { TrainingFeedbackSection } from '@/components/TrainingFeedbackSection'
 import { MapView } from '@/components/MapView'
 import { ActivityStatusBadge } from '@/components/ActivityCard'
 import {
@@ -71,7 +72,7 @@ export default function ActivityDetail(): React.JSX.Element {
   const { t, i18n } = useTranslation(['activities', 'catalog', 'errors'])
   const locale = (i18n.resolvedLanguage ?? 'de') as Locale
   const navigate = useNavigate()
-  const { user, profile } = useAuth()
+  const { user, profile, orgRoles } = useAuth()
 
   const [activity, setActivity] = useState<Activity | null | undefined>(undefined)
   const [organization, setOrganization] = useState<Organization | null>(null)
@@ -406,6 +407,12 @@ export default function ActivityDetail(): React.JSX.Element {
             : t('activities:detail.reminderOn')}
         </Button>
       </div>
+
+      {/* Faz 5 — eğitim bittiyse 1–5 yıldız + yorum (Bölüm 8) */}
+      <TrainingFeedbackSection
+        activity={activity}
+        canModerate={Boolean(orgRoles[activity.orgId])}
+      />
 
       {/* item 8 — aktivite bittiyse "ben oradaydım" nachtrağı */}
       <AttendanceClaim activity={activity} />

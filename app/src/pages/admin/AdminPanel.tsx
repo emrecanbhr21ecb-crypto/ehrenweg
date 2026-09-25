@@ -21,8 +21,147 @@ import { db } from '@/lib/firebase'
 import { collection, getDocs, limit, query } from 'firebase/firestore'
 import type { Activity, Organization } from '@/types/activity'
 import type { LedgerEntry } from '@/types/reward'
+import {
+  reviewTrainerApplication,
+  watchPendingTrainerApplications,
+} from '@/lib/trainer'
+import type { TrainerApplication } from '@/types/trainer'
 
-type Tab = 'organisations' | 'activities' | 'ledger'
+type Tab = 'organisations' | 'activities' | 'trainers' | 'ledger'
+
+/**
+ * Eğitmen başvuru kuyruğu — CLAUDE.md Bölüm 8.
+ *
+ * Kararı başvuru anındaki `snapshot` üzerinden veriyoruz: kullanıcının
+ * sayaçları o günden beri değişmiş olabilir ve karar geriye dönük
+ * açıklanabilir olmalı.
+ */
+function TrainerQueue(): React.JSX.Element {
+  const { t } = useTranslation(['trainer', 'catalog'])
+  const { user } = useAuth()
+
+  const [rows, setRows] = useState<TrainerApplication[] | null>(null)
+  const [busyUid, setBusyUid] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    return watchPendingTrainerApplications(setRows, (caught) => {
+      console.error('[admin] Eğitmen kuyruğu okunamadı:', caught)
+      setError(t('trainer:admin.loadFailed'))
+      setRows([])
+    })
+  }, [t])
+
+  async function decide(
+    application: TrainerApplication,
+    decision: 'approve' | 'reject',
+    note = '',
+  ): Promise<void> {
+    if (!user) return
+    setBusyUid(application.uid)
+    setError(null)
+    try {
+      await reviewTrainerApplication(application.uid, decision, user.uid, note)
+      setNotice(
+        decision === 'approve'
+          ? t('trainer:admin.approved')
+          : t('trainer:admin.rejected'),
+      )
+    } catch (caught) {
+      console.error('[admin] Eğitmen kararı kaydedilemedi:', caught)
+      setError(t('trainer:admin.actionFailed'))
+    } finally {
+      setBusyUid(null)
+    }
+  }
+
+  if (rows === null) {
+    return (
+      <div className="flex justify-center py-10">
+        <Spinner className="size-8 text-primary-700" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {notice && <Alert tone="success">{notice}</Alert>}
+      {error && <Alert tone="error">{error}</Alert>}
+
+      {rows.length === 0 && (
+        <Card className="text-center text-sm text-gray-600 dark:text-gray-400">
+          {t('trainer:admin.empty')}
+        </Card>
+      )}
+
+      {rows.map((application) => (
+        <Card key={application.uid} className="space-y-3">
+          <div>
+            <h3 className="text-base font-semibold">{application.displayName}</h3>
+            <p className="text-xs text-gray-500">{application.email}</p>
+          </div>
+
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {t('trainer:admin.stats', {
+              level: application.snapshot.level,
+              hours: Math.round(application.snapshot.hours),
+              activities: application.snapshot.activitiesCompleted,
+              rate: Math.round(application.snapshot.noShowRate * 100),
+              age: application.snapshot.accountAgeDays,
+            })}
+          </p>
+
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              {t('trainer:admin.topics')}
+            </p>
+            <p className="text-sm">
+              {application.topics
+                .map((topic) =>
+                  t(`catalog:skills.${topic}` as 'catalog:skills.teamwork'),
+                )
+                .join(' · ')}
+            </p>
+          </div>
+
+          {application.teachingLanguage && (
+            <p className="text-sm">
+              {t('trainer:admin.language')}:{' '}
+              {t(
+                `catalog:languages.codes.${application.teachingLanguage}` as 'catalog:languages.codes.de',
+              )}{' '}
+              · {application.teachingLanguageLevel}
+            </p>
+          )}
+
+          <div>
+            <p className="text-xs uppercase tracking-wide text-gray-500">
+              {t('trainer:admin.motivation')}
+            </p>
+            <p className="text-sm">{application.motivation}</p>
+          </div>
+
+          {application.certificateDataUrl ? (
+            <img
+              src={application.certificateDataUrl}
+              alt=""
+              className="max-h-64 w-full rounded-xl object-contain"
+            />
+          ) : (
+            <p className="text-xs text-gray-500">{t('trainer:admin.noCertificate')}</p>
+          )}
+
+          <ReviewBox
+            busy={busyUid === application.uid}
+            onApprove={() => void decide(application, 'approve')}
+            onReject={(note) => void decide(application, 'reject', note)}
+          />
+        </Card>
+      ))}
+    </div>
+  )
+}
 
 /**
  * Defter tutarlılık kontrolü — CLAUDE.md Bölüm 7.3 ve 7.7.
@@ -369,12 +508,13 @@ function ActivityQueue(): React.JSX.Element {
 }
 
 export default function AdminPanel(): React.JSX.Element {
-  const { t } = useTranslation(['manage', 'wallet'])
+  const { t } = useTranslation(['manage', 'wallet', 'trainer'])
   const [tab, setTab] = useState<Tab>('organisations')
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'organisations', label: t('admin.tabOrganisations') },
     { id: 'activities', label: t('admin.tabActivities') },
+    { id: 'trainers', label: t('admin.tab', { ns: 'trainer' }) },
     { id: 'ledger', label: t('consistency.title', { ns: 'wallet' }) },
   ]
 
@@ -408,6 +548,7 @@ export default function AdminPanel(): React.JSX.Element {
 
       {tab === 'organisations' && <OrganisationQueue />}
       {tab === 'activities' && <ActivityQueue />}
+      {tab === 'trainers' && <TrainerQueue />}
       {tab === 'ledger' && <LedgerCheck />}
     </div>
   )

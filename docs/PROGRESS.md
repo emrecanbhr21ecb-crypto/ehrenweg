@@ -521,3 +521,28 @@ Değeri kendin gir, bana gösterme. `openssl rand -base64 48` iyi bir değer ür
 
 Faz 5 (P08): Eğitmen kariyer yolu — trainer başvurusu, admin onayı, eğitim
 oturumları, katılımcı geri bildirimi, Learn ekranı.
+
+---
+
+## Faz 5 — Eğitmen kariyer yolu (26 Eyl 2026)
+
+| #   | İş                                                                                                                | Durum      |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ---------- |
+| 1   | Profilde "Trainer:in werden" kartı, 5 şart için ilerleme çubuğu; şartlar `config/scoring.trainerRequirements`'tan | ✅         |
+| 2   | Başvuru formu: konular, dil + seviye beyanı, B2+ belge, motivasyon, istatistik snapshot'ı                         | ✅         |
+| 3   | Admin kuyruğu: onayla / gerekçeyle reddet → eğitmen yetkisi + rozet                                               | ✅         |
+| 4   | Eğitmen `type: 'training'` taslak önerir → kurum/admin yayınlar; kendi eğitiminde yoklama başlatabilir; IP ×1.5   | ✅         |
+| 5   | 1–5 yıldız + yorum, eğitmen ortalaması, kurum yorumu gizleyebilir                                                 | ✅         |
+| 6   | Learn ekranı: kurslar, sadece dil kursları filtresi, eğitmene "kurs öner" kısayolu                                | ✅         |
+| 7   | Kural testleri                                                                                                    | ✅ 13 test |
+
+**Testler:** eğitmen olmayan eğitim öneremiyor, eğitmen doğrudan yayına
+alamıyor, başkasını eğitmen göstererek kurs açamıyor, kimse kendi başvurusunu
+onaylayamıyor, kullanıcı kendini eğitmen yapamıyor, başkasının dil belgesi
+okunamıyor, katılmayan puan veremiyor, kullanıcı kendi yorumunu gizleyemiyor,
+5 üstü puan verilemiyor. **Toplam 117/117 yeşil.**
+
+⚠️ `pages/Placeholder.tsx` silindi — tüm sekmeler artık gerçek sayfa.
+
+⚠️ Eğitmen yetkisi claim yerine `users.trainerStatus`'tan okunuyor
+(DECISIONS §11). Push bildirimi Faz 6'nın işi.

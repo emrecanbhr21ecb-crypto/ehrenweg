@@ -28,9 +28,10 @@ import OrgApply from '@/pages/org/OrgApply'
 import AttendanceSession from '@/pages/org/AttendanceSession'
 import LateScans from '@/pages/org/LateScans'
 import OrgPanel from '@/pages/org/OrgPanel'
-import { Learn } from '@/pages/Placeholder'
+import Learn from '@/pages/Learn'
 import Profile from '@/pages/Profile'
 import Scan from '@/pages/Scan'
+import TrainerApply from '@/pages/TrainerApply'
 import Wallet from '@/pages/Wallet'
 import ProfileEdit from '@/pages/ProfileEdit'
 import ProfileSetup from '@/pages/ProfileSetup'
@@ -153,6 +154,7 @@ export default function App(): React.JSX.Element {
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<ProfileEdit />} />
+        <Route path="/trainer/apply" element={<TrainerApply />} />
         <Route path="/legal" element={<LegalIndex />} />
         <Route path="/legal/:page" element={<LegalPageView />} />
 

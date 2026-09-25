@@ -1,0 +1,93 @@
+{
+  "card": {
+    "title": "Trainer:in werden",
+    "intro": "Gib dein Wissen weiter: Sprachcafés, Bewerbungstrainings, digitale Hilfe. Dafür gibt es ein paar Voraussetzungen.",
+    "progress": "Deine Voraussetzungen",
+    "apply": "Jetzt bewerben",
+    "notYet": "Noch nicht alle Voraussetzungen erfüllt – das kommt mit der Zeit.",
+    "pending": "Deine Bewerbung wird geprüft.",
+    "approved": "Du bist Trainer:in. Du kannst jetzt Kurse vorschlagen.",
+    "rejected": "Deine Bewerbung wurde abgelehnt.",
+    "reason": "Begründung: {{note}}",
+    "reapply": "Neu bewerben"
+  },
+  "req": {
+    "level": "Stufe",
+    "hours": "Stunden",
+    "activities": "Teilnahmen",
+    "noShowRate": "Nicht-Erscheinen",
+    "accountAge": "Kontoalter (Tage)",
+    "valueOf": "{{current}} von {{required}}",
+    "percentMax": "{{current}} % (höchstens {{required}} %)",
+    "met": "erfüllt"
+  },
+  "apply": {
+    "title": "Bewerbung als Trainer:in",
+    "subtitle": "Erzähl uns, was du anbieten möchtest. Wir melden uns nach der Prüfung.",
+    "topics": "Was möchtest du unterrichten?",
+    "topicsHint": "Wähle ein bis sechs Themen.",
+    "language": "Sprache, die du unterrichtest",
+    "languageNone": "Keine Sprache – ich unterrichte etwas anderes",
+    "languageLevel": "Dein Niveau in dieser Sprache",
+    "certificate": "Sprachnachweis (B2 oder höher)",
+    "certificateHint": "Foto oder Scan. Sehen nur du und die Prüfung bei Ehrenweg.",
+    "certificateRequired": "Für Sprachunterricht brauchen wir einen Nachweis ab B2.",
+    "motivation": "Warum möchtest du unterrichten?",
+    "motivationHint": "Ein paar Sätze reichen.",
+    "submit": "Bewerbung absenden",
+    "submitting": "Wird gesendet …",
+    "success": "Danke. Deine Bewerbung liegt zur Prüfung vor.",
+    "failed": "Die Bewerbung konnte nicht gesendet werden.",
+    "snapshotNote": "Deine aktuellen Zahlen werden mit der Bewerbung gespeichert."
+  },
+  "admin": {
+    "tab": "Trainer:innen",
+    "empty": "Keine offenen Bewerbungen.",
+    "topics": "Themen",
+    "language": "Sprache",
+    "motivation": "Motivation",
+    "certificate": "Nachweis",
+    "noCertificate": "Kein Nachweis hochgeladen.",
+    "stats": "Stufe {{level}} · {{hours}} Std. · {{activities}} Teilnahmen · {{rate}} % nicht erschienen · Konto {{age}} Tage alt",
+    "approve": "Als Trainer:in freigeben",
+    "reject": "Ablehnen",
+    "approved": "Freigegeben.",
+    "rejected": "Abgelehnt.",
+    "loadFailed": "Die Bewerbungen konnten nicht geladen werden.",
+    "actionFailed": "Die Entscheidung konnte nicht gespeichert werden."
+  },
+  "learn": {
+    "title": "Lernen",
+    "subtitle": "Kurse und Trainings von geprüften Trainer:innen und Organisationen.",
+    "empty": "Gerade laufen keine Kurse. Schau bald wieder vorbei.",
+    "emptyFiltered": "Mit diesen Filtern gibt es gerade keinen Kurs.",
+    "propose": "Kurs vorschlagen",
+    "proposeHint": "Als Trainer:in kannst du einen Kurs vorschlagen. Die Organisation gibt ihn frei.",
+    "byTrainer": "mit {{name}}",
+    "onlyLanguage": "Nur Sprachkurse"
+  },
+  "feedback": {
+    "title": "Wie war der Kurs?",
+    "hint": "Deine Rückmeldung hilft der Trainer:in. Sie ist für andere sichtbar.",
+    "rating": "Bewertung",
+    "star": "{{count}} von 5 Sternen",
+    "comment": "Kommentar",
+    "commentPlaceholder": "Was war gut, was könnte besser sein?",
+    "submit": "Bewertung abgeben",
+    "submitted": "Danke für deine Rückmeldung.",
+    "yours": "Deine Bewertung",
+    "failed": "Die Bewertung konnte nicht gespeichert werden.",
+    "listTitle": "Bewertungen",
+    "empty": "Noch keine Bewertungen.",
+    "average": "{{average}} von 5 · {{count}} Bewertungen",
+    "hide": "Ausblenden",
+    "show": "Wieder anzeigen",
+    "hidden": "Ausgeblendet",
+    "onlyAttendees": "Bewerten können nur Teilnehmende des Kurses."
+  },
+  "profile": {
+    "badge": "Trainer:in",
+    "rating": "{{average}} ★ ({{count}})",
+    "noRating": "Noch keine Bewertungen"
+  }
+}

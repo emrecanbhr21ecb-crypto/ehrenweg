@@ -45,7 +45,16 @@
     "deadlineAfterStart": "Der Anmeldeschluss muss vor dem Beginn liegen.",
     "capacityRange": "Bitte gib zwischen 1 und 1000 Plätze an.",
     "ipRange": "Höchstens 60 Punkte pro Aktivität.",
-    "uidRequired": "Bitte gib eine Nutzer-ID an."
+    "uidRequired": "Bitte gib eine Nutzer-ID an.",
+    "topicsRequired": "Bitte wähle mindestens ein Thema.",
+    "motivationShort": "Bitte schreib mindestens 20 Zeichen.",
+    "motivationLong": "Der Text ist zu lang (max. 1000 Zeichen).",
+    "valueRange": "Der Wert ist zu hoch (max. 500 €).",
+    "valueRequired": "Bitte gib einen Wert an.",
+    "costRange": "Der Preis ist zu hoch.",
+    "validityRange": "Bitte gib mindestens einen Tag an.",
+    "discountRequired": "Bitte gib einen Rabatt an.",
+    "budgetRequired": "Für Geld- und Gutscheinprämien ist ein Budget nötig."
   },
   "scan": {
     "wrongCode": "Dieser QR-Code gehört nicht zu Ehrenweg.",

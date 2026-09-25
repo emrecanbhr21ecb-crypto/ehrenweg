@@ -476,6 +476,42 @@ firebase functions:secrets:set VOUCHER_HMAC_SECRET --project ehrenweg-prod
 
 ---
 
+## 11. Eğitmen yetkisi claim yerine `trainerStatus`'tan (Faz 5)
+
+**Karar tarihi:** 26 Eylül 2026 · **Durum:** geçici, Blaze'e bağlı
+
+Bölüm 8 eğitmen onayını `setTrainerRole` fonksiyonuna ve `trainer` custom
+claim'ine bağlıyor. Blaze kapalı → claim yazılamıyor → hiç kimse eğitmen
+olamazdı.
+
+Faz 2'deki kurum rolü çözümünün (§8) aynısı uygulandı: `firestore.rules`
+içindeki `isTrainer()` önce claim'e bakıyor, bulamazsa
+`users/{uid}.trainerStatus == 'approved'` alanına düşüyor.
+
+**Neden güvenli:** `trainerStatus` kullanıcının kendi düzenleyebildiği alan
+listesinde YOK. Yalnız platform admin yazabiliyor ve bunun için ayrı bir
+kural dalı var (`onlyFields(['trainerStatus','roleDisplay'])`). Test:
+"kullanıcı kendini eğitmen YAPAMAZ".
+
+**Yan kararlar:**
+
+- Dil belgesi (B2+) Storage yerine belgede data URL — Storage Blaze istiyor.
+  Bölüm 8'in "yalnız admin ve sahibi görebilsin" şartı korunuyor:
+  `trainerApplications/{uid}` yalnız sahibi ve admin tarafından okunabiliyor.
+- Eğitmen çarpanı (×1.5, Bölüm 6) kuralda: pasaport girdisi ya aktivitenin
+  ilan ettiği IP'yi ya da `trainerUid == uid` ise onun 1,5 katını taşıyabilir.
+  Başka hiçbir değer geçmiyor.
+- Yorumlar **silinmiyor, gizleniyor**. Silme, kötü geri bildirimi yok etmenin
+  kolay yolu olurdu; gizleme en azından kurum panelinde izini bırakıyor.
+- Yorum yazma hakkı pasaport girdisine bağlı — gitmeyen biri puan veremiyor.
+
+⚠️ `{path=**}/feedback/{uid}` collection group kuralı **sıfır segmenti de
+eşliyor**, yani kök seviyedeki `feedback` koleksiyonunu (platforma yazılan
+geri bildirim, admin'e özel) da kapsıyordu. `trainerUid` alanı şartı
+eklenerek ayrıldı. Wildcard collection group kurallarında bu tuzağa dikkat.
+
+---
+
 ## Değişiklik günlüğü (devam)
 
 - **2026-09-25 (akşam)** — Faz 1 kodlandı: auth (e-posta/şifre + Google),
@@ -501,3 +537,6 @@ firebase functions:secrets:set VOUCHER_HMAC_SECRET --project ehrenweg-prod
   kontrolü. Bölüm 10'daki sapmalar bu sırada verildi. Kural testi
   **104/104 yeşil**; biri gerçek bir "bedava kupon" açığını yakaladı ve
   kural düzeltildi.
+- **2026-09-26 (Faz 5)** — Eğitmen yolu: şart çubukları, başvuru, admin
+  kuyruğu, kurs önerme, ×1.5 IP çarpanı, 1–5 yıldız geri bildirim, Learn
+  ekranı. Bölüm 11'deki sapma bu sırada verildi. Kural testleri 117/117.

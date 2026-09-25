@@ -43,6 +43,24 @@ export interface ScoringConfig {
   }
 
   levels: readonly LevelThreshold[]
+
+  /** Eğitmen olma şartları — CLAUDE.md Bölüm 8. */
+  trainerRequirements: TrainerRequirements
+}
+
+/**
+ * Eğitmen şartları (CLAUDE.md Bölüm 8 varsayılanları).
+ *
+ * "seviye ≥ 3, ≥ 20 gönüllülük saati, ≥ 8 onaylı katılım, no-show oranı
+ *  < %15, hesap yaşı ≥ 60 gün"
+ */
+export interface TrainerRequirements {
+  minLevel: number
+  minHours: number
+  minActivities: number
+  /** En yüksek kabul edilen no-show oranı (0–1). */
+  maxNoShowRate: number
+  minAccountAgeDays: number
 }
 
 export const DEFAULT_SCORING: ScoringConfig = {
@@ -59,7 +77,101 @@ export const DEFAULT_SCORING: ScoringConfig = {
     restrictionDays: 14,
   },
   levels: LEVEL_THRESHOLDS,
+  trainerRequirements: {
+    minLevel: 3,
+    minHours: 20,
+    minActivities: 8,
+    maxNoShowRate: 0.15,
+    minAccountAgeDays: 60,
+  },
 }
+
+// --- Eğitmen uygunluğu (CLAUDE.md Bölüm 8) ---------------------------------
+
+export interface TrainerCheck {
+  key: 'level' | 'hours' | 'activities' | 'noShowRate' | 'accountAge'
+  /** Kullanıcının mevcut değeri. */
+  current: number
+  /** Gereken değer. */
+  required: number
+  met: boolean
+  /** 0–1 arası ilerleme — çubuk için. */
+  progress: number
+}
+
+export interface TrainerEligibility {
+  checks: TrainerCheck[]
+  eligible: boolean
+}
+
+/**
+ * Şartların her birini ayrı ayrı hesaplar.
+ *
+ * Tek bir "uygun/uygun değil" yerine madde madde dönmesinin sebebi Bölüm 8:
+ * "şartlar ve kullanıcının mevcut ilerlemesi çubuklarla gösterilir". İnsan
+ * neyin eksik olduğunu görmeden hedefe çalışamaz.
+ */
+export function trainerEligibility(
+  stats: {
+    level: number
+    hours: number
+    activitiesCompleted: number
+    noShows: number
+  },
+  accountAgeDays: number,
+  requirements: TrainerRequirements = DEFAULT_SCORING.trainerRequirements,
+): TrainerEligibility {
+  // No-show oranı: hiç katılımı olmayanda 0 sayılır, yoksa ilk başvuruda
+  // sıfıra bölünürdü ve herkes "oranı kötü" görünürdü.
+  const attempts = stats.activitiesCompleted + stats.noShows
+  const noShowRate = attempts === 0 ? 0 : stats.noShows / attempts
+
+  const checks: TrainerCheck[] = [
+    {
+      key: 'level',
+      current: stats.level,
+      required: requirements.minLevel,
+      met: stats.level >= requirements.minLevel,
+      progress: Math.min(1, stats.level / requirements.minLevel),
+    },
+    {
+      key: 'hours',
+      current: Math.round(stats.hours),
+      required: requirements.minHours,
+      met: stats.hours >= requirements.minHours,
+      progress: Math.min(1, stats.hours / requirements.minHours),
+    },
+    {
+      key: 'activities',
+      current: stats.activitiesCompleted,
+      required: requirements.minActivities,
+      met: stats.activitiesCompleted >= requirements.minActivities,
+      progress: Math.min(1, stats.activitiesCompleted / requirements.minActivities),
+    },
+    {
+      key: 'noShowRate',
+      // Yüzde olarak gösteriliyor; burada da yüzde veriyoruz ki arayüz
+      // ikinci bir dönüştürme yapmasın.
+      current: Math.round(noShowRate * 100),
+      required: Math.round(requirements.maxNoShowRate * 100),
+      met: noShowRate <= requirements.maxNoShowRate,
+      // Bu şart "az olsun" şartı: karşılanıyorsa çubuk dolu.
+      progress: noShowRate <= requirements.maxNoShowRate ? 1 : 0,
+    },
+    {
+      key: 'accountAge',
+      current: Math.floor(accountAgeDays),
+      required: requirements.minAccountAgeDays,
+      met: accountAgeDays >= requirements.minAccountAgeDays,
+      progress: Math.min(1, accountAgeDays / requirements.minAccountAgeDays),
+    },
+  ]
+
+  return { checks, eligible: checks.every((check) => check.met) }
+}
+
+/** Eğitmenin verdiği eğitimde IP çarpanı (Bölüm 6: saat başı ×1.5). */
+export const TRAINER_IP_MULTIPLIER = 1.5
 
 /**
  * Bonusların toplam üst sınırı — yalnız SUNUCU yolunda anlamlı.

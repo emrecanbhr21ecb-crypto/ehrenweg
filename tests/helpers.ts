@@ -46,6 +46,11 @@ export const CLAIMS = {
   },
   participantUnverified: { role: 'participant', email_verified: false },
   trainer: { role: 'trainer', email_verified: true },
+  /**
+   * Claim'inde `trainer` OLMAYAN ama `users.trainerStatus == 'approved'`
+   * olan kullanıcı — Blaze kapalıyken gerçek durum bu (DECISIONS §11).
+   */
+  participantVerifiedOnly: { role: 'participant', email_verified: true },
   staff: {
     role: 'participant',
     email_verified: true,

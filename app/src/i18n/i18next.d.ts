@@ -7,6 +7,7 @@ import 'i18next'
 
 import type deActivities from '@/locales/de/activities.json'
 import type deAttendance from '@/locales/de/attendance.json'
+import type deTrainer from '@/locales/de/trainer.json'
 import type deWallet from '@/locales/de/wallet.json'
 import type deCatalog from '@/locales/de/catalog.json'
 import type deCommon from '@/locales/de/common.json'
@@ -26,6 +27,7 @@ declare module 'i18next' {
       manage: typeof deManage
       attendance: typeof deAttendance
       wallet: typeof deWallet
+      trainer: typeof deTrainer
     }
   }
 }

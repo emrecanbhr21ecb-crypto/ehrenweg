@@ -48,8 +48,23 @@ service cloud.firestore {
       return platformRole() == 'platform_admin';
     }
 
+    /**
+     * Eğitmen mi?
+     *
+     * ⚠️ SAPMA (docs/DECISIONS.md §11) — Faz 2'deki kurum rolü çözümünün
+     * aynısı: claim'i yalnız sunucu yazabilir, Blaze kapalı olduğu için
+     * sunucu yok. Claim'de `trainer` yoksa `users/{uid}.trainerStatus`
+     * alanına düşülüyor. O alanı kullanıcı YAZAMAZ (users update kuralındaki
+     * izinli alan listesinde yok), yalnız platform admin yazabilir.
+     */
     function isTrainer() {
-      return platformRole() == 'trainer';
+      return platformRole() == 'trainer' || approvedTrainer(uid());
+    }
+
+    function approvedTrainer(userId) {
+      let path = /databases/$(database)/documents/users/$(userId);
+      return exists(path)
+             && get(path).data.get('trainerStatus', 'none') == 'approved';
     }
 
     // Kurum rolü haritası: { orgId: 'org_admin'|'org_staff'|... }
@@ -257,6 +272,18 @@ service cloud.firestore {
                     && awardStatsDelta(resource.data.stats,
                                        request.resource.data.stats,
                                        awardedEntry());
+
+      // ---------------------------------------------------------------
+      // EĞİTMEN ONAYI — yalnız platform admin (CLAUDE.md Bölüm 8).
+      //
+      // `trainerStatus` kullanıcının izinli alan listesinde YOK, yani
+      // kimse kendini eğitmen yapamaz. Blaze gelince bu yerini
+      // `setTrainerRole` claim yazımına bırakır.
+      // ---------------------------------------------------------------
+      allow update: if isAdmin()
+                    && onlyFields(['trainerStatus', 'roleDisplay'])
+                    && request.resource.data.trainerStatus
+                         in ['none', 'pending', 'approved', 'rejected'];
 
       // ---------------------------------------------------------------
       // IP HARCAMA — ödül mağazasından alım (CLAUDE.md Bölüm 7.2).
@@ -496,8 +523,17 @@ service cloud.firestore {
                && request.resource.data.endAt > request.resource.data.startAt;
       }
 
+      // Eğitmen kendi eğitimini önerir (Bölüm 8): kurum personeli olmasa da
+      // `type: 'training'` ve `trainerUid` kendisi olan bir TASLAK açabilir.
+      // Yayına yine kurum/admin onayıyla girer — öneri, yayın değil.
+      function trainerProposal() {
+        return isTrainer()
+               && request.resource.data.type == 'training'
+               && request.resource.data.get('trainerUid', '') == uid();
+      }
+
       allow create: if verified()
-                    && orgStaff(request.resource.data.orgId)
+                    && (orgStaff(request.resource.data.orgId) || trainerProposal())
                     && request.resource.data.createdBy == uid()
                     && request.resource.data.status == 'draft'
                     && request.resource.data.stats == { 'applicants': 0, 'attendees': 0 }
@@ -642,6 +678,63 @@ service cloud.firestore {
       }
     }
 
+    // =====================================================================
+    // activities/{id}/feedback/{uid} — eğitim geri bildirimi (Bölüm 8)
+    //
+    // "1–5 yıldız + yorum … Yorumlar kurum tarafından gizlenebilsin."
+    // Yorum SİLİNMİYOR, gizleniyor: silme, kötü geri bildirimi yok etmenin
+    // kolay yolu olurdu.
+    // =====================================================================
+    match /activities/{activityId}/feedback/{authorUid} {
+      function act() {
+        return get(/databases/$(database)/documents/activities/$(activityId)).data;
+      }
+
+      function attended() {
+        let path = /databases/$(database)/documents/passportEntries/$(activityId + '_' + uid());
+        return exists(path);
+      }
+
+      allow get, list: if signedIn();
+
+      // Yalnız KATILMIŞ kişi yorum yazabilir — pasaport girdisi kanıt.
+      allow create: if isSelf(authorUid)
+                    && verified()
+                    && attended()
+                    && request.resource.data.uid == uid()
+                    && request.resource.data.activityId == activityId
+                    && request.resource.data.orgId == act().orgId
+                    && request.resource.data.trainerUid == act().get('trainerUid', '')
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.hidden == false
+                    && request.resource.data.comment.size() <= 600;
+
+      // Yazan kendi yorumunu düzeltebilir; gizleme bayrağına dokunamaz.
+      allow update: if isSelf(authorUid)
+                    && onlyFields(['rating', 'comment'])
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5;
+
+      // Kurum gizler/gösterir.
+      allow update: if orgStaff(act().orgId) && onlyFields(['hidden']);
+
+      allow delete: if false;
+    }
+
+    // Eğitmenin tüm geri bildirimleri — profilindeki ortalama için.
+    //
+    // ⚠️ `{path=**}` SIFIR segmenti de eşler, yani bu kural kök seviyedeki
+    // `feedback` koleksiyonuna (platforma yazılan geri bildirim, Bölüm 5) da
+    // uyar. Orası admin'e özel olduğu için `trainerUid` şartı konuldu:
+    // eğitim geri bildiriminde bu alan var, platform geri bildiriminde yok.
+    // Sorgu da `where('trainerUid','==',...)` ile geldiği için kural ve
+    // sorgu örtüşüyor.
+    match /{path=**}/feedback/{authorUid} {
+      allow list: if signedIn() && resource.data.get('trainerUid', '') != '';
+    }
+
     // "Başvurularım" — collection group. Sorgu `where('uid','==',me)`.
     match /{path=**}/applicants/{applicantUid} {
       allow list: if signedIn() && resource.data.get('uid', '') == uid();
@@ -658,7 +751,14 @@ service cloud.firestore {
 
       // `startAttendanceSession` — yalnız kurum personeli, yalnız kendi
       // kurumunun aktivitesi için, yalnız YAYINDAKİ aktiviteye.
-      allow create: if orgStaff(request.resource.data.orgId)
+      // Eğitmen KENDİ eğitiminde yoklama başlatabilir (Bölüm 8).
+      function ownTraining() {
+        return isTrainer()
+               && get(/databases/$(database)/documents/activities/$(request.resource.data.activityId))
+                    .data.get('trainerUid', '') == uid();
+      }
+
+      allow create: if (orgStaff(request.resource.data.orgId) || ownTraining())
                     && request.resource.data.startedBy == uid()
                     && request.resource.data.active == true
                     && request.resource.data.rotationSeconds is int
@@ -824,7 +924,11 @@ service cloud.firestore {
                && orgStaff(request.resource.data.orgId)
                && request.resource.data.orgId == activityOf().orgId
                && request.resource.data.status == 'completed'
-               && request.resource.data.ipAwarded == activityOf().rewards.ip
+               // Eğitmen kendi eğitimini verdiyse Bölüm 6'daki ×1.5 çarpanı.
+               && (request.resource.data.ipAwarded == activityOf().rewards.ip
+                   || (activityOf().get('trainerUid', '') == request.resource.data.uid
+                       && request.resource.data.ipAwarded
+                            == math.round(activityOf().rewards.ip * 1.5)))
                && request.resource.data.hours == activityOf().hoursCredited
                && request.resource.data.categoryId == activityOf().categoryId;
       }
@@ -1226,9 +1330,38 @@ service cloud.firestore {
     // trainerApplications — eğitmen başvuruları
     // ---------------------------------------------------------------------
     match /trainerApplications/{userId} {
+      // Belge dil belgesini (data URL) taşıyor — yalnız sahibi ve admin.
       allow get: if isSelf(userId) || isAdmin();
       allow list: if isAdmin();
-      allow write: if false;  // başvuru + inceleme onCall ile
+
+      // -----------------------------------------------------------------
+      // BAŞVURU — kullanıcı kendi adına, her zaman 'pending' (Bölüm 8).
+      //
+      // Kimlik = uid, yani bir kişi bir başvuru; ikinci kez göndermek
+      // öncekinin üstüne yazar ve yine 'pending' olur.
+      //
+      // 🔒 Kimse kendi başvurusunu ONAYLAYAMAZ: `status` yalnız 'pending'
+      // olabiliyor ve `reviewedBy` null olmak zorunda.
+      // -----------------------------------------------------------------
+      allow create, update: if isSelf(userId)
+                            && verified()
+                            && request.resource.data.uid == userId
+                            && request.resource.data.status == 'pending'
+                            && request.resource.data.reviewedBy == null
+                            && request.resource.data.submittedAt == request.time
+                            && request.resource.data.motivation is string
+                            && request.resource.data.motivation.size() <= 1000
+                            && request.resource.data.certificateDataUrl is string
+                            && request.resource.data.certificateDataUrl.size() <= 500000;
+
+      // İNCELEME — yalnız platform admin.
+      allow update: if isAdmin()
+                    && onlyFields(['status', 'reviewedBy', 'reviewedAt', 'note'])
+                    && resource.data.status == 'pending'
+                    && request.resource.data.status in ['approved', 'rejected']
+                    && request.resource.data.reviewedBy == uid();
+
+      allow delete: if false;
     }
 
     // ---------------------------------------------------------------------

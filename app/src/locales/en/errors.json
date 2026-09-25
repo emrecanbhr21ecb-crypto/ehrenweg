@@ -45,7 +45,16 @@
     "deadlineAfterStart": "The sign-up deadline must be before the start.",
     "capacityRange": "Please enter between 1 and 1000 places.",
     "ipRange": "60 points per activity at most.",
-    "uidRequired": "Please enter a user ID."
+    "uidRequired": "Please enter a user ID.",
+    "topicsRequired": "Please choose at least one topic.",
+    "motivationShort": "Please write at least 20 characters.",
+    "motivationLong": "The text is too long (max. 1000 characters).",
+    "valueRange": "The value is too high (max. €500).",
+    "valueRequired": "Please give a value.",
+    "costRange": "The price is too high.",
+    "validityRange": "Please give at least one day.",
+    "discountRequired": "Please give a discount.",
+    "budgetRequired": "Money and gift rewards need a budget."
   },
   "scan": {
     "wrongCode": "This QR code does not belong to Ehrenweg.",

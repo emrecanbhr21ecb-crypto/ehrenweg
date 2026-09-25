@@ -1,0 +1,93 @@
+{
+  "card": {
+    "title": "Become a trainer",
+    "intro": "Pass on what you know: language cafés, application training, digital help. There are a few requirements for that.",
+    "progress": "Your requirements",
+    "apply": "Apply now",
+    "notYet": "Not all requirements are met yet – that comes with time.",
+    "pending": "Your application is being reviewed.",
+    "approved": "You are a trainer. You can propose courses now.",
+    "rejected": "Your application was declined.",
+    "reason": "Reason: {{note}}",
+    "reapply": "Apply again"
+  },
+  "req": {
+    "level": "Level",
+    "hours": "Hours",
+    "activities": "Attendances",
+    "noShowRate": "No-shows",
+    "accountAge": "Account age (days)",
+    "valueOf": "{{current}} of {{required}}",
+    "percentMax": "{{current}} % (at most {{required}} %)",
+    "met": "met"
+  },
+  "apply": {
+    "title": "Trainer application",
+    "subtitle": "Tell us what you would like to offer. We will get back to you after the review.",
+    "topics": "What would you like to teach?",
+    "topicsHint": "Choose one to six topics.",
+    "language": "Language you teach",
+    "languageNone": "No language – I teach something else",
+    "languageLevel": "Your level in that language",
+    "certificate": "Language certificate (B2 or higher)",
+    "certificateHint": "Photo or scan. Only you and the Ehrenweg review see it.",
+    "certificateRequired": "For language teaching we need a certificate from B2 upwards.",
+    "motivation": "Why would you like to teach?",
+    "motivationHint": "A few sentences are enough.",
+    "submit": "Send application",
+    "submitting": "Sending …",
+    "success": "Thank you. Your application is waiting to be reviewed.",
+    "failed": "The application could not be sent.",
+    "snapshotNote": "Your current numbers are saved with the application."
+  },
+  "admin": {
+    "tab": "Trainers",
+    "empty": "No open applications.",
+    "topics": "Topics",
+    "language": "Language",
+    "motivation": "Motivation",
+    "certificate": "Certificate",
+    "noCertificate": "No certificate uploaded.",
+    "stats": "Level {{level}} · {{hours}} h · {{activities}} attendances · {{rate}} % no-shows · account {{age}} days old",
+    "approve": "Approve as trainer",
+    "reject": "Decline",
+    "approved": "Approved.",
+    "rejected": "Declined.",
+    "loadFailed": "The applications could not be loaded.",
+    "actionFailed": "The decision could not be saved."
+  },
+  "learn": {
+    "title": "Learn",
+    "subtitle": "Courses and trainings from verified trainers and organisations.",
+    "empty": "No courses running right now. Come back soon.",
+    "emptyFiltered": "No course matches these filters right now.",
+    "propose": "Propose a course",
+    "proposeHint": "As a trainer you can propose a course. The organisation releases it.",
+    "byTrainer": "with {{name}}",
+    "onlyLanguage": "Language courses only"
+  },
+  "feedback": {
+    "title": "How was the course?",
+    "hint": "Your feedback helps the trainer. It is visible to others.",
+    "rating": "Rating",
+    "star": "{{count}} out of 5 stars",
+    "comment": "Comment",
+    "commentPlaceholder": "What was good, what could be better?",
+    "submit": "Submit rating",
+    "submitted": "Thank you for your feedback.",
+    "yours": "Your rating",
+    "failed": "The rating could not be saved.",
+    "listTitle": "Ratings",
+    "empty": "No ratings yet.",
+    "average": "{{average}} out of 5 · {{count}} ratings",
+    "hide": "Hide",
+    "show": "Show again",
+    "hidden": "Hidden",
+    "onlyAttendees": "Only people who attended the course can rate it."
+  },
+  "profile": {
+    "badge": "Trainer",
+    "rating": "{{average}} ★ ({{count}})",
+    "noRating": "No ratings yet"
+  }
+}
