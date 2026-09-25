@@ -54,7 +54,8 @@
     "costRange": "The price is too high.",
     "validityRange": "Please give at least one day.",
     "discountRequired": "Please give a discount.",
-    "budgetRequired": "Money and gift rewards need a budget."
+    "budgetRequired": "Money and gift rewards need a budget.",
+    "bodyRequired": "Please write a text."
   },
   "scan": {
     "wrongCode": "This QR code does not belong to Ehrenweg.",

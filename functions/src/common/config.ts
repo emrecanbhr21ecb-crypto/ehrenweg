@@ -50,6 +50,9 @@ export const AI_MODEL = defineString('AI_MODEL', {
 /** Kupon QR token'ının ömrü (saniye). Bölüm 7.4: 60 sn. */
 export const VOUCHER_QR_TTL_SECONDS = 60
 
+/** AI çağrıları için kullanıcı başına günlük sınır (Bölüm 12 rate limit). */
+export const AI_DAILY_LIMIT = 30
+
 /** Yoklama QR'ının varsayılan dönme aralığı (saniye). Bölüm 5. */
 export const DEFAULT_ROTATION_SECONDS = 30
 

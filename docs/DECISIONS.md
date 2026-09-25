@@ -512,6 +512,61 @@ eklenerek ayrıldı. Wildcard collection group kurallarında bu tuzağa dikkat.
 
 ---
 
+## 12. AI Blaze'siz ÇALIŞTIRILAMAZ (Faz 6)
+
+**Karar tarihi:** 26 Eylül 2026 · **Durum:** kalıcı kısıt, Blaze'e bağlı
+
+Faz 2–5'te tekrar eden bir örüntü vardı: sunucu yoksa işi istemciye al,
+güvenliği `firestore.rules`'a yık. **Bu örüntü AI'da UYGULANAMAZ** ve bunu
+net söylemek gerekiyor:
+
+> Bir SIRRI Firestore kuralıyla koruyamazsınız.
+
+Anthropic API anahtarı istemciye konsaydı, APK'yı indiren herkes onu
+çıkarabilirdi. Sonucu yalnız fatura değil: anahtar bizim adımıza başka
+şeyler için kullanılırdı.
+
+Bu yüzden `aiMatch`, `aiTranslate`, `aiDraftApplication`, `parseLink` ve
+`aiChat` **gerçekten kapalı**. `functions/src/ai.ts` içinde tam olarak
+yazıldılar; `app/src/lib/ai.ts` bayrak kapalıyken ağa hiç çıkmadan
+`unavailable` dönüyor ve arayüz bunu kullanıcıya açıkça söylüyor
+("KI-Funktionen sind noch aus" + sebebi).
+
+**Yerine ne kondu:** Ana ekrandaki "Sana uygun" bölümü, AI yerine ilgi
+alanı + dil + online eşleşmesine göre puanlıyor. Kutunun üstünde bunun AI
+olmadığı yazıyor — basit bir filtreyi "yapay zekâ önerisi" diye sunmak yalan
+olurdu.
+
+### Push'un yarısı çalışıyor
+
+- **Alma tarafı** (izin, FCM jetonu, jeton kaydı) → bugün çalışıyor.
+  Jetonlar şimdiden toplanıyor ki Blaze açıldığı gün mevcut kullanıcılara da
+  ulaşılabilsin.
+- **Gönderme tarafı** (`sendAnnouncement`, `deadlineReminders`,
+  `monthlySummary`) → sunucu işi, yazıldı, dağıtılmadı.
+
+Duyurular Firestore'a yazılıyor ve uygulamada anında görünüyor; yalnız
+telefona push düşmüyor. Kurum panelinde her duyurunun yanında "Push noch
+nicht gesendet" yazıyor.
+
+`pushSent` bayrağını istemci YAZAMAZ (testli): "gönderildi" demek,
+gönderilmediği hâlde ikinci denemeyi engellemek olurdu.
+
+### Hava durumu
+
+Open-Meteo seçildi: anahtar istemiyor, ücretsiz, ticari kullanımda serbest.
+Koordinat **iki ondalığa yuvarlanıyor** (~1 km) — hava durumu için fazlasıyla
+yeterli ve kullanıcının tam konumunu üçüncü bir sunucuya vermiyoruz.
+Konum izni de İSTENMİYOR; profildeki ya da seçilmiş şehir kullanılıyor.
+
+### Duyuru slider'ı otomatik dönmüyor
+
+Bilinçli: otomatik karusel erişilebilirlik açısından kötü (ekran okuyucu ve
+motor güçlüğü olan kullanıcı yakalayamaz) ve genelde kimse okumuyor.
+Kullanıcı kendi kaydırıyor.
+
+---
+
 ## Değişiklik günlüğü (devam)
 
 - **2026-09-25 (akşam)** — Faz 1 kodlandı: auth (e-posta/şifre + Google),
@@ -540,3 +595,7 @@ eklenerek ayrıldı. Wildcard collection group kurallarında bu tuzağa dikkat.
 - **2026-09-26 (Faz 5)** — Eğitmen yolu: şart çubukları, başvuru, admin
   kuyruğu, kurs önerme, ×1.5 IP çarpanı, 1–5 yıldız geri bildirim, Learn
   ekranı. Bölüm 11'deki sapma bu sırada verildi. Kural testleri 117/117.
+- **2026-09-26 (Faz 6)** — Bildirimler, duyurular, ana ekran, AI iskeleti.
+  Bölüm 12'deki kısıt bu sırada netleşti: AI Blaze'siz çalıştırılamaz.
+  Kural testleri 126/126; AI için 8 sahte yanıtlı test (gerçek API
+  çağrılmıyor).

@@ -1369,7 +1369,34 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     match /announcements/{announcementId} {
       allow get, list: if signedIn();
-      allow write: if false;
+
+      // Duyuruyu kurum personeli ya da platform admin yazar (Bölüm 12).
+      //
+      // 🔒 `pushSent` bayrağına istemci DOKUNAMAZ: push'u yalnız sunucu
+      // gönderebilir ve "gönderildi" demek, gönderilmediği hâlde ikinci bir
+      // denemeyi engellemek olurdu.
+      function announcementShapeOk() {
+        return request.resource.data.createdBy == uid()
+               && request.resource.data.pushSent == false
+               && request.resource.data.createdAt == request.time
+               && request.resource.data.title.de.size() <= 120
+               && request.resource.data.title.en.size() <= 120
+               && request.resource.data.body.de.size() <= 1200
+               && request.resource.data.body.en.size() <= 1200;
+      }
+
+      allow create: if announcementShapeOk()
+                    && (
+                         (request.resource.data.orgId != ''
+                          && orgStaff(request.resource.data.orgId))
+                      || (request.resource.data.orgId == '' && isAdmin())
+                    );
+
+      allow update: if onlyFields(['title', 'body', 'pinned', 'linkActivityId',
+                                   'imageURL', 'expiresAt'])
+                    && (orgStaff(resource.data.orgId) || isAdmin());
+
+      allow delete: if orgStaff(resource.data.get('orgId', '')) || isAdmin();
     }
 
     match /slider/{slideId} {
@@ -1413,7 +1440,14 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     match /config/{docId} {
       allow get, list: if signedIn();
-      allow write: if false;  // admin panelinden → setScoringConfig onCall
+      // Puan kuralları editörü (Bölüm 9). Sürüm numarası ZORUNLU ve her
+      // kayıtta artmalı: hangi kuralın ne zaman geçerli olduğu geriye dönük
+      // anlaşılabilsin.
+      allow create: if isAdmin() && request.resource.data.version is int;
+      allow update: if isAdmin()
+                    && request.resource.data.version is int
+                    && request.resource.data.version > resource.data.get('version', 0);
+      allow delete: if false;
     }
 
     // ---------------------------------------------------------------------

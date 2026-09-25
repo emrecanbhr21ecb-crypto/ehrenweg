@@ -1,18 +1,23 @@
 /**
  * Ana sayfa.
  *
- * Faz 1 kapsamı: selamlama, bu ayki özet, profil tamamlama durumu ve
- * ilgi alanları. Duyuru slider'ı, AI önerileri, hava durumu ve yaklaşan
- * başvurular Faz 2/6'da bu iskeletin içine yerleşecek — yerleri şimdiden
- * belli olsun diye bölüm başlıkları duruyor, sahte veri YOK (CLAUDE.md:
- * arayüzde "demo/örnek" afişi olmaz, boş durum dürüstçe gösterilir).
+ * CLAUDE.md Bölüm 9: selamlama (saat dilimine göre), duyuru slider'ı,
+ * "sana uygun" önerileri, yaklaşan başvurularım, bu ayki özet, hava durumu.
+ *
+ * Faz 6'da tamamlandı. Ağır parçalar `components/HomeExtras.tsx` içinde —
+ * her biri kendi veri aboneliğini taşıyor ve bu dosya sade kalıyor.
  */
 
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
+import {
+  AnnouncementSlider,
+  Suggestions,
+  UpcomingAndMonth,
+  WeatherBadge,
+} from '@/components/HomeExtras'
 import { StatTile } from '@/components/LevelRing'
-import { Button, Card } from '@/components/ui'
 import { CATEGORY_META } from '@/config/catalog'
 import { useAuth } from '@/lib/AuthProvider'
 
@@ -46,7 +51,13 @@ export default function Home(): React.JSX.Element {
         <h1 className="text-2xl font-bold">
           {firstName || t('home.greetingFallback')}
         </h1>
+        <div className="mt-2">
+          <WeatherBadge />
+        </div>
       </header>
+
+      {/* Faz 6: duyuru slider'ı (CLAUDE.md Bölüm 9) */}
+      <AnnouncementSlider />
 
       {stats && (
         <section aria-labelledby="month-summary">
@@ -69,22 +80,11 @@ export default function Home(): React.JSX.Element {
         </section>
       )}
 
-      <section aria-labelledby="upcoming">
-        <h2 id="upcoming" className="mb-3 text-sm font-semibold">
-          {t('home.upcomingTitle')}
-        </h2>
-        <Card className="text-center">
-          <p className="text-3xl" aria-hidden="true">
-            🔎
-          </p>
-          <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-            {t('home.noUpcoming')}
-          </p>
-          <Button className="mt-4" variant="secondary">
-            <Link to="/activities">{t('home.browseActivities')}</Link>
-          </Button>
-        </Card>
-      </section>
+      {/* Faz 6: gerçek veriyle yaklaşan başvurular + bu ayki özet */}
+      <UpcomingAndMonth />
+
+      {/* Faz 6: "sana uygun" önerileri */}
+      <Suggestions />
 
       {profile && profile.interests.length > 0 && (
         <section aria-labelledby="your-interests">

@@ -546,3 +546,80 @@ okunamıyor, katılmayan puan veremiyor, kullanıcı kendi yorumunu gizleyemiyor
 
 ⚠️ Eğitmen yetkisi claim yerine `users.trainerStatus`'tan okunuyor
 (DECISIONS §11). Push bildirimi Faz 6'nın işi.
+
+---
+
+## Faz 6 — Bildirimler, duyurular, yapay zekâ (26 Eyl 2026) · 🟡 KISMİ
+
+Bu faz **tam bitmedi ve bitemez**: AI uçları Cloud Functions olmadan
+çalıştırılamaz. Aşağıda ne çalışıyor, ne beklemede, açıkça yazıyor.
+
+### ✅ Bugün çalışan
+
+| #   | İş                                                                                                                      | Not                            |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1   | Bildirim tercihleri: duyurular, son başvuru hatırlatıcısı, aylık özet                                                   | `users/{uid}/private/settings` |
+| 1   | Push izni + FCM jetonu kaydı (Android)                                                                                  | jetonlar şimdiden toplanıyor   |
+| 2   | Kurum/admin DE+EN duyuru yazıyor, ana ekran slider'ında görünüyor                                                       | push hariç                     |
+| 5   | Ana ekran: saate göre selamlama, duyuru slider'ı, öneriler, yaklaşan başvurular, bu ayki özet, hava durumu (Open-Meteo) | ✅                             |
+| 6   | AI uçları için sahte yanıtlı testler — gerçek API çağrılmıyor                                                           | 8 test                         |
+| —   | Analitik rızası ayarlarda, **varsayılan KAPALI** (Bölüm 10)                                                             | ✅                             |
+
+### ⏸️ Yazıldı, Blaze bekliyor
+
+| #   | İş                                                                     | Dosya                            |
+| --- | ---------------------------------------------------------------------- | -------------------------------- |
+| 2   | `sendAnnouncement` — duyuruyu push olarak gönderir                     | `functions/src/notifications.ts` |
+| 3   | `deadlineReminders` (her gün 09:00), `monthlySummary` (ayın 1'i 03:00) | aynı dosya                       |
+| 4   | `aiMatch`, `aiTranslate`, `aiDraftApplication`, `parseLink`, `aiChat`  | `functions/src/ai.ts`            |
+
+### 🔴 Neden AI bugün açılamıyor
+
+Faz 2–5'te sunucusuz kalan her iş istemciye alınıp `firestore.rules` ile
+korundu. **AI'da bu mümkün değil: bir sırrı kuralla koruyamazsınız.**
+Anthropic anahtarı APK'ya konsaydı, indiren herkes çıkarabilirdi.
+
+Arayüz bunu gizlemiyor: AI özelliklerinin yerinde sebebini anlatan bir kutu
+var. Ana ekrandaki "Sana uygun" bölümü AI yerine ilgi alanı + dil eşleşmesi
+kullanıyor ve bunu da açıkça söylüyor.
+
+### Asistanın sistem talimatı
+
+`docs/AI_ASSISTANT.md` — **tek kaynak**. Asistan hukuki tavsiye vermiyor,
+MBE / JMD / Ausländerbehörde / Jobcenter gibi doğru kuruma yönlendiriyor,
+tehlike durumunda 110/112 ve 116 016 veriyor. Metin
+`functions/src/common/aiPrompt.ts` içine birebir kopyalanıyor (Functions
+paketine `docs/` girmiyor).
+
+### Sırlar — proje sahibi çalıştıracak
+
+```
+firebase functions:secrets:set ANTHROPIC_API_KEY --project ehrenweg-prod
+```
+
+Değeri kendin gir, bana gösterme. Model adı koda gömülü DEĞİL:
+`functions/src/common/config.ts` içindeki `AI_MODEL` parametresinden okunuyor
+(varsayılan `claude-sonnet-5`), yani model değişince yeniden dağıtım yeter.
+
+Günlük çağrı sınırı: kullanıcı başına **30** (`AI_DAILY_LIMIT`).
+
+### 📱 Push'u kendi telefonunda nasıl deneyeceksin
+
+Bugün **push düşmez** — gönderen taraf yok. Şu an denenebilecekler:
+
+1. APK'yı kur → Profil → **Benachrichtigungen** → "Push einschalten".
+   Android izin penceresi çıkar, izin ver.
+2. "Gerät registriert" yazısını görürsen jeton kaydedilmiştir.
+   Firebase Console → Firestore → `users/{uid}/private/settings` →
+   `pushTokens` dizisinde jetonu görebilirsin.
+3. Gerçek bildirim için Blaze gerekiyor. Açıldıktan sonra:
+   `firebase deploy --only functions --project ehrenweg-prod` →
+   kurum panelinde duyuru yayınla → `sendAnnouncement` çağrısı push'u atar.
+4. Blaze'siz test etmek istersen: Firebase Console → **Cloud Messaging** →
+   "Send test message" → yukarıdaki jetonu yapıştır. Bu, uygulamanın ALMA
+   tarafının çalıştığını kanıtlar.
+
+### 🔜 Sıradaki
+
+Faz 7 (P10): kurum/admin analitiği, PDF pasaport, doğrulama sayfası,
+karne görseli, DSGVO (veri indirme, hesap silme, rıza yönetimi).

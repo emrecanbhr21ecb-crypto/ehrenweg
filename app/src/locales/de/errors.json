@@ -54,7 +54,8 @@
     "costRange": "Der Preis ist zu hoch.",
     "validityRange": "Bitte gib mindestens einen Tag an.",
     "discountRequired": "Bitte gib einen Rabatt an.",
-    "budgetRequired": "Für Geld- und Gutscheinprämien ist ein Budget nötig."
+    "budgetRequired": "Für Geld- und Gutscheinprämien ist ein Budget nötig.",
+    "bodyRequired": "Bitte schreib einen Text."
   },
   "scan": {
     "wrongCode": "Dieser QR-Code gehört nicht zu Ehrenweg.",

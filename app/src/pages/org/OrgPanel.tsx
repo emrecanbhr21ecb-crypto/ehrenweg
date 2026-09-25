@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 
 import { ActivityCard } from '@/components/ActivityCard'
+import { OrgAnnouncements } from '@/pages/org/Announcements'
 import { OrgReconciliation } from '@/pages/org/Reconciliation'
 import { OrgRedeem } from '@/pages/org/Redeem'
 import { OrgRewards } from '@/pages/org/Rewards'
@@ -51,7 +52,8 @@ import {
   type Organization,
 } from '@/types/activity'
 
-type Tab = 'activities' | 'members' | 'rewards' | 'redeem' | 'report' | 'profile'
+type Tab =
+  'activities' | 'members' | 'news' | 'rewards' | 'redeem' | 'report' | 'profile'
 
 // ---------------------------------------------------------------------------
 
@@ -510,7 +512,7 @@ function ProfileTab({
 // ---------------------------------------------------------------------------
 
 export default function OrgPanel(): React.JSX.Element {
-  const { t } = useTranslation(['manage', 'common', 'wallet'])
+  const { t } = useTranslation(['manage', 'common', 'wallet', 'notify'])
   const { orgRoles, memberships } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [tab, setTab] = useState<Tab>('activities')
@@ -568,6 +570,7 @@ export default function OrgPanel(): React.JSX.Element {
   const TABS: { id: Tab; label: string }[] = [
     { id: 'activities', label: t('manage:org.tabActivities') },
     { id: 'members', label: t('manage:org.tabMembers') },
+    { id: 'news', label: t('notify:announce.title') },
     { id: 'rewards', label: t('wallet:org.tabRewards') },
     { id: 'redeem', label: t('wallet:org.tabRedeem') },
     { id: 'report', label: t('wallet:org.tabReport') },
@@ -644,6 +647,8 @@ export default function OrgPanel(): React.JSX.Element {
 
       {/* Ödül şablonları ve bütçe yalnız kurum yöneticisinde: para
           tanımlamak personel yetkisi değil (CLAUDE.md Bölüm 7.1). */}
+      {tab === 'news' && <OrgAnnouncements organization={organization} />}
+
       {tab === 'rewards' &&
         (isOrgAdmin ? (
           <OrgRewards organization={organization} />

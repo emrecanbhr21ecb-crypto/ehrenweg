@@ -16,6 +16,7 @@ import { DEFAULT_LOCALE, isRtl, SUPPORTED_LOCALES, type Locale } from '@/config/
 
 import deActivities from '@/locales/de/activities.json'
 import deAttendance from '@/locales/de/attendance.json'
+import deNotify from '@/locales/de/notify.json'
 import deTrainer from '@/locales/de/trainer.json'
 import deWallet from '@/locales/de/wallet.json'
 import deCatalog from '@/locales/de/catalog.json'
@@ -25,6 +26,7 @@ import deLegal from '@/locales/de/legal.json'
 import deManage from '@/locales/de/manage.json'
 import enActivities from '@/locales/en/activities.json'
 import enAttendance from '@/locales/en/attendance.json'
+import enNotify from '@/locales/en/notify.json'
 import enTrainer from '@/locales/en/trainer.json'
 import enWallet from '@/locales/en/wallet.json'
 import enCatalog from '@/locales/en/catalog.json'
@@ -43,6 +45,7 @@ export const NAMESPACES = [
   'attendance',
   'wallet',
   'trainer',
+  'notify',
 ] as const
 export type Namespace = (typeof NAMESPACES)[number]
 
@@ -57,6 +60,7 @@ export const resources = {
     attendance: deAttendance,
     wallet: deWallet,
     trainer: deTrainer,
+    notify: deNotify,
   },
   en: {
     common: enCommon,
@@ -68,6 +72,7 @@ export const resources = {
     attendance: enAttendance,
     wallet: enWallet,
     trainer: enTrainer,
+    notify: enNotify,
   },
 } as const
 

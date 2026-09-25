@@ -13,6 +13,7 @@ import { Link, useNavigate } from 'react-router'
 import { LevelRing, StatTile } from '@/components/LevelRing'
 import { MyApplications } from '@/components/MyApplications'
 import { PassportDetails } from '@/components/PassportDetails'
+import { NotificationSettings } from '@/components/NotificationSettings'
 import { TrainerCard } from '@/components/TrainerCard'
 import { Alert, Button, Card } from '@/components/ui'
 import { CATEGORY_META } from '@/config/catalog'
@@ -192,6 +193,8 @@ export default function Profile(): React.JSX.Element {
           </Card>
         </section>
       )}
+
+      <NotificationSettings />
 
       <section aria-labelledby="settings-heading">
         <h2 id="settings-heading" className="mb-3 text-sm font-semibold">

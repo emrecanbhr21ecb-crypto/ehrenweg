@@ -35,6 +35,7 @@ export type AuditAction =
   | 'voucher.revoked'
   | 'ledger.adjustment'
   // bakım
+  | 'announcement.sent'
   | 'account.deleted'
   | 'data.exported'
 
