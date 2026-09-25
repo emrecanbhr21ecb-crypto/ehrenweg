@@ -32,6 +32,8 @@
     "ledger:check:prod": "tsx scripts/ledgerConsistencyCheck.ts --project ehrenweg-prod"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
     "@firebase/rules-unit-testing": "^5.0.0",
     "@playwright/test": "^1.63.0",
     "firebase": "^12.19.0",

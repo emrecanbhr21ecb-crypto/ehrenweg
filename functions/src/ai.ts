@@ -1,16 +1,28 @@
 /**
- * AI uçları — CLAUDE.md Bölüm 12.
- *   aiMatch, aiTranslate, aiDraftApplication, parseLink, aiChat
+ * AI — TEK UÇ: `aiTranslate` (CLAUDE.md Bölüm 12).
  *
- * ⚠️ HENÜZ DAĞITILMADI (Blaze kapalı). Ama Faz 2–5'teki "istemciye al,
- * kuralla koru" çözümü burada UYGULANAMAZ: Anthropic anahtarı bir SIRDIR
- * ve bir sırrı Firestore kuralıyla koruyamazsınız. İstemciye koymak,
- * anahtarı APK'yı indiren herkese vermektir.
+ * ⚠️ SPESİFİKASYONDAN BİLİNÇLİ SAPMA (docs/DECISIONS.md §12).
+ * Bölüm 12 beş AI ucu istiyor: aiMatch, aiTranslate, aiDraftApplication,
+ * parseLink, aiChat. Proje sahibiyle 26 Eyl'de yapılan değerlendirmede
+ * **dördü kaldırıldı**, yalnız `aiTranslate` bırakıldı. Gerekçeler
+ * DECISIONS §12'de; özeti:
  *
- * Bu yüzden AI, Blaze açılana kadar gerçekten kapalıdır — istemci tarafı
- * (`app/src/lib/ai.ts`) bunu kullanıcıya dürüstçe söyler.
+ *   · aiMatch  → bir ilçede 12 aktivite var; basit ilgi alanı eşleşmesi
+ *                hem anında, hem bedava, hem de açıklanabilir.
+ *   · parseLink→ işe yarayan kısmı (og: etiketleri) zaten AI istemiyordu.
+ *   · aiDraftApplication → küçük fayda, herkesin aynı taslağı göndermesi riski.
+ *   · aiChat   → sistem talimatının neredeyse tamamı "şunu cevaplama"ydı;
+ *                geriye kalan "uygulamayı nasıl kullanırım" sorusunu iyi bir
+ *                arayüz zaten cevaplamalı. Buna karşılık yanlış cevabın
+ *                bedelini kullanıcı ödüyordu. Dar fayda, ağır risk.
  *
- * Sistem talimatı `docs/AI_ASSISTANT.md` içinde ve TEK KAYNAK odur.
+ * `aiTranslate` neden KALDI: bir belediye çalışanı her aktivite için
+ * Almanca + İngilizce + Leichte Sprache yazmaz. Yazmayınca o alanlar boş
+ * kalır — ve **Leichte Sprache tam olarak hedef kitlenin en çok ihtiyaç
+ * duyduğu şey.** Burada AI süs değil, erişilebilirlik aracı.
+ *
+ * ⚠️ HENÜZ DAĞITILMADI (Blaze kapalı). Anahtar istemciye KONULAMAZ: bir
+ * sırrı Firestore kuralıyla koruyamazsınız.
  *
  * Sır kurulumu:
  *   firebase functions:secrets:set ANTHROPIC_API_KEY --project ehrenweg-prod
@@ -20,21 +32,17 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https'
 import { logger } from 'firebase-functions'
 import { z } from 'zod'
 
-import { COL, FieldValue, db } from './common/admin'
-import { AI_MODEL, ANTHROPIC_API_KEY } from './common/config'
-import { parseInput, requireAuth, type AuthedContext } from './common/guards'
-import { ASSISTANT_SYSTEM_PROMPT } from './common/aiPrompt'
-
-/** Kullanıcı başına günlük çağrı sınırı (Bölüm 12: "rate limit"). */
-const AI_DAILY_LIMIT = 30
+import { FieldValue, db } from './common/admin'
+import { AI_DAILY_LIMIT, AI_MODEL, ANTHROPIC_API_KEY } from './common/config'
+import { parseInput, requireAuth } from './common/guards'
 
 const AI_USAGE = 'aiUsage'
 
 /**
- * Günlük sınırı sayar ve aşımda reddeder.
+ * Günlük sınırı sayar ve aşımda reddeder (Bölüm 12 "rate limit").
  *
- * Sayaç kullanıcı belgesinde değil ayrı bir koleksiyonda: `users` belgesi
- * istemciye okunuyor ve kotayı orada göstermek gereksiz bilgi sızdırırdı.
+ * Sayaç `users` belgesinde değil ayrı koleksiyonda: `users` istemciye
+ * okunuyor ve kotayı orada göstermek gereksiz bilgi sızdırırdı.
  */
 async function consumeQuota(uid: string): Promise<void> {
   const today = new Date().toISOString().slice(0, 10)
@@ -54,22 +62,24 @@ async function consumeQuota(uid: string): Promise<void> {
   })
 }
 
-interface AnthropicMessage {
-  role: 'user' | 'assistant'
-  content: string
-}
+const translateSchema = z.object({
+  text: z.string().min(1).max(4000),
+  from: z.enum(['de', 'en']),
+  to: z.enum(['de', 'en']),
+  simplify: z.boolean().default(true),
+})
 
 /**
- * Anthropic Messages API çağrısı.
+ * `aiTranslate` — DE ⇄ EN çeviri + Leichte Sprache özeti.
  *
- * SDK yerine doğrudan `fetch`: tek uç kullanıyoruz ve fonksiyon paketine
- * ek bağımlılık koymak soğuk başlatmayı uzatır.
+ * 🔒 Bu fonksiyon HİÇBİR ŞEY YAZMAZ, yalnız öneri döner. Bölüm 12:
+ * "kurum onaylamadan kaydedilmesin." Kaydetme kararı her zaman kurumda.
  */
-async function askClaude(input: {
-  system: string
-  messages: AnthropicMessage[]
-  maxTokens?: number
-}): Promise<string> {
+export const aiTranslate = onCall({ secrets: [ANTHROPIC_API_KEY] }, async (request) => {
+  const ctx = requireAuth(request)
+  await consumeQuota(ctx.uid)
+  const input = parseInput(translateSchema, request.data)
+
   const key = ANTHROPIC_API_KEY.value()
   if (!key) throw new HttpsError('failed-precondition', 'errors.ai.unavailable')
 
@@ -83,9 +93,17 @@ async function askClaude(input: {
     body: JSON.stringify({
       // Model adı KODA SABİTLENMEZ (CLAUDE.md Bölüm 3).
       model: AI_MODEL.value(),
-      max_tokens: input.maxTokens ?? 1024,
-      system: input.system,
-      messages: input.messages,
+      max_tokens: 1500,
+      system:
+        'Du übersetzt Texte für eine Ehrenamts-App. Antworte AUSSCHLIESSLICH ' +
+        'mit JSON: {"translation":"...","simple":"..."}. ' +
+        '"translation" ist die Übersetzung in die Zielsprache. ' +
+        '"simple" ist eine Fassung in LEICHTER SPRACHE in der ZIELsprache: ' +
+        'kurze Hauptsätze, ein Gedanke pro Satz, keine Fremdwörter, keine ' +
+        'Nebensätze, keine Abkürzungen. Zielgruppe sind Menschen, die die ' +
+        'Sprache gerade lernen. Wenn simplify false ist, lass "simple" leer. ' +
+        'Erfinde keine Informationen, die nicht im Text stehen.',
+      messages: [{ role: 'user', content: JSON.stringify(input) }],
     }),
   })
 
@@ -99,281 +117,12 @@ async function askClaude(input: {
   }
   const text = data.content?.find((part) => part.type === 'text')?.text
   if (!text) throw new HttpsError('internal', 'errors.ai.failed')
-  return text
-}
-
-async function guard(
-  request: Parameters<typeof requireAuth>[0],
-): Promise<AuthedContext> {
-  const ctx = requireAuth(request)
-  await consumeQuota(ctx.uid)
-  return ctx
-}
-
-// --- aiMatch ---------------------------------------------------------------
-
-const matchSchema = z.object({
-  locale: z.enum(['de', 'en']).default('de'),
-  limit: z.number().int().min(1).max(10).default(5),
-})
-
-/** `aiMatch` — ilgi alanı, beceri ve konuma göre öneriler + gerekçe. */
-export const aiMatch = onCall({ secrets: [ANTHROPIC_API_KEY] }, async (request) => {
-  const ctx = await guard(request)
-  const input = parseInput(matchSchema, request.data)
-
-  const user = await db.collection(COL.users).doc(ctx.uid).get()
-  const activities = await db
-    .collection(COL.activities)
-    .where('status', '==', 'published')
-    .orderBy('startAt', 'asc')
-    .limit(40)
-    .get()
-
-  if (activities.empty) return { suggestions: [] }
-
-  // Modele YALNIZ eşleştirme için gerekli alanlar gidiyor. Kişinin adı,
-  // e-postası, konumu gönderilmiyor (Bölüm 10 veri minimizasyonu).
-  const catalogue = activities.docs.map((doc) => ({
-    id: doc.id,
-    title: doc.get('title.de') ?? doc.get('title.en') ?? '',
-    category: doc.get('categoryId'),
-    languages: doc.get('languagesUsed') ?? [],
-    online: doc.get('online') === true,
-    city: (doc.get('location.address') as string | undefined)?.split(',').pop()?.trim(),
-  }))
-
-  const profile = {
-    interests: user.get('interests') ?? [],
-    skills: user.get('skills') ?? [],
-    languages: ((user.get('languages') ?? []) as { code: string }[]).map((l) => l.code),
-    city: user.get('city') ?? '',
-  }
-
-  const text = await askClaude({
-    system:
-      'Du ordnest ehrenamtliche Aktivitäten Personen zu. Antworte AUSSCHLIESSLICH ' +
-      'mit JSON: {"suggestions":[{"activityId":"...","reason":"..."}]}. ' +
-      `Die Begründung ist EIN kurzer Satz in der Sprache "${input.locale}". ` +
-      'Erfinde keine activityId — nimm nur IDs aus der Liste.',
-    messages: [
-      {
-        role: 'user',
-        content: JSON.stringify({ profile, activities: catalogue, limit: input.limit }),
-      },
-    ],
-  })
-
-  try {
-    const parsed = JSON.parse(text) as { suggestions?: unknown }
-    const valid = Array.isArray(parsed.suggestions)
-      ? (parsed.suggestions as { activityId: string; reason: string }[]).filter(
-          (item) => catalogue.some((entry) => entry.id === item.activityId),
-        )
-      : []
-    return { suggestions: valid.slice(0, input.limit) }
-  } catch {
-    logger.warn('aiMatch JSON çözümlenemedi')
-    return { suggestions: [] }
-  }
-})
-
-// --- aiTranslate -----------------------------------------------------------
-
-const translateSchema = z.object({
-  text: z.string().min(1).max(4000),
-  from: z.enum(['de', 'en']),
-  to: z.enum(['de', 'en']),
-  simplify: z.boolean().default(true),
-})
-
-/**
- * `aiTranslate` — DE ⇄ EN çeviri + Leichte Sprache özeti.
- *
- * Bölüm 12: "kurum onaylamadan kaydedilmesin." Bu yüzden fonksiyon HİÇBİR
- * ŞEY YAZMAZ, yalnız öneri döner; kaydetme kararı kurumda.
- */
-export const aiTranslate = onCall({ secrets: [ANTHROPIC_API_KEY] }, async (request) => {
-  await guard(request)
-  const input = parseInput(translateSchema, request.data)
-
-  const text = await askClaude({
-    system:
-      'Du übersetzt Texte für eine Ehrenamts-App. Antworte AUSSCHLIESSLICH mit ' +
-      'JSON: {"translation":"...","simple":"..."}. ' +
-      '"translation" ist die Übersetzung. "simple" ist eine Fassung in Leichter ' +
-      'Sprache in der ZIELsprache: kurze Sätze, keine Fremdwörter, keine ' +
-      'Nebensätze. Wenn simplify false ist, lass "simple" leer.',
-    messages: [
-      {
-        role: 'user',
-        content: JSON.stringify(input),
-      },
-    ],
-  })
 
   try {
     const parsed = JSON.parse(text) as { translation?: string; simple?: string }
     return { translation: parsed.translation ?? '', simple: parsed.simple ?? '' }
   } catch {
+    logger.warn('aiTranslate JSON çözümlenemedi')
     throw new HttpsError('internal', 'errors.ai.failed')
   }
-})
-
-// --- aiDraftApplication ----------------------------------------------------
-
-const draftSchema = z.object({
-  activityId: z.string().min(1).max(64),
-  locale: z.enum(['de', 'en']).default('de'),
-})
-
-/** `aiDraftApplication` — başvuru mesajı taslağı. */
-export const aiDraftApplication = onCall(
-  { secrets: [ANTHROPIC_API_KEY] },
-  async (request) => {
-    const ctx = await guard(request)
-    const input = parseInput(draftSchema, request.data)
-
-    const activity = await db.collection(COL.activities).doc(input.activityId).get()
-    if (!activity.exists) throw new HttpsError('not-found', 'errors.notFound')
-
-    const user = await db.collection(COL.users).doc(ctx.uid).get()
-
-    const draft = await askClaude({
-      maxTokens: 400,
-      system:
-        'Du schreibst eine kurze Bewerbungsnachricht für ein Ehrenamt. ' +
-        'Drei bis fünf Sätze. Einfache Sprache, freundlich, ohne Übertreibung. ' +
-        'Erfinde KEINE Erfahrungen, die nicht in den Daten stehen. ' +
-        `Schreibe in der Sprache "${input.locale}". Antworte nur mit dem Text.`,
-      messages: [
-        {
-          role: 'user',
-          content: JSON.stringify({
-            activity: {
-              title: activity.get('title.de') ?? activity.get('title.en'),
-              description: activity.get('description.de'),
-              category: activity.get('categoryId'),
-            },
-            person: {
-              skills: user.get('skills') ?? [],
-              languages: ((user.get('languages') ?? []) as { code: string }[]).map(
-                (l) => l.code,
-              ),
-            },
-          }),
-        },
-      ],
-    })
-
-    return { draft: draft.trim() }
-  },
-)
-
-// --- parseLink -------------------------------------------------------------
-
-const linkSchema = z.object({ url: z.string().url().max(500) })
-
-/**
- * `parseLink` — haber/etkinlik linkinden başlık, açıklama, görsel.
- *
- * Önce sayfanın meta etiketlerini okumayı dener; bu genelde yeter ve AI
- * çağrısı yapmaz. Yalnız meta yoksa modele düşer — gereksiz maliyet ve
- * gereksiz gecikme olmasın.
- */
-export const parseLink = onCall({ secrets: [ANTHROPIC_API_KEY] }, async (request) => {
-  await guard(request)
-  const input = parseInput(linkSchema, request.data)
-
-  let html = ''
-  try {
-    const response = await fetch(input.url, {
-      headers: { 'user-agent': 'EhrenwegBot/1.0 (+https://ehrenweg.de)' },
-      signal: AbortSignal.timeout(8000),
-    })
-    if (!response.ok) throw new Error(String(response.status))
-    html = (await response.text()).slice(0, 120_000)
-  } catch (error) {
-    logger.warn('parseLink sayfayı alamadı', { error })
-    throw new HttpsError('invalid-argument', 'errors.ai.linkFailed')
-  }
-
-  const meta = (property: string): string => {
-    const pattern = new RegExp(
-      `<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']+)["']`,
-      'i',
-    )
-    return pattern.exec(html)?.[1] ?? ''
-  }
-
-  const title = meta('og:title') || /<title>([^<]+)<\/title>/i.exec(html)?.[1] || ''
-  const description = meta('og:description') || meta('description')
-  const imageURL = meta('og:image')
-
-  if (title && description) {
-    return { title: title.trim(), description: description.trim(), imageURL }
-  }
-
-  // Meta yoksa modelden çıkar.
-  const text = await askClaude({
-    maxTokens: 500,
-    system:
-      'Du extrahierst aus HTML die Kerninformation einer Veranstaltung. ' +
-      'Antworte AUSSCHLIESSLICH mit JSON: ' +
-      '{"title":"...","description":"...","imageURL":"..."}.',
-    messages: [{ role: 'user', content: html.slice(0, 20_000) }],
-  })
-
-  try {
-    const parsed = JSON.parse(text) as Record<string, string>
-    return {
-      title: parsed['title'] ?? title,
-      description: parsed['description'] ?? description,
-      imageURL: parsed['imageURL'] ?? imageURL,
-    }
-  } catch {
-    return { title, description, imageURL }
-  }
-})
-
-// --- aiChat ----------------------------------------------------------------
-
-const chatSchema = z.object({
-  message: z.string().min(1).max(2000),
-  locale: z.enum(['de', 'en']).default('de'),
-  history: z
-    .array(
-      z.object({
-        role: z.enum(['user', 'assistant']),
-        content: z.string().max(2000),
-      }),
-    )
-    .max(10)
-    .default([]),
-})
-
-/**
- * `aiChat` — entegrasyon asistanı.
- *
- * Sistem talimatı `docs/AI_ASSISTANT.md` içinde ve `common/aiPrompt.ts`
- * üzerinden okunuyor. Asistan hukuki tavsiye VERMEZ, doğru kuruma
- * yönlendirir; gerekçesi o dosyada.
- */
-export const aiChat = onCall({ secrets: [ANTHROPIC_API_KEY] }, async (request) => {
-  await guard(request)
-  const input = parseInput(chatSchema, request.data)
-
-  const reply = await askClaude({
-    maxTokens: 800,
-    system: ASSISTANT_SYSTEM_PROMPT,
-    messages: [...input.history, { role: 'user', content: input.message }],
-  })
-
-  // Yönlendirme yapıldıysa arayüz ayrı bir kutuda göstersin diye işaretle.
-  const referral =
-    /MBE|Migrationsberatung|Jugendmigrationsdienst|JMD|Ausländerbehörde|Jobcenter|Verbraucherzentrale/i.exec(
-      reply,
-    )?.[0] ?? null
-
-  return { reply: reply.trim(), referral }
 })

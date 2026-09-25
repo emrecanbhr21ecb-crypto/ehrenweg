@@ -16,7 +16,8 @@
  *   Faz 4 → buyReward, getVoucherQr, redeemVoucher, revokeVoucher,
  *           expireVouchers                                         ✅ yazıldı
  *   Faz 5 → reviewTrainerApplication                                ✅ yazıldı
- *   Faz 6 → monthlySummary, deadlineReminders, sendAnnouncement, ai*  ✅ yazıldı
+ *   Faz 6 → monthlySummary, deadlineReminders, sendAnnouncement,
+ *           aiTranslate (diğer AI uçları kaldırıldı, DECISIONS §12)  ✅ yazıldı
  *   Faz 7 → orgMonthlyReport, passportPdf
  */
 

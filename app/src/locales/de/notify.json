@@ -3,7 +3,6 @@
     "weather": "{{temp}} °C in {{city}}",
     "suggestionsTitle": "Für dich",
     "suggestionsHint": "Vorschläge, die zu deinen Interessen passen.",
-    "aiUnavailable": "Persönliche KI-Vorschläge kommen, sobald der Serverteil aktiv ist. Bis dahin zeigen wir Aktivitäten nach deinen Interessen.",
     "monthTitle": "Dieser Monat",
     "monthHours": "{{count}} Stunden",
     "monthIp": "{{count}} Punkte",
@@ -59,7 +58,6 @@
     "simplify": "Leichte Sprache vorschlagen",
     "accept": "Übernehmen",
     "discard": "Verwerfen",
-    "draft": "Nachricht vorschlagen lassen",
     "limit": "Du hast das Tageslimit für KI-Anfragen erreicht.",
     "failed": "Das hat nicht geklappt."
   }

@@ -3,7 +3,6 @@
     "weather": "{{temp}} °C in {{city}}",
     "suggestionsTitle": "For you",
     "suggestionsHint": "Suggestions that match your interests.",
-    "aiUnavailable": "Personal AI suggestions arrive once the server part is active. Until then we show activities based on your interests.",
     "monthTitle": "This month",
     "monthHours": "{{count}} hours",
     "monthIp": "{{count}} points",
@@ -59,7 +58,6 @@
     "simplify": "Suggest plain language",
     "accept": "Use this",
     "discard": "Discard",
-    "draft": "Suggest a message",
     "limit": "You have reached the daily limit for AI requests.",
     "failed": "That did not work."
   }

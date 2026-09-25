@@ -573,23 +573,28 @@ Bu faz **tam bitmedi ve bitemez**: AI uçları Cloud Functions olmadan
 | 3   | `deadlineReminders` (her gün 09:00), `monthlySummary` (ayın 1'i 03:00) | aynı dosya                       |
 | 4   | `aiMatch`, `aiTranslate`, `aiDraftApplication`, `parseLink`, `aiChat`  | `functions/src/ai.ts`            |
 
-### 🔴 Neden AI bugün açılamıyor
+### ✂️ AI uçlarından DÖRDÜ kaldırıldı (proje sahibi kararı)
 
-Faz 2–5'te sunucusuz kalan her iş istemciye alınıp `firestore.rules` ile
-korundu. **AI'da bu mümkün değil: bir sırrı kuralla koruyamazsınız.**
-Anthropic anahtarı APK'ya konsaydı, indiren herkes çıkarabilirdi.
+`aiMatch`, `aiDraftApplication`, `parseLink` ve `aiChat` **silindi**.
+Gerekçeler DECISIONS §12'de; kısaca: bir ilçede 12 aktiviteyi sıralamak için
+modele gerek yok, `parseLink`'in işe yarayan kısmı zaten AI'sızdı, ve
+`aiChat`'in sistem talimatının neredeyse tamamı "şunu cevaplama" listesiydi —
+dar fayda, ağır risk.
 
-Arayüz bunu gizlemiyor: AI özelliklerinin yerinde sebebini anlatan bir kutu
-var. Ana ekrandaki "Sana uygun" bölümü AI yerine ilgi alanı + dil eşleşmesi
-kullanıyor ve bunu da açıkça söylüyor.
+`docs/AI_ASSISTANT.md` ve `functions/src/common/aiPrompt.ts` da silindi.
 
-### Asistanın sistem talimatı
+**Kalan tek uç `aiTranslate`** ve artık kurum aktivite formuna BAĞLI:
+Almanca açıklamanın altında "Übersetzen lassen" ve "Leichte Sprache
+vorschlagen" düğmeleri. Öneri kutuda gösteriliyor, kurum "Übernehmen" derse
+forma yazılıyor — kaydetme kararı her zaman kurumda (Bölüm 12).
 
-`docs/AI_ASSISTANT.md` — **tek kaynak**. Asistan hukuki tavsiye vermiyor,
-MBE / JMD / Ausländerbehörde / Jobcenter gibi doğru kuruma yönlendiriyor,
-tehlike durumunda 110/112 ve 116 016 veriyor. Metin
-`functions/src/common/aiPrompt.ts` içine birebir kopyalanıyor (Functions
-paketine `docs/` girmiyor).
+Neden bu kaldı: belediye çalışanı her aktivite için üç metin yazmaz,
+yazmayınca Leichte Sprache alanı boş kalır — ve o alan hedef kitlenin en çok
+ihtiyaç duyduğu şey. Burada AI süs değil, erişilebilirlik aracı.
+
+🔴 Yine de Blaze'siz çalışmıyor: Anthropic anahtarı sunucuda durmak zorunda.
+Bir sırrı Firestore kuralıyla koruyamazsınız. Arayüz bunu kullanıcıya
+açıkça söylüyor.
 
 ### Sırlar — proje sahibi çalıştıracak
 

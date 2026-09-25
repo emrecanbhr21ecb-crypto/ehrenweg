@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 
+import { AiTranslateBox } from '@/components/AiTranslateBox'
 import { MapView } from '@/components/MapView'
 import {
   Alert,
@@ -87,7 +88,14 @@ function emptyValues(): ActivityFormValues {
 export default function ActivityForm(): React.JSX.Element {
   const { activityId } = useParams()
   const [searchParams] = useSearchParams()
-  const { t } = useTranslation(['manage', 'catalog', 'errors', 'common', 'activities'])
+  const { t } = useTranslation([
+    'manage',
+    'catalog',
+    'errors',
+    'common',
+    'activities',
+    'notify',
+  ])
   const navigate = useNavigate()
   const { user, orgRoles } = useAuth()
 
@@ -291,6 +299,23 @@ export default function ActivityForm(): React.JSX.Element {
           value={values.description.en}
           onChange={(event) =>
             patch({ description: { ...values.description, en: event.target.value } })
+          }
+        />
+
+        {/* Tek AI ucu: Almanca açıklamadan İngilizce çeviri + kolay dil
+            özeti önerir. Öneri kaydedilmez, kurum "Übernehmen" derse forma
+            yazılır (CLAUDE.md Bölüm 12). */}
+        <AiTranslateBox
+          source={values.description.de}
+          from="de"
+          to="en"
+          onAcceptTranslation={(text) =>
+            patch({ description: { ...values.description, en: text } })
+          }
+          onAcceptSimple={(text) =>
+            patch({
+              simpleDescription: { ...values.simpleDescription, de: text },
+            })
           }
         />
 

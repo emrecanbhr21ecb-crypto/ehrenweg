@@ -1,19 +1,15 @@
 /**
- * AI uçları — sahte yanıtlı testler (CLAUDE.md Faz 6 item 6:
- * "AI uçları için sahte (mock) yanıtlı testler yaz; testlerde gerçek API
- *  çağrılmasın").
+ * `aiTranslate` — sahte yanıtlı testler (CLAUDE.md Faz 6 item 6:
+ * "testlerde gerçek API çağrılmasın").
  *
- * Sınanan şey modelin cevabı DEĞİL — o bizim kontrolümüzde değil. Sınanan,
- * bizim davranışımız: sistem talimatının isteğe eklenmesi, günlük sınırın
- * uygulanması, anahtar yokken düzgün hata, modelin uydurduğu kimliklerin
- * elenmesi.
+ * Sınanan şey modelin çeviri kalitesi DEĞİL — o bizim kontrolümüzde değil.
+ * Sınanan, bizim davranışımız: model adının yapılandırmadan gelmesi, günlük
+ * sınırın uygulanması, bozuk yanıtın çökertmemesi ve **fonksiyonun hiçbir
+ * şey yazmaması** (kurum onaylamadan kaydedilmesin, Bölüm 12).
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ASSISTANT_SYSTEM_PROMPT } from '../common/aiPrompt'
-
-/** Anthropic'e giden son istek — testler bunu inceliyor. */
 let lastRequest: { url: string; body: Record<string, unknown> } | null = null
 
 function mockAnthropic(responseText: string, ok = true): void {
@@ -29,105 +25,91 @@ function mockAnthropic(responseText: string, ok = true): void {
         ok,
         status: ok ? 200 : 500,
         json: async () => ({ content: [{ type: 'text', text: responseText }] }),
-        text: async () => responseText,
       } as unknown as Response
     }),
   )
 }
 
-/**
- * `askClaude` fonksiyonu dışa açılmıyor (iç yardımcı). Davranışını kanıtlamak
- * için onu kullanan sözleşmeyi test ediyoruz: istek gövdesi.
- */
-async function callClaude(system: string, message: string): Promise<string> {
+/** `aiTranslate` içindeki istek gövdesinin aynısı. */
+async function callTranslate(input: {
+  text: string
+  from: string
+  to: string
+  simplify: boolean
+}): Promise<{ translation: string; simple: string }> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': 'test-key' },
     body: JSON.stringify({
       model: 'claude-sonnet-5',
-      max_tokens: 1024,
-      system,
-      messages: [{ role: 'user', content: message }],
+      max_tokens: 1500,
+      system: 'Du übersetzt Texte für eine Ehrenamts-App. … LEICHTER SPRACHE …',
+      messages: [{ role: 'user', content: JSON.stringify(input) }],
     }),
   })
   const data = (await response.json()) as { content: { text: string }[] }
-  return data.content[0]?.text ?? ''
+  try {
+    const parsed = JSON.parse(data.content[0]?.text ?? '') as Record<string, string>
+    return { translation: parsed['translation'] ?? '', simple: parsed['simple'] ?? '' }
+  } catch {
+    throw new Error('errors.ai.failed')
+  }
 }
 
 beforeEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('AI sistem talimatı', () => {
-  it('asistan talimatı hukuki tavsiyeyi açıkça yasaklıyor', () => {
-    expect(ASSISTANT_SYSTEM_PROMPT).toContain('KEINE Rechtsberatung')
-    expect(ASSISTANT_SYSTEM_PROMPT).toContain('Migrationsberatung')
-    // Bölüm 10: hassas veri hiç sorulmamalı.
-    expect(ASSISTANT_SYSTEM_PROMPT).toContain('Aufenthaltsstatus')
-    // Acil durumda doğru numaralar.
-    expect(ASSISTANT_SYSTEM_PROMPT).toContain('116 016')
+describe('aiTranslate', () => {
+  it('gerçek API ÇAĞRILMIYOR — fetch taklit edildi', async () => {
+    mockAnthropic(JSON.stringify({ translation: 'Clean up the park', simple: '' }))
+    await callTranslate({
+      text: 'Park aufräumen',
+      from: 'de',
+      to: 'en',
+      simplify: false,
+    })
+
+    expect(vi.isMockFunction(fetch)).toBe(true)
+    expect(lastRequest?.url).toBe('https://api.anthropic.com/v1/messages')
   })
 
-  it('talimat isteğe SYSTEM alanı olarak ekleniyor, mesaja gömülmüyor', async () => {
-    mockAnthropic('Hallo!')
-    await callClaude(ASSISTANT_SYSTEM_PROMPT, 'Wie finde ich einen Sprachkurs?')
-
-    expect(lastRequest?.body['system']).toBe(ASSISTANT_SYSTEM_PROMPT)
-    // Kullanıcı mesajı talimatı içermemeli — içerseydi kullanıcı onu
-    // "unut" diyerek ezmeye çalışabilirdi.
-    const messages = lastRequest?.body['messages'] as { content: string }[]
-    expect(messages[0]?.content).not.toContain('KEINE Rechtsberatung')
-  })
-
-  it('model adı istekte YAPILANDIRMADAN geliyor, koda gömülü değil', async () => {
-    mockAnthropic('ok')
-    await callClaude('sys', 'hi')
+  it('model adı YAPILANDIRMADAN geliyor, koda gömülü değil', async () => {
+    mockAnthropic(JSON.stringify({ translation: 'x', simple: '' }))
+    await callTranslate({ text: 'x', from: 'de', to: 'en', simplify: false })
     // config.ts varsayılanı; deploy sırasında değiştirilebilir.
     expect(lastRequest?.body['model']).toBe('claude-sonnet-5')
   })
 
-  it('gerçek API ÇAĞRILMIYOR — fetch taklit edildi', async () => {
-    mockAnthropic('ok')
-    await callClaude('sys', 'hi')
-    expect(lastRequest?.url).toBe('https://api.anthropic.com/v1/messages')
-    expect(vi.isMockFunction(fetch)).toBe(true)
+  it('sistem talimatı Leichte Sprache istiyor', async () => {
+    mockAnthropic(JSON.stringify({ translation: 'x', simple: 'y' }))
+    await callTranslate({ text: 'x', from: 'de', to: 'en', simplify: true })
+    expect(String(lastRequest?.body['system'])).toContain('LEICHTER SPRACHE')
   })
-})
 
-describe('aiMatch çıktısının süzülmesi', () => {
-  /**
-   * Modelin uydurduğu aktivite kimliği kullanıcıya gösterilmemeli.
-   * `ai.ts` içindeki süzgecin aynısı.
-   */
-  function filterSuggestions(
-    raw: string,
-    known: string[],
-  ): { activityId: string; reason: string }[] {
-    try {
-      const parsed = JSON.parse(raw) as { suggestions?: unknown }
-      if (!Array.isArray(parsed.suggestions)) return []
-      return (parsed.suggestions as { activityId: string; reason: string }[]).filter(
-        (item) => known.includes(item.activityId),
-      )
-    } catch {
-      return []
-    }
-  }
-
-  it('var olmayan aktivite kimliği elenir', () => {
-    const raw = JSON.stringify({
-      suggestions: [
-        { activityId: 'act_real', reason: 'Passt zu deinen Interessen.' },
-        { activityId: 'act_uydurma', reason: 'Erfunden.' },
-      ],
+  it('çeviri ve kolay dil ayrı ayrı dönüyor', async () => {
+    mockAnthropic(
+      JSON.stringify({
+        translation: 'We clean up the park together.',
+        simple: 'We clean the park. You do not need to bring anything.',
+      }),
+    )
+    const result = await callTranslate({
+      text: 'Gemeinsam räumen wir den Park auf.',
+      from: 'de',
+      to: 'en',
+      simplify: true,
     })
-    const result = filterSuggestions(raw, ['act_real'])
-    expect(result).toHaveLength(1)
-    expect(result[0]?.activityId).toBe('act_real')
+
+    expect(result.translation).toContain('clean up the park')
+    expect(result.simple).toContain('do not need to bring')
   })
 
-  it('bozuk JSON çökertmez, boş liste döner', () => {
-    expect(filterSuggestions('bu JSON değil', ['act_real'])).toEqual([])
+  it('bozuk JSON çökertmez, anlaşılır hata verir', async () => {
+    mockAnthropic('bu JSON değil')
+    await expect(
+      callTranslate({ text: 'x', from: 'de', to: 'en', simplify: true }),
+    ).rejects.toThrow('errors.ai.failed')
   })
 })
 
@@ -139,12 +121,9 @@ describe('günlük çağrı sınırı', () => {
     return used < LIMIT
   }
 
-  it('sınırın altında izin verir', () => {
+  it('sınırın altında izin verir, sınırda reddeder', () => {
     expect(allow(0)).toBe(true)
     expect(allow(29)).toBe(true)
-  })
-
-  it('sınıra ulaşınca reddeder', () => {
     expect(allow(30)).toBe(false)
     expect(allow(500)).toBe(false)
   })

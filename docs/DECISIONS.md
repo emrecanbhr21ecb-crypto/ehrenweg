@@ -512,58 +512,83 @@ eklenerek ayrıldı. Wildcard collection group kurallarında bu tuzağa dikkat.
 
 ---
 
-## 12. AI Blaze'siz ÇALIŞTIRILAMAZ (Faz 6)
+## 12. AI'dan beş uçtan dördü KALDIRILDI (Faz 6)
 
-**Karar tarihi:** 26 Eylül 2026 · **Durum:** kalıcı kısıt, Blaze'e bağlı
+**Karar tarihi:** 26 Eylül 2026 · **Durum:** kalıcı · **Karar:** proje sahibi
 
-Faz 2–5'te tekrar eden bir örüntü vardı: sunucu yoksa işi istemciye al,
-güvenliği `firestore.rules`'a yık. **Bu örüntü AI'da UYGULANAMAZ** ve bunu
-net söylemek gerekiyor:
+CLAUDE.md Bölüm 12 beş AI ucu istiyor. Proje sahibiyle yapılan
+değerlendirmede **yalnız `aiTranslate` bırakıldı**, diğer dördü kaldırıldı.
+
+### Neden kaldırıldılar
+
+| Uç                   | Gerekçe                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aiMatch`            | Bir ilçede 12 aktivite var. Onu sıralamak için modele gerek yok: ilgi alanı + dil + online puanlaması anında çalışıyor, bedava ve "bu öneri neden geldi" sorusunun cevabı belli. AI'nın anlamı beş şehir, üç yüz aktivite olduğunda başlar.                                                                                                                                                                                            |
+| `parseLink`          | İşe yarayan kısmı (`og:title`, `og:image` etiketleri) zaten AI istemiyordu; model yalnız etiket yoksa devreye giriyordu. Kenar durumun kenarı.                                                                                                                                                                                                                                                                                         |
+| `aiDraftApplication` | Küçük fayda, buna karşılık herkesin aynı taslağı gönderme riski — başvuru mesajı alanı o zaman bilgi taşımaz olur.                                                                                                                                                                                                                                                                                                                     |
+| `aiChat`             | **En riskli ve en az değerli olan.** Sistem talimatının neredeyse tamamı "şunu cevaplama" listesiydi: oturum izni, sosyal yardım, aile birleşimi, çalışma izni, sağlık, vergi. Bunları çıkarınca geriye "uygulamayı nasıl kullanırım" kalıyor ve onu iyi bir arayüz zaten cevaplamalı. Buna karşılık yanlış bir cevabın bedelini biz değil KULLANICI ödüyor: reddedilen başvuru, kesilen yardım, kaçırılan süre. Dar fayda, ağır risk. |
+
+`docs/AI_ASSISTANT.md` ve `functions/src/common/aiPrompt.ts` bu kararla
+birlikte silindi.
+
+### Neden `aiTranslate` kaldı
+
+Bir belediye çalışanı her aktivite için Almanca **+** İngilizce **+** Leichte
+Sprache yazmaz. Yazmayınca o alanlar boş kalır — ve **Leichte Sprache tam
+olarak hedef kitlenin en çok ihtiyaç duyduğu şey.** A2 seviyesinde Almanca
+bilen biri için "Wir sammeln Müll. Du brauchst nichts mitbringen." ile normal
+Almanca arasında dağlar kadar fark var.
+
+Seed verisindeki kolay dil özetlerini elle yazdım; gerçek kurumlar
+yazmayacak. Burada AI süs değil, **erişilebilirlik aracı**.
+
+(Çeviriyi DeepL de yapardı; Leichte Sprache'yi yapmaz. Değerli olan kısım o.)
+
+**Nerede:** kurum aktivite formunda, Almanca açıklamanın altında iki düğme —
+"Übersetzen lassen" ve "Leichte Sprache vorschlagen".
+
+🔒 **Öneri asla doğrudan kaydedilmez.** Kutuda gösterilir, kurum
+"Übernehmen" derse forma yazılır. Bölüm 12 bunu şart koşuyor: makinenin
+ürettiği metin, kurumun onaylamadığı hâliyle katılımcıya gitmemeli.
+
+### Neden Blaze'siz çalıştırılamıyor
+
+Faz 2–5'te tekrar eden örüntü — "sunucu yoksa işi istemciye al, güvenliği
+`firestore.rules`'a yık" — burada UYGULANAMAZ:
 
 > Bir SIRRI Firestore kuralıyla koruyamazsınız.
 
-Anthropic API anahtarı istemciye konsaydı, APK'yı indiren herkes onu
-çıkarabilirdi. Sonucu yalnız fatura değil: anahtar bizim adımıza başka
-şeyler için kullanılırdı.
+Anthropic anahtarı istemciye konsaydı, APK'yı indiren herkes çıkarabilirdi.
+Sonucu yalnız fatura değil; anahtar bizim adımıza başka şeyler için de
+kullanılırdı. `app/src/lib/ai.ts` bayrak kapalıyken ağa HİÇ çıkmadan
+`unavailable` döner, arayüz sebebini açıkça yazar.
 
-Bu yüzden `aiMatch`, `aiTranslate`, `aiDraftApplication`, `parseLink` ve
-`aiChat` **gerçekten kapalı**. `functions/src/ai.ts` içinde tam olarak
-yazıldılar; `app/src/lib/ai.ts` bayrak kapalıyken ağa hiç çıkmadan
-`unavailable` dönüyor ve arayüz bunu kullanıcıya açıkça söylüyor
-("KI-Funktionen sind noch aus" + sebebi).
-
-**Yerine ne kondu:** Ana ekrandaki "Sana uygun" bölümü, AI yerine ilgi
-alanı + dil + online eşleşmesine göre puanlıyor. Kutunun üstünde bunun AI
-olmadığı yazıyor — basit bir filtreyi "yapay zekâ önerisi" diye sunmak yalan
-olurdu.
+⚠️ **Blaze kararı AI kararından bağımsız.** AI tamamen atılsa bile push
+gönderimi, zamanlanmış işler (no-show, süre dolumu, aylık özet), HMAC'li QR
+ve bonus hesabı hâlâ sunucu istiyor.
 
 ### Push'un yarısı çalışıyor
 
-- **Alma tarafı** (izin, FCM jetonu, jeton kaydı) → bugün çalışıyor.
-  Jetonlar şimdiden toplanıyor ki Blaze açıldığı gün mevcut kullanıcılara da
+- **Alma tarafı** (izin, FCM jetonu, kayıt) → bugün çalışıyor. Jetonlar
+  şimdiden toplanıyor ki Blaze açıldığı gün mevcut kullanıcılara da
   ulaşılabilsin.
 - **Gönderme tarafı** (`sendAnnouncement`, `deadlineReminders`,
-  `monthlySummary`) → sunucu işi, yazıldı, dağıtılmadı.
+  `monthlySummary`) → yazıldı, dağıtılmadı.
 
 Duyurular Firestore'a yazılıyor ve uygulamada anında görünüyor; yalnız
 telefona push düşmüyor. Kurum panelinde her duyurunun yanında "Push noch
-nicht gesendet" yazıyor.
-
-`pushSent` bayrağını istemci YAZAMAZ (testli): "gönderildi" demek,
-gönderilmediği hâlde ikinci denemeyi engellemek olurdu.
+nicht gesendet" yazıyor. `pushSent` bayrağını istemci YAZAMAZ (testli).
 
 ### Hava durumu
 
-Open-Meteo seçildi: anahtar istemiyor, ücretsiz, ticari kullanımda serbest.
-Koordinat **iki ondalığa yuvarlanıyor** (~1 km) — hava durumu için fazlasıyla
-yeterli ve kullanıcının tam konumunu üçüncü bir sunucuya vermiyoruz.
-Konum izni de İSTENMİYOR; profildeki ya da seçilmiş şehir kullanılıyor.
+Open-Meteo: anahtar istemiyor, ücretsiz, ticari kullanımda serbest.
+Koordinat **iki ondalığa yuvarlanıyor** (~1 km) ve konum izni İSTENMİYOR —
+profildeki ya da seçilmiş şehir kullanılıyor.
 
 ### Duyuru slider'ı otomatik dönmüyor
 
 Bilinçli: otomatik karusel erişilebilirlik açısından kötü (ekran okuyucu ve
 motor güçlüğü olan kullanıcı yakalayamaz) ve genelde kimse okumuyor.
-Kullanıcı kendi kaydırıyor.
 
 ---
 
@@ -599,3 +624,6 @@ Kullanıcı kendi kaydırıyor.
   Bölüm 12'deki kısıt bu sırada netleşti: AI Blaze'siz çalıştırılamaz.
   Kural testleri 126/126; AI için 8 sahte yanıtlı test (gerçek API
   çağrılmıyor).
+- **2026-09-26 (Faz 6 revizyonu)** — Proje sahibinin kararıyla AI uçlarından
+  dördü kaldırıldı; yalnız `aiTranslate` kaldı ve kurum formuna bağlandı.
+  Gerekçeler Bölüm 12'de.

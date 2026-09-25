@@ -12,9 +12,8 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
 import { ActivityCard } from '@/components/ActivityCard'
-import { Alert, Badge, Card, Spinner } from '@/components/ui'
+import { Badge, Card, Spinner } from '@/components/ui'
 import { findCity, matchCityByName } from '@/config/cities'
-import { CLOUD_FUNCTIONS_ENABLED } from '@/lib/backend'
 import { useAuth } from '@/lib/AuthProvider'
 import { watchPublishedActivities } from '@/lib/activities'
 import { watchAnnouncements } from '@/lib/announcements'
@@ -135,11 +134,12 @@ export function AnnouncementSlider(): React.JSX.Element | null {
 // --- "Sana uygun" ----------------------------------------------------------
 
 /**
- * Öneriler.
+ * Öneriler — ilgi alanı, dil ve online tercihine göre puanlama.
  *
- * ⚠️ `aiMatch` Blaze'e bağlı (app/src/lib/ai.ts). Sunucu yokken AI yerine
- * **ilgi alanı eşleşmesi** gösteriliyor ve bu fark kullanıcıya açıkça
- * söyleniyor — "AI önerisi" diye basit bir filtreyi sunmak yalan olurdu.
+ * ⚠️ Burada AI YOK ve olmayacak (docs/DECISIONS.md §12). Bir ilçede on iki
+ * aktivite var; onu sıralamak için modele ihtiyaç yok. Bu basit puanlama
+ * anında çalışıyor, bedava ve "bu öneri neden geldi" sorusunun cevabı belli.
+ * AI'nın anlamı beş şehir, üç yüz aktivite olduğunda başlar.
  */
 export function Suggestions(): React.JSX.Element | null {
   const { t } = useTranslation(['notify', 'activities'])
@@ -196,10 +196,6 @@ export function Suggestions(): React.JSX.Element | null {
           {t('notify:home.suggestionsHint')}
         </p>
       </div>
-
-      {!CLOUD_FUNCTIONS_ENABLED && (
-        <Alert tone="info">{t('notify:home.aiUnavailable')}</Alert>
-      )}
 
       <ul className="space-y-4">
         {suggestions.map((activity) => (
