@@ -16,8 +16,11 @@
     "check:i18n": "node ../scripts/check-i18n.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.3",
     "@tanstack/react-query": "^5.103.2",
     "@types/leaflet": "^1.9.22",
     "clsx": "^2.1.1",

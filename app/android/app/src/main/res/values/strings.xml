@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ehrenweg</string>
+    <string name="title_activity_main">Ehrenweg</string>
+    <string name="package_name">de.ehrenweg.app</string>
+    <string name="custom_url_scheme">de.ehrenweg.app</string>
+</resources>

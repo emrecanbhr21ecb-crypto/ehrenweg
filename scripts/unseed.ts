@@ -30,15 +30,24 @@ if (!projectId) {
 
 const keyFile = arg('key') ?? process.env['GOOGLE_APPLICATION_CREDENTIALS']
 
+/**
+ * Kimlik iki biçimde gelebilir:
+ *   · servis hesabı anahtarı  (`"type": "service_account"`)  → cert()
+ *   · kullanıcı kimliği / ADC (`"type": "authorized_user"`)  → applicationDefault()
+ * Yanlış olanı seçmek "must contain a string project_id" hatası verir, o
+ * yüzden dosyanın kendisine bakıyoruz.
+ */
+function credentialFor(path: string | undefined) {
+  if (!path) return applicationDefault()
+  const parsed = JSON.parse(readFileSync(path, 'utf8')) as Record<string, string>
+  if (parsed['type'] === 'service_account') return cert(parsed)
+  process.env['GOOGLE_APPLICATION_CREDENTIALS'] = path
+  return applicationDefault()
+}
+
 initializeApp({
   projectId,
-  ...(emulator
-    ? {}
-    : {
-        credential: keyFile
-          ? cert(JSON.parse(readFileSync(keyFile, 'utf8')) as Record<string, string>)
-          : applicationDefault(),
-      }),
+  ...(emulator ? {} : { credential: credentialFor(keyFile) }),
 })
 
 const db = getFirestore()

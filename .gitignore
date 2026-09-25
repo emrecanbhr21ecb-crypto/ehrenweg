@@ -111,3 +111,10 @@ tmp/
 
 # --- Claude Code yerel ayarları ---
 .claude/settings.local.json
+
+# Capacitor — üretilen native çıktılar (proje iskeleti git'te durur)
+app/android/app/build/
+app/android/build/
+app/android/.gradle/
+app/android/local.properties
+app/android/app/src/main/assets/public/
