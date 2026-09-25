@@ -98,7 +98,51 @@ Bu adımda yapılan düzeltmeler:
 - `scripts/with-jdk.sh` — JDK 21+ otomatik bulunuyor, emülatör komutları
   makineye özel ayar istemiyor
 
+**0.5 Firebase projeleri (P02, 25 Eyl) — CLI kısmı BİTTİ**
+
+| | dev | prod |
+|---|---|---|
+| Proje kimliği | `ehrenweg-dev` | `ehrenweg-prod` |
+| Proje numarası | 845360816804 | 24663235054 |
+| Web uygulaması | ✅ | ✅ |
+| Android | ✅ `de.ehrenweg.app.dev` | ✅ `de.ehrenweg.app` |
+| Analytics | kapalı ✅ | kapalı ✅ |
+
+- `.firebaserc` zaten bu kimliklere işaret ediyordu, değişiklik gerekmedi.
+- Gerçek web yapılandırması: **`app/.env.development.local`** (dev) ve
+  **`app/.env.production`** (prod). İkisinin de git tarafından engellendiği
+  `git check-ignore` ile kanıtlandı. `app/.env.development` bilerek git'te
+  kalıyor ve yalnız sahte `demo-ehrenweg` emülatör değerleri tutuyor —
+  **P02 promptu "gerçek değerleri .env.development'a yaz" diyordu, uygulanmadı**;
+  o dosya `.gitignore` dışında olduğu için anahtarlar git'e sızardı.
+
+**Hesap kurulumunda iki ayrı kapı çıktı** (ikisi de konsoldan, bir kez):
+1. *Google Cloud ToS* — geçilmeden `projects:create` "Callers must accept Terms
+   of Service" veriyor.
+2. *Firebase ilk kurulum* — ayrı bir kapı; geçilmeden `addFirebase` 403
+   PERMISSION_DENIED veriyor. GCP projesi oluşur ama Firebase eklenemez.
+
+Bu sırada konsolda yanlışlıkla **`ehrenweg-dev-10c28`** adlı fazla bir proje
+açıldı. Kullanılmıyor, silinecek. Doğru kimlik (`ehrenweg-dev`) var olan GCP
+projesine `projects:addfirebase` ile Firebase eklenerek kurtarıldı.
+
 ### 🔜 Kaldı
+
+**P02'den kalan — konsolda elle yapılacaklar (25 Eyl itibarıyla ölçüldü):**
+
+| Adım | dev | prod | Not |
+|---|---|---|---|
+| Authentication (E-posta/Şifre + Google) | ? | ⬜ | CLI'dan doğrulanamıyor |
+| **Firestore — `europe-west3`** | ⬜ **YAPILMADI** | ⬜ | API bile açılmamış. ⚠️ Konum kalıcı, yanlış seçilirse dönüşü yok |
+| Storage — aynı bölge | ⬜ | ⬜ | **Blaze'e bağlı**, ondan önce açılmıyor |
+| Blaze + 10 € bütçe uyarısı | ⬜ | ⬜ | Storage ve Functions bunu bekliyor |
+| App Check kaydı (enforcement KAPALI) | ⬜ | ⬜ | Web reCAPTCHA Enterprise; site key `.env`'e eklenecek |
+| `ehrenweg-dev-10c28` sil | ⬜ | — | 30 gün geri alma süresi var |
+
+Sıra önemli: **Blaze → Storage**. Firestore Blaze istemiyor, ondan önce
+yapılabilir.
+
+**Faz 0'dan kalan diğerleri:**
 - `scripts/seed.ts` — demo içerik **yalnızca Firestore'a**, `seed: true` işaretli
 - `scripts/unseed.ts` — demo içeriği tek komutla silme
 - `scripts/grantAdmin.ts`
