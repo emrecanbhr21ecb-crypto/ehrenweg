@@ -11,7 +11,8 @@
  *   Faz 1 → onUserCreate, deleteMyAccount, exportMyData, setUserRole
  *   Faz 2 → submitActivity, reviewActivity, applyToActivity, decideApplication
  *           approveOrganization, setOrgMember, removeOrgMember   ✅ yazıldı
- *   Faz 3 → startAttendanceSession, getCurrentCode, submitScan, approveLateScans
+ *   Faz 3 → startAttendanceSession, getCurrentCode, submitScan, approveLateScans,
+ *           onAttendanceConfirmed, markNoShows                     ✅ yazıldı
  *   Faz 4 → issueVoucher, buyReward, getVoucherQr, redeemVoucher, revokeVoucher
  *   Faz 5 → reviewTrainerApplication
  *   Faz 6 → monthlySummary, deadlineReminders, sendAnnouncement, ai*

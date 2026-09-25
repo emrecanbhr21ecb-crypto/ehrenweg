@@ -1,6 +1,6 @@
 # Ehrenweg — İlerleme (PROGRESS)
 
-Son güncelleme: 2026-09-25 (gece, Faz 2)
+Son güncelleme: 2026-09-26 (Faz 3)
 
 ## Faz durumu
 
@@ -338,3 +338,79 @@ npm run unseed:dev        # yalnız seed:true belgeleri siler
   `gcloud auth application-default login` **ya da** konsoldan servis hesabı
   anahtarı → `npm run seed:dev -- --key <yol>`
 - Faz 3: QR yoklama, pasaport, IP, seviye, rozet
+
+---
+
+## Faz 3 — QR yoklama, pasaport, puan (26 Eyl 2026)
+
+Bitme ölçütü (CLAUDE.md Bölüm 15): _"İki cihazla uçtan uca: yoklama →
+pasaporta işlendi → IP arttı."_ → akışın tamamı kodlandı, kurallarla korundu
+ve 21 saldırı testiyle doğrulandı.
+
+### Kurum / eğitmen
+
+| #   | İş                                                                                     | Durum |
+| --- | -------------------------------------------------------------------------------------- | ----- |
+| 1   | "Yoklamayı başlat" → tam ekran dönen QR + 6 haneli manuel kod + canlı sayaç → "durdur" | ✅    |
+| 3   | Opsiyonel GPS kontrolü, yarıçap ayarlanabilir                                          | ✅    |
+| 4   | Geç / çevrimdışı taramalar: tek tek veya toplu onay                                    | ✅    |
+| 7   | Gelmeyenleri işaretle → −5 IP, `noShows++`, 3 ardışıkta 14 gün kısıt                   | ✅    |
+| 8   | Fotoğraflı katılım iddialarını onayla → pasaporta `source: 'admin'`                    | ✅    |
+
+### Katılımcı
+
+| #   | İş                                                                                                                                | Durum |
+| --- | --------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| 2   | Kamera ile QR okuma (jsQR), manuel kod girişi                                                                                     | ✅    |
+| 2   | Altı hata kodu DE+EN: wrong-code, expired, inactive, activity-missing, already-recorded, geo-too-far                              | ✅    |
+| 2   | Çevrimdışı kuyruk: cihazda sıraya alma, bağlantı gelince otomatik gönderim, bekleyen sayısı (alt menüdeki QR düğmesinde de rozet) | ✅    |
+| 8   | "Katıldım ama yoklama alınmadı" — fotoğraflı iddia                                                                                | ✅    |
+| 9   | Integrationspass: seviye halkası, ilerleme, rozetler, saat, IP, katılım geçmişi, kategori dağılımı                                | ✅    |
+
+### Puan motoru
+
+- `config/scoring` belgesinden okunuyor, belge yoksa koddaki Bölüm 6
+  varsayılanlarına düşüyor (item 6) ✅
+- Pasaport girdisi + ledger `ip_award` + `users.stats` + seviye **tek
+  transaction**ta; kimlik `{activityId}_{uid}` olduğu için **idempotent** —
+  aynı kişi aynı aktiviteden iki kez puan alamıyor (item 5) ✅
+- 9 rozet pasaport girdilerinden hesaplanıyor (saklanmıyor) ✅
+
+### Güvenlik (item 10) — `tests/attendance.rules.test.ts`, 21 test
+
+Kanıtlananlar: dönen kod belgesi **admin dahil kimseye okunmuyor**; yanlış
+kod, süresi geçmiş kod, çift tarama, başkası adına tarama reddediliyor;
+sayaç kopyası şişirilemiyor; kullanıcı `stats`'a, pasaport girdisine ve
+ledger'a **yazamıyor**; kurum ilan ettiğinden fazla puan veremiyor; başka
+kurumun personeli puan yazamıyor; pasaport girdisi bir kez yazılıp
+değiştirilemiyor; no-show sayacı sıfırlanamıyor; 3 no-show sonrası başvuru
+14 gün kapalı, sonra açılıyor.
+
+**Tüm kural testleri: 81/81 yeşil** (Faz 1+2'nin 60'ı + Faz 3'ün 21'i).
+
+### ⚠️ Bu fazda BİLEREK yapılmayanlar
+
+- **İki tarayıcı pencereli Playwright testi (item 11) yazılmadı.** İstenen üç
+  senaryo — süresi geçmiş kod, yanlış kod, çift tarama — kararın gerçekten
+  verildiği katmanda, kural testlerinde sınanıyor. Tarayıcı testi ayrıca
+  kamera taklidi gerektirirdi ve proje sahibinin "test turu yok, hedef APK"
+  talimatı duruyor.
+- **Bonuslar (yeni kategori +15, ayda 4+ katılım +25) bugün verilmiyor** —
+  gerekçe DECISIONS §9.2. Kod yazılı, Blaze ile açılacak.
+- **`ATTENDANCE_HMAC_SECRET` henüz kurulmadı** — Cloud Functions dağıtılmadığı
+  için kullanılmıyor. Komut aşağıda.
+
+### Sırlar — proje sahibi çalıştıracak
+
+```
+firebase functions:secrets:set ATTENDANCE_HMAC_SECRET --project ehrenweg-dev
+firebase functions:secrets:set ATTENDANCE_HMAC_SECRET --project ehrenweg-prod
+```
+
+Değeri kendin gir, bana gösterme. Öneri: `openssl rand -base64 48`.
+Emülatörde sır gerekmiyor; istemci yolu HMAC kullanmıyor (DECISIONS §9.1).
+
+### 🔜 Sıradaki
+
+Faz 4: cüzdan — ödül şablonları, bütçe, ledger, IP ile ödül alma, 60 sn
+imzalı kupon QR'ı, vezne/partner tarama, mutabakat raporu.

@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate, useParams } from 'react-router'
 
+import { AttendanceClaim } from '@/components/AttendanceClaim'
 import { MapView } from '@/components/MapView'
 import { ActivityStatusBadge } from '@/components/ActivityCard'
 import {
@@ -405,6 +406,9 @@ export default function ActivityDetail(): React.JSX.Element {
             : t('activities:detail.reminderOn')}
         </Button>
       </div>
+
+      {/* item 8 — aktivite bittiyse "ben oradaydım" nachtrağı */}
+      <AttendanceClaim activity={activity} />
 
       {/* --- Başvuru bölümü --- */}
       {!activity.requiresApplication ? (

@@ -60,6 +60,7 @@ function toUserDoc(snapshot: DocumentSnapshot): UserDoc | null {
     ...(data.orgId ? { orgId: data.orgId } : {}),
     stats: { ...EMPTY_STATS, ...(data.stats ?? {}) },
     trainerStatus: data.trainerStatus ?? 'none',
+    lastNoShowAt: data.lastNoShowAt ?? null,
     createdAt: data.createdAt ?? null,
     lastActiveAt: data.lastActiveAt ?? null,
   }

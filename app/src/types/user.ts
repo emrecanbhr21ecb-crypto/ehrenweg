@@ -27,6 +27,11 @@ export const userStatsSchema = z.object({
   noShows: z.number().int().min(0),
   categoriesCount: z.number().int().min(0),
   level: z.number().int().min(1),
+  /**
+   * Ardışık no-show sayısı — CLAUDE.md Bölüm 6: "3 ardışık no-show → 14 gün
+   * başvuru kısıtı". Bir katılım gerçekleşince sıfırlanır.
+   */
+  consecutiveNoShows: z.number().int().min(0),
 })
 export type UserStats = z.infer<typeof userStatsSchema>
 
@@ -37,6 +42,7 @@ export const EMPTY_STATS: UserStats = {
   noShows: 0,
   categoriesCount: 0,
   level: 1,
+  consecutiveNoShows: 0,
 }
 
 export const trainerStatusSchema = z.enum(['none', 'pending', 'approved', 'rejected'])
@@ -86,6 +92,16 @@ export type EditableProfile = z.infer<typeof editableProfileSchema>
 /** Firestore'daki tam belge. `Timestamp` alanları istemcide salt okunur. */
 export interface UserDoc extends EditableProfile {
   email: string
+  /**
+   * Son no-show anı (CLAUDE.md Bölüm 6 cezası).
+   *
+   * Kısıt SÜRESİ saklanmıyor, başlangıcı saklanıyor: "14 gün sonrası" bir
+   * damga olarak yazılsaydı, yazan istemcinin onu doğru hesapladığına
+   * güvenmek gerekirdi. Bunun yerine kural `lastNoShowAt == request.time`
+   * diyor (uydurulamaz) ve kısıtı `consecutiveNoShows >= 3 && şimdi <
+   * lastNoShowAt + 14 gün` olarak KENDİ hesaplıyor.
+   */
+  lastNoShowAt?: Timestamp | null
   countryCode: string
   roleDisplay: string
   orgId?: string
@@ -127,6 +143,24 @@ export const DEFAULT_CLAIMS: UserClaims = {
   role: 'participant',
   orgs: {},
   emailVerified: false,
+}
+
+/**
+ * Başvuru kısıtı sürüyor mu? (CLAUDE.md Bölüm 6)
+ *
+ * `firestore.rules` içindeki aynı isimli kontrolün ikizi — arayüz kısıtı
+ * kullanıcıya nazikçe açıklayabilsin diye. Asıl engelleme kuralda.
+ */
+export const NO_SHOW_STREAK_LIMIT = 3
+export const NO_SHOW_RESTRICTION_DAYS = 14
+
+export function restrictionEndsAt(profile: UserDoc | null): Date | null {
+  if (!profile) return null
+  if (profile.stats.consecutiveNoShows < NO_SHOW_STREAK_LIMIT) return null
+  const last = profile.lastNoShowAt?.toDate?.()
+  if (!last) return null
+  const end = new Date(last.getTime() + NO_SHOW_RESTRICTION_DAYS * 86_400_000)
+  return end.getTime() > Date.now() ? end : null
 }
 
 /** Kullanıcının herhangi bir kurumda personel yetkisi var mı? */

@@ -287,6 +287,106 @@ olur, `memberRole` düşüşü fazlalık olarak kalır.
 
 ---
 
+## 9. Yoklama sunucusuz nasıl güvenli oldu (Faz 3)
+
+**Karar tarihi:** 25–26 Eylül 2026 · **Durum:** geçici, Blaze'e bağlı
+
+Faz 3'ün tamamı bir sunucu varsayıyor: HMAC'li dönen QR, `onAttendanceConfirmed`
+tetikleyicisi, `markNoShows` zamanlayıcısı. Blaze kapalı, üçü de yok. Üç ayrı
+sorunu ayrı ayrı çözmek gerekti.
+
+### 9.1 QR nasıl imzalanıyor
+
+**Sorun:** `ATTENDANCE_HMAC_SECRET`'ı istemciye koymak çözüm değil — paketten
+çıkarılır ve herkes etkinliğe hiç gitmeden geçerli QR üretir.
+
+**Çözüm:** İmza _hesaplanmıyor_, _saklanıyor._
+
+1. Kurum cihazı her turda `crypto.getRandomValues` ile tahmin edilemez bir
+   `nonce` üretip `attendanceSessions/{id}/codes/current` belgesine yazıyor.
+2. O belge **hiçbir istemciye okunmuyor** (`allow read: if false`) — admin
+   dahil. Testle kanıtlı.
+3. Katılımcı taradığı `nonce`'u kaydına yazıyor; **kural** belgeyi `get()` ile
+   okuyup karşılaştırıyor. Firestore kuralları okuma izinlerine tabi değildir,
+   yani "kimse okuyamaz ama doğrulama yine sunucuda yapılır" mümkün oluyor.
+
+Sonuç HMAC'lisiyle aynı: kod tahmin edilemez, uzaktan okunamaz, 30 saniyede
+ölür, ekran görüntüsü işe yaramaz. 6 haneli manuel kod da aynı okunamayan
+belgede duruyor — oturum belgesinde olsaydı katılımcı okuyup evinden yoklama
+verebilirdi (bu yüzden Bölüm 5'teki `manualCode` alanı oturum belgesinde
+DEĞİL).
+
+### 9.2 Puanı kim yazıyor
+
+**Sorun:** `onAttendanceConfirmed` yok. Katılımcıya yazdırmak yasak (Bölüm 5:
+"Kullanıcı bunu ASLA doğrudan yazamaz").
+
+**Çözüm:** Puanı **kurum personelinin cihazı** yazıyor — zaten yoklama
+ekranında canlı listeyi izleyen taraf o. Yetki kuralla iğne deliğine
+sıkıştırıldı:
+
+| Kısıt                         | Nasıl                                          |
+| ----------------------------- | ---------------------------------------------- |
+| Kişi başı bir kez             | girdi kimliği `{activityId}_{uid}` sabit       |
+| İlan edilenden fazla puan yok | `ipAwarded == activity.rewards.ip`             |
+| Saat uydurulamaz              | `hours == activity.hoursCredited`              |
+| Dayanaksız puan yok           | o kişinin `confirmed` yoklama kaydı ŞART       |
+| Sayaç deltası birebir         | `getAfter()` ile aynı commit'teki girdiden     |
+| Seviye şişirilemez            | `allowedLevel()` eşik tablosu kuralda          |
+| Defter ayrışamaz              | ledger tutarı girdiyle aynı olmak zorunda      |
+| Geçmiş değişmez               | pasaport girdisinde `update, delete: if false` |
+
+Kötü niyetli bir kurum bile ancak kendi aktivitesinin ilan ettiği puanı, kişi
+başı bir kez verebiliyor — gerçek tasarımda da sahip olduğu güç bu kadar.
+
+**Kurum `users` belgesini okuyamadığı için** (veri minimizasyonu) yeni seviyeyi
+hesaplayacak eski toplamlara ihtiyacı var. Bu yüzden tarama kaydına bir
+`statsSnapshot` kopyalanıyor ve kural onu `get(users/{uid}).stats` ile
+karşılaştırıyor — uydurulamıyor. Sayaçlar `increment()` ile yazılıyor ki araya
+giren başka bir puan ezilmesin.
+
+**Bonuslar bu yolda UYGULANMIYOR.** "Yeni kategoride ilk katılım +15" ve "aynı
+ay 4+ katılım +25" kullanıcının tüm kurumlardaki geçmişini okumayı gerektiriyor;
+kural bunu doğrulayamaz, yani kurum bonusu uydurup puan şişirebilirdi. Bonuslar
+`functions/src/attendance.ts` içinde yazılı ve Blaze açıldığı gün devreye
+girecek. Bugün herkes temel puanı alıyor.
+
+### 9.3 No-show cezası ve kısıt
+
+`markNoShows` zamanlayıcısı yerine kurum personeli "gelmeyenleri işaretle"
+diyor. Kural cezayı doğruluyor: aktivite bu kurumun olmalı, BİTMİŞ olmalı,
+kişinin KABUL EDİLMİŞ başvurusu olmalı.
+
+Kısıtın bitiş tarihi saklanmıyor, **başlangıcı** saklanıyor. `lastNoShowAt ==
+request.time` şartı damgayı uydurulamaz kılıyor; kural kısıtı
+`consecutiveNoShows >= 3 && şimdi < lastNoShowAt + 14 gün` olarak kendisi
+hesaplıyor. Bitiş damgası yazılsaydı, onu yazan istemcinin doğru hesapladığına
+güvenmek gerekirdi.
+
+Bakiyesi cezadan azsa kural `ip >= 0` şartında reddediyor; bu durumda istemci
+puan kesmeden yalnız sayacı artırıyor. Hiçbir şeyi olmayandan puan kesmenin
+anlamı yok.
+
+### 9.4 Kanıt fotoğrafı
+
+Storage Blaze istiyor. "Katıldım ama yoklama alınmadı" iddiasının fotoğrafı bu
+yüzden istemcide 800 piksele küçültülüp JPEG olarak **belgeye** data URL
+şeklinde yazılıyor (kural 500 kB ile sınırlıyor, Firestore sınırı 1 MB).
+Blaze açılınca alan Storage yoluna döner.
+
+### Blaze açıldığında
+
+`app/src/lib/backend.ts` → `CLOUD_FUNCTIONS_ENABLED = true`. Kuraldaki istemci
+yazma izinleri `if false` olur. QR yükü biçimi DEĞİŞMEZ — okuyucu kodu aynı
+kalır. Sır kurulumu:
+
+```
+firebase functions:secrets:set ATTENDANCE_HMAC_SECRET --project ehrenweg-dev
+firebase functions:secrets:set ATTENDANCE_HMAC_SECRET --project ehrenweg-prod
+```
+
+---
+
 ## Değişiklik günlüğü (devam)
 
 - **2026-09-25 (akşam)** — Faz 1 kodlandı: auth (e-posta/şifre + Google),
@@ -303,3 +403,7 @@ olur, `memberRole` düşüşü fazlalık olarak kalır.
   Proje sahibinin talimatıyla bu fazda **otomatik test yazılmadı**
   (kural testleri ve Playwright e2e atlandı); hedef yatırımcıya
   gösterilebilir dolu bir uygulama.
+- **2026-09-26** — Faz 3 kodlandı: dönen QR'lı yoklama, manuel kod, çevrimdışı
+  kuyruk, opsiyonel GPS, geç onay, pasaport/IP/seviye/rozet, no-show cezası,
+  fotoğraflı katılım iddiası. Bölüm 9'daki üç sapma bu sırada verildi.
+  Kural testleri **81/81 yeşil** (21'i Faz 3'ün saldırı senaryoları).

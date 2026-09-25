@@ -184,9 +184,7 @@ describe('users — profil', () => {
 
   it('🔒 kullanıcı başkasının profilini güncelleyemez', async () => {
     const db = env.authenticatedContext(UID.alice, CLAIMS.participant).firestore()
-    await assertFails(
-      updateDoc(doc(db, 'users', UID.bob), { displayName: 'Gehackt' }),
-    )
+    await assertFails(updateDoc(doc(db, 'users', UID.bob), { displayName: 'Gehackt' }))
   })
 
   it('🔒 kullanıcı kendine şişirilmiş puanla profil oluşturamaz', async () => {
@@ -283,10 +281,7 @@ describe('users — kayıtta profil oluşturma (istemci)', () => {
   it('🔒 kendini onaylı eğitmen olarak oluşturamaz', async () => {
     const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
     await assertFails(
-      setDoc(
-        doc(db, 'users', NEW_UID),
-        freshProfile({ trainerStatus: 'approved' }),
-      ),
+      setDoc(doc(db, 'users', NEW_UID), freshProfile({ trainerStatus: 'approved' })),
     )
   })
 
@@ -303,10 +298,7 @@ describe('users — kayıtta profil oluşturma (istemci)', () => {
   it('🔒 kendini bir kuruma üye olarak oluşturamaz', async () => {
     const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
     await assertFails(
-      setDoc(
-        doc(db, 'users', NEW_UID),
-        freshProfile({ orgId: ORG.neukoelln }),
-      ),
+      setDoc(doc(db, 'users', NEW_UID), freshProfile({ orgId: ORG.neukoelln })),
     )
   })
 
@@ -327,11 +319,9 @@ describe('users — kayıtta profil oluşturma (istemci)', () => {
     )
   })
 
-  it('🔒 başkasının uid\'si için profil oluşturamaz', async () => {
+  it("🔒 başkasının uid'si için profil oluşturamaz", async () => {
     const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
-    await assertFails(
-      setDoc(doc(db, 'users', 'uid_fremd'), freshProfile()),
-    )
+    await assertFails(setDoc(doc(db, 'users', 'uid_fremd'), freshProfile()))
   })
 
   it('🔒 giriş yapmamış biri profil oluşturamaz', async () => {
@@ -502,14 +492,58 @@ describe('passportEntries — Integrationspass', () => {
 })
 
 describe('pendingClaims — "katıldım" iddiası', () => {
-  it('doğrulanmış kullanıcı kendi iddiasını oluşturabilir', async () => {
+  // ⚠️ Faz 3'te kural sıkılaştı: belge kimliği `{activityId}_{uid}` olmak
+  // zorunda, `orgId` aktivitenin kurumuyla eşleşmeli, aktivite BİTMİŞ olmalı
+  // ve kanıt fotoğrafı belgede (Storage yok — docs/DECISIONS.md §7).
+  // Ayrıntılı senaryolar tests/attendance.rules.test.ts içinde.
+  it('doğrulanmış kullanıcı bitmiş aktivite için kendi iddiasını oluşturabilir', async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), 'activities', 'act_finished'), {
+        orgId: ORG.neukoelln,
+        status: 'completed',
+        title: { de: 'Biten', en: 'Finished' },
+        categoryId: 'environment',
+        startAt: new Date(Date.now() - 7_200_000),
+        endAt: new Date(Date.now() - 3_600_000),
+        rewards: { ip: 10 },
+        hoursCredited: 2,
+        stats: { applicants: 0, attendees: 0 },
+      })
+    })
+
     const db = env.authenticatedContext(UID.alice, CLAIMS.participant).firestore()
     await assertSucceeds(
-      setDoc(doc(db, 'pendingClaims', 'claim_1'), {
+      setDoc(doc(db, 'pendingClaims', `act_finished_${UID.alice}`), {
         uid: UID.alice,
-        activityId: 'act_published',
+        displayName: 'Alice',
+        activityId: 'act_finished',
+        orgId: ORG.neukoelln,
+        activityTitle: 'Biten',
+        note: '',
+        photoDataUrl: 'data:image/jpeg;base64,AAAA',
         status: 'pending',
-        proofURL: 'claims/uid_alice/claim_1/proof.jpg',
+        reviewedBy: null,
+        reviewedAt: null,
+        reviewNote: '',
+      }),
+    )
+  })
+
+  it('🔒 aktivite BİTMEDEN iddia açılamaz (önce git, yoklama ver)', async () => {
+    const db = env.authenticatedContext(UID.alice, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(doc(db, 'pendingClaims', `act_published_${UID.alice}`), {
+        uid: UID.alice,
+        displayName: 'Alice',
+        activityId: 'act_published',
+        orgId: ORG.neukoelln,
+        activityTitle: 'Hasenheide',
+        note: '',
+        photoDataUrl: 'data:image/jpeg;base64,AAAA',
+        status: 'pending',
+        reviewedBy: null,
+        reviewedAt: null,
+        reviewNote: '',
       }),
     )
   })
@@ -581,9 +615,7 @@ describe('vouchers + ledger — para 💶', () => {
 
   it('🔒 vezne görevlisi bile kuponu doğrudan işaretleyemez (redeemVoucher gerekli)', async () => {
     const db = env.authenticatedContext(UID.cashier, CLAIMS.cashier).firestore()
-    await assertFails(
-      updateDoc(doc(db, 'vouchers', 'vch_1'), { status: 'redeemed' }),
-    )
+    await assertFails(updateDoc(doc(db, 'vouchers', 'vch_1'), { status: 'redeemed' }))
   })
 
   it('kendi ledger satırını okur', async () => {

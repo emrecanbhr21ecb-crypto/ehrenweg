@@ -109,6 +109,57 @@ service cloud.firestore {
       return !(field in request.resource.data.diff(resource.data).affectedKeys());
     }
 
+    // ---------------------------------------------------------------------
+    // Seviye eşikleri — CLAUDE.md Bölüm 6 tablosu.
+    //
+    // ⚠️ app/src/config/scoring.ts `levelFor()` ile AYNI mantık. Ayrılırlarsa
+    // istemci bir seviye yazar, kural reddeder ve katılım hiç işlenmez.
+    // ---------------------------------------------------------------------
+    function allowedLevel(stats) {
+      return stats.activitiesCompleted >= 30 && stats.hours >= 120 ? 5
+           : stats.activitiesCompleted >= 15 && stats.hours >= 50
+             && stats.categoriesCount >= 3 ? 4
+           : stats.activitiesCompleted >= 8 && stats.hours >= 20 ? 3
+           : stats.activitiesCompleted >= 3 ? 2
+           : 1;
+    }
+
+    // Katılım puanı yazılırken sayaçlar tam olarak girdi kadar artmalı.
+    function awardStatsDelta(before, after, entry) {
+      return after.ip == before.ip + entry.ipAwarded
+             && after.hours == before.hours + entry.hours
+             && after.activitiesCompleted == before.activitiesCompleted + 1
+             && after.categoriesCount >= before.categoriesCount
+             && after.categoriesCount <= before.categoriesCount + 1
+             && after.noShows == before.noShows
+             // Katılım gerçekleşti → no-show serisi sıfırlanır (Bölüm 6).
+             && after.consecutiveNoShows == 0
+             && after.level >= 1
+             && after.level <= allowedLevel(after);
+    }
+
+    // No-show: yalnız sayaçlar artar, puan ASLA artmaz ve eksiye düşmez.
+    function noShowStatsDelta(before, after) {
+      return after.noShows == before.noShows + 1
+             && after.consecutiveNoShows == before.consecutiveNoShows + 1
+             && after.activitiesCompleted == before.activitiesCompleted
+             && after.hours == before.hours
+             && after.categoriesCount == before.categoriesCount
+             && after.level == before.level
+             && after.ip >= 0
+             && after.ip <= before.ip;
+    }
+
+    // Başvuru kısıtı sürüyor mu? (CLAUDE.md Bölüm 6: 3 ardışık no-show →
+    // 14 gün). Damga `request.time` ile yazıldığı için uydurulamaz.
+    function notRestricted(userId) {
+      let path = /databases/$(database)/documents/users/$(userId);
+      let user = get(path).data;
+      return !(user.stats.get('consecutiveNoShows', 0) >= 3)
+             || user.get('lastNoShowAt', null) == null
+             || request.time > user.lastNoShowAt + duration.value(14, 'd');
+    }
+
     // Kurum belgesi — aktivite kuralları doğrulama durumunu buradan okur.
     // (Aynı get() bir değerlendirme içinde önbelleklenir, tekrar ücret yok.)
     function orgDoc(orgId) {
@@ -164,12 +215,78 @@ service cloud.firestore {
 
       // Kullanıcı yalnızca şu alanları değiştirebilir (CLAUDE.md Bölüm 14).
       // stats, trainerStatus, orgId, roleDisplay, createdAt → SUNUCU ALANLARI.
+      //
+      // 🔒 `stats` BU LİSTEDE YOK ve asla olmayacak. Kullanıcı kendine puan,
+      // saat, seviye ya da katılım yazamaz. tests/attendance.rules.test.ts
+      // bunu saldırı senaryolarıyla kanıtlıyor.
       allow update: if isSelf(userId)
                     && onlyFields([
                          'displayName', 'bio', 'skills', 'interests',
                          'languages', 'locale', 'photoURL', 'city',
                          'lastActiveAt'
                        ]);
+
+      // ---------------------------------------------------------------
+      // PUAN YAZIMI — kurum personeli (docs/DECISIONS.md §9)
+      //
+      // CLAUDE.md Bölüm 12 bunu `onAttendanceConfirmed` tetikleyicisine
+      // veriyor. Blaze kapalı, tetikleyici yok; puanı kurum personelinin
+      // cihazı yazıyor. Yetki üç şartla iğne deliğine sıkıştırıldı:
+      //
+      //   1. AYNI COMMIT'te bir pasaport girdisi açılmış olmalı (getAfter),
+      //   2. sayaçlardaki artış o girdinin değerleriyle BİREBİR aynı olmalı,
+      //   3. yeni seviye eşik tablosunun izin verdiğinden büyük olamaz.
+      //
+      // Yani kurum "şu kişiye 500 puan" diyemiyor; yalnız kendi
+      // aktivitesinin ilan ettiği puanı, kişi başı bir kez verebiliyor —
+      // girdi kimliği `{activityId}_{uid}` sabit olduğu için ikinci kez
+      // yazmak da mümkün değil.
+      //
+      // `lastAwardId` hangi girdinin yazıldığını söyler; olmadan kural
+      // hangi belgeye bakacağını bilemezdi.
+      // ---------------------------------------------------------------
+      function awardedEntry() {
+        return getAfter(/databases/$(database)/documents/passportEntries/$(request.resource.data.lastAwardId)).data;
+      }
+
+      allow update: if signedIn()
+                    && onlyFields(['stats', 'lastAwardId'])
+                    && request.resource.data.lastAwardId is string
+                    && awardedEntry().uid == userId
+                    && orgStaff(awardedEntry().orgId)
+                    && awardStatsDelta(resource.data.stats,
+                                       request.resource.data.stats,
+                                       awardedEntry());
+
+      // ---------------------------------------------------------------
+      // NO-SHOW CEZASI — CLAUDE.md Bölüm 6 (item 7)
+      //
+      // Hangi aktiviteden dolayı ceza verildiği `lastNoShowActivityId` ile
+      // söyleniyor ve kural onu doğruluyor: aktivite bu kurumun olmalı,
+      // BİTMİŞ olmalı, kişinin de o aktivitede KABUL EDİLMİŞ başvurusu
+      // olmalı. Rastgele bir kullanıcıya ceza yazılamıyor.
+      //
+      // `lastNoShowAt == request.time` şartı da kritik: ileri tarihli bir
+      // damga yazılıp kısıt süresi uzatılamıyor. Kısıt ayrı bir alan
+      // değil, bu damgadan hesaplanıyor (bkz. notRestricted()).
+      // ---------------------------------------------------------------
+      function noShowActivity() {
+        return get(/databases/$(database)/documents/activities/$(request.resource.data.lastNoShowActivityId)).data;
+      }
+
+      function wasAccepted(activityId) {
+        let path = /databases/$(database)/documents/activities/$(activityId)/applicants/$(userId);
+        return exists(path) && get(path).data.status == 'accepted';
+      }
+
+      allow update: if signedIn()
+                    && onlyFields(['stats', 'lastNoShowAt', 'lastNoShowActivityId'])
+                    && request.resource.data.lastNoShowAt == request.time
+                    && orgStaff(noShowActivity().orgId)
+                    && noShowActivity().endAt < request.time
+                    && wasAccepted(request.resource.data.lastNoShowActivityId)
+                    && noShowStatsDelta(resource.data.stats,
+                                        request.resource.data.stats);
 
       // users/{uid}/private/** — bildirim tercihleri, push token'ları
       match /private/{docId} {
@@ -456,6 +573,8 @@ service cloud.firestore {
 
         allow create: if isSelf(applicantUid)
                       && verified()
+                      // CLAUDE.md Bölüm 6: 3 ardışık no-show → 14 gün kısıt.
+                      && notRestricted(applicantUid)
                       && act().status == 'published'
                       && act().requiresApplication == true
                       && act().stats.applicants < act().capacity
@@ -503,16 +622,43 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     match /attendanceSessions/{sessionId} {
       // Katılımcının oturumun AÇIK olduğunu görmesi yeterli; kodu GÖRMEZ.
+      // (Kod ayrı bir alt belgede ve o belge hiçbir istemciye okunmuyor.)
       allow get: if signedIn();
       allow list: if signedIn() && orgStaff(resource.data.orgId);
-      allow write: if false;
 
-      // 🔒 KRİTİK: dönen QR kodları HİÇBİR istemciye okunmaz.
+      // `startAttendanceSession` — yalnız kurum personeli, yalnız kendi
+      // kurumunun aktivitesi için, yalnız YAYINDAKİ aktiviteye.
+      allow create: if orgStaff(request.resource.data.orgId)
+                    && request.resource.data.startedBy == uid()
+                    && request.resource.data.active == true
+                    && request.resource.data.rotationSeconds is int
+                    && request.resource.data.rotationSeconds >= 10
+                    && request.resource.data.rotationSeconds <= 600
+                    && request.resource.data.geoRadiusMeters is int
+                    && request.resource.data.geoRadiusMeters >= 10
+                    && request.resource.data.geoRadiusMeters <= 20000
+                    && orgDoc(request.resource.data.orgId).get('verified', false) == true;
+
+      // `stopAttendanceSession` — durum kapatma ve bitiş damgası.
+      allow update: if orgStaff(resource.data.orgId)
+                    && onlyFields(['active', 'endedAt', 'rotationSeconds',
+                                   'requireGeo', 'geoRadiusMeters']);
+
+      allow delete: if false;
+
+      // 🔒 KRİTİK: dönen QR kodları HİÇBİR istemciye OKUNMAZ.
       // Okunabilseydi, etkinliğe hiç gitmeden yoklama verilebilirdi.
-      // Kod yalnızca getCurrentCode onCall ile, oturumu başlatan personele
-      // döner; katılımcı submitScan ile taradığını sunucuya gönderir.
+      //
+      // Yazma yalnız oturumu yöneten kurum personeline açık: kodu üreten
+      // taraf o. Kural bu belgeyi `get()` ile okuyup taranan kodu
+      // doğruluyor — kurallar okuma izinlerine tabi değildir, bu yüzden
+      // "kimse okuyamaz ama doğrulama yine de sunucuda yapılır" mümkün.
+      // (docs/DECISIONS.md §9)
       match /codes/{codeId} {
-        allow read, write: if false;
+        allow read: if false;
+        allow write: if orgStaff(
+                          get(/databases/$(database)/documents/attendanceSessions/$(sessionId)).data.orgId
+                        );
       }
     }
 
@@ -520,37 +666,190 @@ service cloud.firestore {
     // attendanceRecords — yoklama kayıtları
     // ---------------------------------------------------------------------
     match /attendanceRecords/{recordId} {
+
+      function session() {
+        return get(/databases/$(database)/documents/attendanceSessions/$(request.resource.data.sessionId)).data;
+      }
+
+      // Okunamayan kod belgesi — doğrulamanın kalbi.
+      function liveCode() {
+        return get(/databases/$(database)/documents/attendanceSessions/$(request.resource.data.sessionId)/codes/current).data;
+      }
+
+      function codePath() {
+        return /databases/$(database)/documents/attendanceSessions/$(request.resource.data.sessionId)/codes/current;
+      }
+
+      // Kullanıcının o anki gerçek sayaçları — kayda kopyalanan snapshot
+      // bununla karşılaştırılıyor, yani uydurulamıyor.
+      function realStats() {
+        return get(/databases/$(database)/documents/users/$(uid())).data.stats;
+      }
+
       allow get: if signedIn() && (resource.data.uid == uid()
                                    || orgStaff(resource.data.orgId)
                                    || isAdmin());
-      allow list: if signedIn() && isAdmin();
-      allow write: if false;  // yalnızca submitScan / approveLateScans
+      // Kurum kendi oturumunun/aktivitesinin kayıtlarını listeler.
+      allow list: if signedIn() && (isAdmin() || orgStaff(resource.data.orgId));
+
+      // -----------------------------------------------------------------
+      // `submitScan` — CLAUDE.md Bölüm 12 hata kodlarının kural karşılığı:
+      //   inactive        → session().active != true
+      //   expired         → request.time > liveCode().expiresAt
+      //   wrong-code      → imza/manuel kod eşleşmiyor
+      //   already-recorded→ belge kimliği sabit, ikinci create düşer
+      //
+      // Belge kimliği `{sessionId}_{uid}` olmak ZORUNDA: yoksa aynı kişi
+      // farklı kimliklerle defalarca yazılabilirdi.
+      // -----------------------------------------------------------------
+      function validQrScan() {
+        return exists(codePath())
+               && request.resource.data.signature == liveCode().nonce
+               && request.time < liveCode().expiresAt;
+      }
+
+      function validManualScan() {
+        return exists(codePath())
+               && request.resource.data.method == 'manual_code'
+               && request.resource.data.signature == liveCode().manualCode;
+      }
+
+      function scanShapeOk() {
+        return recordId == request.resource.data.sessionId + '_' + uid()
+               && request.resource.data.uid == uid()
+               && request.resource.data.orgId == session().orgId
+               && request.resource.data.activityId == session().activityId
+               && request.resource.data.awarded == false
+               && request.resource.data.statsSnapshot.ip == realStats().ip
+               && request.resource.data.statsSnapshot.hours == realStats().hours
+               && request.resource.data.statsSnapshot.activitiesCompleted
+                    == realStats().activitiesCompleted
+               && request.resource.data.statsSnapshot.categoriesCount
+                    == realStats().categoriesCount;
+      }
+
+      // Canlı tarama → doğrudan `confirmed`.
+      allow create: if verified()
+                    && scanShapeOk()
+                    && session().active == true
+                    && request.resource.data.status == 'confirmed'
+                    && (validQrScan() || validManualScan());
+
+      // Geç / çevrimdışı tarama → `pending_review`. İmza doğrulanamıyor
+      // (kod çoktan döndü), bu yüzden puan ancak kurum ONAYLARSA yazılır.
+      allow create: if verified()
+                    && scanShapeOk()
+                    && request.resource.data.status == 'pending_review'
+                    && request.resource.data.method == 'offline_late';
+
+      // `approveLateScans` — yalnız kurum personeli, yalnız durum alanları.
+      allow update: if orgStaff(resource.data.orgId)
+                    && onlyFields(['status', 'method'])
+                    && resource.data.status == 'pending_review'
+                    && request.resource.data.status in ['confirmed', 'rejected'];
+
+      // Puanlandı işareti — pasaport girdisi aynı commit'te açılmış olmalı.
+      allow update: if orgStaff(resource.data.orgId)
+                    && onlyFields(['awarded'])
+                    && request.resource.data.awarded == true;
+
+      // Kayıt SİLİNMEZ: pasaport girdisinin dayanağı bu belge.
+      allow delete: if false;
     }
 
     // ---------------------------------------------------------------------
     // passportEntries — Integrationspass girdileri
     // ---------------------------------------------------------------------
     match /passportEntries/{entryId} {
+
+      function activityOf() {
+        return get(/databases/$(database)/documents/activities/$(request.resource.data.activityId)).data;
+      }
+
+      // Katılımın DAYANAĞI: o kişinin o aktivitede onaylı yoklama kaydı.
+      function hasConfirmedAttendance() {
+        let path = /databases/$(database)/documents/attendanceRecords/$(request.resource.data.sessionId + '_' + request.resource.data.uid);
+        return exists(path) && get(path).data.status == 'confirmed';
+      }
+
       // "Kullanıcı bunu ASLA doğrudan yazamaz" (CLAUDE.md Bölüm 5).
       allow get: if signedIn() && (resource.data.uid == uid()
                                    || orgStaff(resource.data.orgId)
                                    || isAdmin());
-      allow list: if signedIn();
-      allow write: if false;
+      allow list: if signedIn() && (resource.data.uid == uid()
+                                    || orgStaff(resource.data.orgId)
+                                    || isAdmin());
+
+      // -----------------------------------------------------------------
+      // Girdiyi kurum personeli açar (docs/DECISIONS.md §9). Sınırlar:
+      //   · kimlik `{activityId}_{uid}` → kişi başı BİR kez (idempotent)
+      //   · `ipAwarded` aktivitenin ilan ettiği puana EŞİT
+      //   · `hours` aktivitenin `hoursCredited` değerine EŞİT
+      //   · 'attendance' kaynağı için onaylı yoklama kaydı ŞART
+      //   · 'admin' kaynağı için onaylanmış bir pendingClaim ŞART
+      // Güncelleme ve silme HİÇ yok: pasaport geçmişi değiştirilemez.
+      // -----------------------------------------------------------------
+      function entryShapeOk() {
+        return entryId == request.resource.data.activityId + '_' + request.resource.data.uid
+               && orgStaff(request.resource.data.orgId)
+               && request.resource.data.orgId == activityOf().orgId
+               && request.resource.data.status == 'completed'
+               && request.resource.data.ipAwarded == activityOf().rewards.ip
+               && request.resource.data.hours == activityOf().hoursCredited
+               && request.resource.data.categoryId == activityOf().categoryId;
+      }
+
+      function approvedClaim() {
+        let path = /databases/$(database)/documents/pendingClaims/$(request.resource.data.activityId + '_' + request.resource.data.uid);
+        return exists(path) && get(path).data.status == 'approved';
+      }
+
+      allow create: if entryShapeOk()
+                    && ((request.resource.data.source == 'attendance'
+                         && hasConfirmedAttendance())
+                     || (request.resource.data.source == 'admin'
+                         && approvedClaim()));
+
+      allow update, delete: if false;
     }
 
     // ---------------------------------------------------------------------
     // pendingClaims — "katıldım" iddiaları (kanıt fotoğraflı)
     // ---------------------------------------------------------------------
     match /pendingClaims/{claimId} {
-      allow get, list: if signedIn() && (resource.data.uid == uid() || isAdmin());
+      // BazaltGo'daki `bekleyenOnaylar` karşılığı: "katıldım ama yoklama
+      // alınmadı" iddiası (CLAUDE.md Bölüm 2 onay akışı).
+      allow get, list: if signedIn() && (resource.data.uid == uid()
+                                         || orgStaff(resource.data.orgId)
+                                         || isAdmin());
 
-      // Kullanıcı kendi iddiasını oluşturabilir; sonrasında DEĞİŞTİREMEZ.
-      // Onay/red admin tarafında (sunucu) yapılır.
+      function claimActivity() {
+        return get(/databases/$(database)/documents/activities/$(request.resource.data.activityId)).data;
+      }
+
+      // Kullanıcı kendi iddiasını açar; sonrasında DEĞİŞTİREMEZ.
+      // Kimlik `{activityId}_{uid}` → aktivite başına tek iddia.
+      // Aktivite bitmeden iddia açılamaz: henüz gidip yoklama verebilir.
       allow create: if verified()
+                    && claimId == request.resource.data.activityId + '_' + uid()
                     && request.resource.data.uid == uid()
-                    && request.resource.data.status == 'pending';
-      allow update, delete: if false;
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.reviewedBy == null
+                    && request.resource.data.orgId == claimActivity().orgId
+                    && claimActivity().endAt < request.time
+                    // Fotoğraf Storage yerine belgede (docs/DECISIONS.md §7).
+                    // Sınır Firestore belge sınırının çok altında tutuluyor.
+                    && request.resource.data.photoDataUrl is string
+                    && request.resource.data.photoDataUrl.size() <= 500000;
+
+      // Kararı yalnız ilgili kurumun personeli verir.
+      allow update: if orgStaff(resource.data.orgId)
+                    && onlyFields(['status', 'reviewedBy', 'reviewedAt', 'reviewNote'])
+                    && resource.data.status == 'pending'
+                    && request.resource.data.status in ['approved', 'rejected']
+                    && request.resource.data.reviewedBy == uid();
+
+      allow delete: if false;
     }
 
     // ---------------------------------------------------------------------
@@ -580,12 +879,28 @@ service cloud.firestore {
     // ledger — DEĞİŞMEZ muhasebe defteri  💶
     // ---------------------------------------------------------------------
     match /ledger/{txId} {
-      // Yalnızca ekleme (sunucudan). Silme/güncelleme hiçbir koşulda yok —
+      // Yalnızca EKLEME. Silme/güncelleme hiçbir koşulda yok —
       // tutarlılık scripti defterden bakiye yeniden hesaplayabilmeli.
       allow get, list: if signedIn() && (resource.data.uid == uid()
                                          || orgAdmin(resource.data.get('orgId', ''))
                                          || isAdmin());
-      allow write: if false;
+
+      // `ip_award` kaydı yalnız aynı commit'te açılan pasaport girdisiyle
+      // birlikte yazılabilir ve tutarı o girdiyle BİREBİR aynı olmak
+      // zorunda. Defter ile pasaport böylece hiç ayrışamıyor.
+      function refEntry() {
+        return getAfter(/databases/$(database)/documents/passportEntries/$(request.resource.data.refId)).data;
+      }
+
+      allow create: if request.resource.data.type == 'ip_award'
+                    && request.resource.data.currency == 'IP'
+                    && request.resource.data.actorUid == uid()
+                    && orgStaff(request.resource.data.orgId)
+                    && refEntry().uid == request.resource.data.uid
+                    && refEntry().orgId == request.resource.data.orgId
+                    && refEntry().ipAwarded == request.resource.data.amount;
+
+      allow update, delete: if false;
     }
 
     // ---------------------------------------------------------------------

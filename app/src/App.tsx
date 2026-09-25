@@ -25,9 +25,12 @@ import { LegalIndex, LegalPageView } from '@/pages/Legal'
 import ActivityForm from '@/pages/org/ActivityForm'
 import OrgApplicants from '@/pages/org/OrgApplicants'
 import OrgApply from '@/pages/org/OrgApply'
+import AttendanceSession from '@/pages/org/AttendanceSession'
+import LateScans from '@/pages/org/LateScans'
 import OrgPanel from '@/pages/org/OrgPanel'
 import { Learn, Wallet } from '@/pages/Placeholder'
 import Profile from '@/pages/Profile'
+import Scan from '@/pages/Scan'
 import ProfileEdit from '@/pages/ProfileEdit'
 import ProfileSetup from '@/pages/ProfileSetup'
 import SignIn from '@/pages/SignIn'
@@ -144,6 +147,7 @@ export default function App(): React.JSX.Element {
         <Route path="/" element={<Home />} />
         <Route path="/activities" element={<Activities />} />
         <Route path="/activities/:activityId" element={<ActivityDetail />} />
+        <Route path="/scan" element={<Scan />} />
         <Route path="/learn" element={<Learn />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/profile" element={<Profile />} />
@@ -163,6 +167,11 @@ export default function App(): React.JSX.Element {
           path="/org/activities/:activityId/applicants"
           element={<OrgApplicants />}
         />
+        <Route
+          path="/org/activities/:activityId/attendance"
+          element={<AttendanceSession />}
+        />
+        <Route path="/org/activities/:activityId/late-scans" element={<LateScans />} />
 
         {/* Yönetim yalnız platform_admin claim'iyle; menüde gizlemek yetmez,
             adres çubuğuna elle yazan kullanıcı da girememeli. */}

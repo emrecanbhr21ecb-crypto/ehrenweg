@@ -3,8 +3,8 @@
  *
  * Alt menü CLAUDE.md Bölüm 9'daki sırayı izler:
  *   Home · Activities · [Scan] · Learn · Profile
- * Ortadaki büyük QR butonu Faz 3'e kadar kapalı ama YERİ duruyor — sonradan
- * eklenince menü kayıp kullanıcının kas hafızasını bozmasın.
+ * Ortadaki büyük QR butonu Faz 3'te devreye girdi; bekleyen çevrimdışı
+ * tarama varsa üstünde sayı rozeti çıkar.
  *
  * Wallet, Kurum ve Yönetim üst başlıktaki hızlı erişimde: alt menüye altıncı
  * öğe koymak mobilde dokunma hedefini 44px'in altına düşürürdü. Kurum ve
@@ -12,11 +12,13 @@
  * kural 2: yetki kararı claim'den okunur, Firestore'daki alandan değil).
  */
 
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink } from 'react-router'
 
 import { BRAND } from '@/config/brand'
 import { useAuth } from '@/lib/AuthProvider'
+import { subscribeQueue } from '@/lib/scanQueue'
 
 interface NavItem {
   to: string
@@ -94,6 +96,11 @@ export function AppShell({
   const { t } = useTranslation()
   const { claims, orgRoles } = useAuth()
 
+  // Bekleyen çevrimdışı tarama sayısı — kullanıcı taramasının kaybolmadığını
+  // her ekranda görsün (CLAUDE.md Bölüm 9: "çevrimdışı kuyruk göstergesi").
+  const [queued, setQueued] = useState(0)
+  useEffect(() => subscribeQueue(setQueued), [])
+
   const isAdmin = claims.role === 'platform_admin'
   // Kurum rolü claim'de VEYA üyelik belgesinde olabilir (docs/DECISIONS.md §8).
   const hasOrgRole = Object.keys(orgRoles).length > 0
@@ -138,15 +145,18 @@ export function AppShell({
           ))}
 
           <li className="flex justify-center">
-            <button
-              type="button"
-              disabled
+            <NavLink
+              to="/scan"
               aria-label={t('nav.scan')}
-              title={t('soon.scanTooltip')}
-              className="-mt-6 flex size-14 items-center justify-center rounded-full bg-primary-700 text-2xl text-white shadow-lg disabled:opacity-40"
+              className="relative -mt-6 flex size-14 items-center justify-center rounded-full bg-primary-700 text-2xl text-white shadow-lg"
             >
               <span aria-hidden="true">⛶</span>
-            </button>
+              {queued > 0 && (
+                <span className="absolute -end-1 -top-1 flex min-w-6 items-center justify-center rounded-full bg-accent-500 px-1.5 text-xs font-bold text-ink-950">
+                  {queued}
+                </span>
+              )}
+            </NavLink>
           </li>
 
           {RIGHT_ITEMS.map((item) => (

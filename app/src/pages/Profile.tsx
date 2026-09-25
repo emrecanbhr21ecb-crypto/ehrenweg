@@ -12,6 +12,7 @@ import { Link, useNavigate } from 'react-router'
 
 import { LevelRing, StatTile } from '@/components/LevelRing'
 import { MyApplications } from '@/components/MyApplications'
+import { PassportDetails } from '@/components/PassportDetails'
 import { Alert, Button, Card } from '@/components/ui'
 import { CATEGORY_META } from '@/config/catalog'
 import { SUPPORTED_LOCALES, type Locale } from '@/config/brand'
@@ -99,6 +100,8 @@ export default function Profile(): React.JSX.Element {
           </Alert>
         )}
       </section>
+
+      <PassportDetails />
 
       <MyApplications />
 

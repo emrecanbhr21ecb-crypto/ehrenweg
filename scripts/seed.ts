@@ -625,6 +625,29 @@ const ACTIVITIES: SeedActivity[] = [
   },
 ]
 
+/**
+ * Puan kuralları — CLAUDE.md Bölüm 6 varsayılanları.
+ *
+ * Firestore'a yazılmasının sebebi: admin panelinden değiştirilebilsin
+ * (Bölüm 9 "puan kuralları editörü"). Uygulama belge yoksa koddaki
+ * varsayılanlara düşüyor, yani bu seed zorunlu değil — ama kuralların
+ * nereden geldiğini görünür kılıyor.
+ */
+const SCORING = {
+  maxIpPerActivity: 60,
+  ipPerHour: 10,
+  bonuses: { newCategory: 15, monthlyFour: 25, trainerMultiplier: 1.5 },
+  penalties: { noShowIp: 5, noShowStreakLimit: 3, restrictionDays: 14 },
+  levels: [
+    { level: 1, activities: 0, hours: 0, categories: 0 },
+    { level: 2, activities: 3, hours: 0, categories: 0 },
+    { level: 3, activities: 8, hours: 20, categories: 0 },
+    { level: 4, activities: 15, hours: 50, categories: 3 },
+    { level: 5, activities: 30, hours: 120, categories: 0 },
+  ],
+  version: 1,
+}
+
 // --- Yazma -----------------------------------------------------------------
 
 async function seed(): Promise<void> {
@@ -719,12 +742,18 @@ async function seed(): Promise<void> {
     )
   }
 
+  batch.set(
+    db.collection('config').doc('scoring'),
+    { ...SCORING, ...SEED },
+    { merge: true },
+  )
+
   await batch.commit()
 
   const published = ACTIVITIES.filter((a) => a.status === 'published').length
   console.log(
     `✔ ${CATEGORIES.length} kategori, ${ORGANIZATIONS.length} kurum, ` +
-      `${ACTIVITIES.length} aktivite (${published} yayında) yazıldı.`,
+      `${ACTIVITIES.length} aktivite (${published} yayında) + puan kuralları yazıldı.`,
   )
   console.log('  Hepsi `seed: true` işaretli — "npm run unseed" ile silinir.')
 }

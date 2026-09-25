@@ -59,7 +59,7 @@ function ActivitiesTab({
   orgId: string
   canPublish: boolean
 }): React.JSX.Element {
-  const { t } = useTranslation(['manage', 'common'])
+  const { t } = useTranslation(['manage', 'common', 'attendance'])
   const [activities, setActivities] = useState<Activity[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -152,6 +152,14 @@ function ActivitiesTab({
                         {activity.stats.applicants})
                       </Button>
                     </Link>
+
+                    {/* Yoklama yalnız YAYINDAKİ aktivitede açılır: taslakta
+                        kimse yok, iptal edilende olmamalı. */}
+                    {activity.status === 'published' && (
+                      <Link to={`/org/activities/${activity.id}/attendance`}>
+                        <Button>⛶ {t('attendance:session.title')}</Button>
+                      </Link>
+                    )}
 
                     {activity.status === 'draft' && (
                       <Button

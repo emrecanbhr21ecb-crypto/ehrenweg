@@ -15,12 +15,14 @@ import { initReactI18next } from 'react-i18next'
 import { DEFAULT_LOCALE, isRtl, SUPPORTED_LOCALES, type Locale } from '@/config/brand'
 
 import deActivities from '@/locales/de/activities.json'
+import deAttendance from '@/locales/de/attendance.json'
 import deCatalog from '@/locales/de/catalog.json'
 import deCommon from '@/locales/de/common.json'
 import deErrors from '@/locales/de/errors.json'
 import deLegal from '@/locales/de/legal.json'
 import deManage from '@/locales/de/manage.json'
 import enActivities from '@/locales/en/activities.json'
+import enAttendance from '@/locales/en/attendance.json'
 import enCatalog from '@/locales/en/catalog.json'
 import enCommon from '@/locales/en/common.json'
 import enErrors from '@/locales/en/errors.json'
@@ -34,6 +36,7 @@ export const NAMESPACES = [
   'legal',
   'activities',
   'manage',
+  'attendance',
 ] as const
 export type Namespace = (typeof NAMESPACES)[number]
 
@@ -45,6 +48,7 @@ export const resources = {
     legal: deLegal,
     activities: deActivities,
     manage: deManage,
+    attendance: deAttendance,
   },
   en: {
     common: enCommon,
@@ -53,6 +57,7 @@ export const resources = {
     legal: enLegal,
     activities: enActivities,
     manage: enManage,
+    attendance: enAttendance,
   },
 } as const
 
