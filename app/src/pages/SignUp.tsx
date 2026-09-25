@@ -14,11 +14,11 @@ import { Link, useNavigate } from 'react-router'
 import { Alert, Button, Card, TextField } from '@/components/ui'
 import { BRAND } from '@/config/brand'
 import {
-  AuthError,
   MIN_PASSWORD_LENGTH,
   signInWithGoogle,
   signUpWithEmail,
 } from '@/lib/authService'
+import { resolveErrorKey } from '@/lib/errorKey'
 import { ensureUserProfile } from '@/lib/userProfile'
 import type { Locale } from '@/config/brand'
 
@@ -42,12 +42,9 @@ export default function SignUp(): React.JSX.Element {
     termsAccepted
 
   function reportError(caught: unknown): void {
-    if (caught instanceof AuthError) {
-      setError(t(caught.i18nKey, { ns: 'errors' }))
-    } else {
-      setError(t('auth.unknown', { ns: 'errors' }))
-      console.error('[signup]', caught)
-    }
+    // Kaynak neresi olursa olsun (Auth mı, Firestore mu) doğru mesaj çıksın.
+    console.error('[signup]', caught)
+    setError(t(resolveErrorKey(caught), { ns: 'errors' }))
   }
 
   async function handleEmailSignUp(event: React.FormEvent): Promise<void> {

@@ -11,11 +11,11 @@ import { Link, useNavigate } from 'react-router'
 
 import { Alert, Button, Card, TextField } from '@/components/ui'
 import {
-  AuthError,
   requestPasswordReset,
   signInWithEmail,
   signInWithGoogle,
 } from '@/lib/authService'
+import { resolveErrorKey } from '@/lib/errorKey'
 import { ensureUserProfile } from '@/lib/userProfile'
 import type { Locale } from '@/config/brand'
 
@@ -31,12 +31,8 @@ export default function SignIn(): React.JSX.Element {
   const [resetMode, setResetMode] = useState(false)
 
   function reportError(caught: unknown): void {
-    if (caught instanceof AuthError) {
-      setError(t(caught.i18nKey, { ns: 'errors' }))
-    } else {
-      setError(t('auth.unknown', { ns: 'errors' }))
-      console.error('[signin]', caught)
-    }
+    console.error('[signin]', caught)
+    setError(t(resolveErrorKey(caught), { ns: 'errors' }))
   }
 
   async function handleSubmit(event: React.FormEvent): Promise<void> {
