@@ -23,7 +23,7 @@
   "state": {
     "loading": "Loading …",
     "empty": "Nothing here yet.",
-    "offline": "You are offline. Your input is saved and will be sent later."
+    "offline": "No internet connection. Your input is saved and will be sent later."
   },
   "language": {
     "label": "Language",
@@ -34,10 +34,138 @@
     "label": "Appearance",
     "light": "Light",
     "dark": "Dark",
-    "system": "System"
+    "system": "System setting"
   },
   "a11y": {
     "skipToContent": "Skip to content",
     "mainNavigation": "Main navigation"
+  },
+  "onboarding": {
+    "find": {
+      "emoji": "🔎",
+      "title": "Find what fits you",
+      "body": "Volunteering and courses from cities and associations near you – filtered by topic, language and distance."
+    },
+    "join": {
+      "emoji": "🤝",
+      "title": "Just take part",
+      "body": "Sign up, show up, scan the QR code on site. Your attendance is confirmed straight away."
+    },
+    "collect": {
+      "emoji": "🎫",
+      "title": "Build your integration passport",
+      "body": "Every session earns points, hours and proof – for you, for authorities and for job applications."
+    },
+    "progress": "Step {{current}} of {{total}}",
+    "skip": "Skip",
+    "createAccount": "Create account",
+    "haveAccount": "I already have an account"
+  },
+  "auth": {
+    "signUpTitle": "Create account",
+    "signUpSubtitle": "Free. All you need is an email address.",
+    "signInTitle": "Sign in",
+    "signInSubtitle": "Welcome back.",
+    "displayName": "Name",
+    "displayNameHint": "This is how organisations see you. A first name is enough.",
+    "email": "Email",
+    "password": "Password",
+    "passwordHint": "At least {{count}} characters.",
+    "ageConfirm": "I am at least 16 years old.",
+    "termsPrefix": "I have read the",
+    "privacyLink": "privacy policy",
+    "termsAnd": "and the",
+    "termsLink": "terms of use",
+    "signUpAction": "Sign up",
+    "signInAction": "Sign in",
+    "signOut": "Sign out",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "haveAccountQuestion": "Already have an account?",
+    "noAccountQuestion": "No account yet?",
+    "forgotPassword": "Forgot your password?",
+    "resetTitle": "Reset password",
+    "resetSubtitle": "We'll send you a reset link.",
+    "resetAction": "Send link",
+    "resetSent": "If an account exists for this email, the link is on its way.",
+    "verifyTitle": "Confirm your email",
+    "verifyBody": "We sent an email to {{email}}. Open the link inside and you're good to go.",
+    "verifyCheck": "I've confirmed it",
+    "resendVerification": "Send email again",
+    "resendIn": "Resend in {{seconds}} s",
+    "verificationResent": "Email sent again.",
+    "stillNotVerified": "Not confirmed yet. Check your spam folder too.",
+    "verifySpamHint": "No email? Check your spam folder or send it again."
+  },
+  "setup": {
+    "stepLabel": "Step {{current}} of {{total}}",
+    "step1Title": "Tell us about you",
+    "step1Subtitle": "Only the essentials – you can change everything later.",
+    "step2Title": "What are you interested in?",
+    "step2Subtitle": "We'll suggest activities that match.",
+    "finish": "Done – let's go"
+  },
+  "home": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "greetingFallback": "Welcome",
+    "summaryTitle": "Your progress",
+    "upcomingTitle": "Your next dates",
+    "noUpcoming": "You haven't signed up for anything yet. Have a look – every pair of hands is needed in your city.",
+    "browseActivities": "Browse activities",
+    "yourInterests": "Your interests",
+    "interestsHint": "Suggestions are built on these.",
+    "editInterests": "change"
+  },
+  "passport": {
+    "title": "Integration passport",
+    "level": "Level",
+    "ip": "Points",
+    "hours": "Hours",
+    "activities": "Sessions",
+    "ringLabel": "Level {{level}}, {{name}}. {{percent}} percent towards the next level.",
+    "nextLevel": "{{activities}} more sessions to {{name}}",
+    "maxLevel": "Highest level reached.",
+    "emptyHint": "Your passport fills up as soon as you attend your first activity."
+  },
+  "levels": {
+    "1": "Newcomer",
+    "2": "Engaged",
+    "3": "Bridge Builder",
+    "4": "Mentor",
+    "5": "Ambassador"
+  },
+  "roles": {
+    "participant": "Participant",
+    "trainer": "Trainer",
+    "platform_admin": "Administration"
+  },
+  "profile": {
+    "edit": "Edit profile",
+    "city": "City",
+    "cityHint": "Helps us find activities near you.",
+    "bio": "About me",
+    "bioHint": "Optional. What would you like to contribute?",
+    "languages": "Languages",
+    "skills": "Skills",
+    "interests": "Interests",
+    "settings": "Settings",
+    "accountEmail": "Signed in as {{email}}",
+    "legalLinks": "Imprint & privacy"
+  },
+  "legal": {
+    "imprint": "Imprint",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "contact": "Questions? Write to us at {{email}}"
+  },
+  "soon": {
+    "activities": "Volunteering and courses near you will appear here – with list, map and filters. This section is coming in the next development step.",
+    "learn": "Language courses, application training and workshops from verified trainers – in preparation.",
+    "wallet": "Your points, rewards and vouchers collect here once you start attending activities.",
+    "scanTooltip": "QR attendance is coming soon."
   }
 }

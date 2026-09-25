@@ -101,8 +101,36 @@ service cloud.firestore {
       allow get: if isSelf(userId) || isAdmin();
       allow list: if isAdmin();
 
-      // Belgeyi Cloud Function (onUserCreate) oluşturur; istemci OLUŞTURAMAZ.
-      allow create: if false;
+      // ---------------------------------------------------------------
+      // OLUŞTURMA — bilinçli sapma (DECISIONS.md §6).
+      //
+      // CLAUDE.md profil belgesini `onUserCreate` Cloud Function'ına
+      // yaptırıyor. Cloud Functions Blaze planı istiyor; proje sahibi pilot
+      // öncesi Blaze'i açmadı. Bu yüzden belgeyi istemci oluşturuyor ve
+      // güvenlik buraya yıkılıyor: yalnız kendi belgesi, yalnız izinli
+      // alanlar, sayaçlar SIFIR, rol alanları sabit.
+      //
+      // Kullanıcının kendine puan/seviye/rol basması bu üç koşulla engellenir:
+      //   stats == sıfır, trainerStatus == 'none', roleDisplay == 'participant'
+      // Blaze açılınca bu kural tekrar `if false` olacak.
+      // ---------------------------------------------------------------
+      allow create: if isSelf(userId)
+                    && request.resource.data.keys().hasOnly([
+                         'displayName', 'bio', 'skills', 'interests',
+                         'languages', 'locale', 'photoURL', 'city',
+                         'email', 'countryCode', 'roleDisplay',
+                         'stats', 'trainerStatus', 'createdAt', 'lastActiveAt'
+                       ])
+                    && request.resource.data.stats == {
+                         'ip': 0, 'hours': 0, 'activitiesCompleted': 0,
+                         'noShows': 0, 'categoriesCount': 0, 'level': 1
+                       }
+                    && request.resource.data.trainerStatus == 'none'
+                    && request.resource.data.roleDisplay == 'participant'
+                    && request.resource.data.email == request.auth.token.email
+                    // orgId hiç gönderilemez — kurum üyeliği yalnız sunucudan.
+                    && !('orgId' in request.resource.data);
+
       allow delete: if false;
 
       // Kullanıcı yalnızca şu alanları değiştirebilir (CLAUDE.md Bölüm 14).

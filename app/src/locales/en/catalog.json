@@ -1,0 +1,74 @@
+{
+  "interests": {
+    "legend": "Interests",
+    "hint": "Pick at least one. We'll suggest activities that match."
+  },
+  "categories": {
+    "environment": "Environment & nature",
+    "elderly_care": "Older people",
+    "language_teaching": "Teaching language",
+    "language_learning": "Learning language",
+    "children_youth": "Children & youth",
+    "culture": "Culture",
+    "sports": "Sports",
+    "digital_skills": "Digital skills",
+    "community": "Neighbourhood",
+    "other": "Other"
+  },
+  "skills": {
+    "legend": "Skills",
+    "hint": "Optional. Organisations can see what you're able to help with.",
+    "teamwork": "Teamwork",
+    "communication": "Communication",
+    "organisation": "Organising",
+    "first_aid": "First aid",
+    "cooking": "Cooking",
+    "gardening": "Gardening",
+    "childcare": "Childcare",
+    "teaching": "Teaching",
+    "translating": "Translating",
+    "it_support": "IT support",
+    "social_media": "Social media",
+    "photography": "Photography",
+    "music": "Music",
+    "crafts": "Crafts",
+    "driving": "Driving",
+    "event_support": "Events"
+  },
+  "languages": {
+    "legend": "Languages you speak",
+    "hint": "Important for translations and matching activities. At least one.",
+    "add": "Add a language",
+    "choose": "Please choose …",
+    "levelFor": "Level for {{language}}",
+    "removeFor": "Remove {{language}}",
+    "levels": {
+      "A1": "A1 – Beginner",
+      "A2": "A2 – Elementary",
+      "B1": "B1 – Intermediate",
+      "B2": "B2 – Good",
+      "C1": "C1 – Very good",
+      "C2": "C2 – Near perfect",
+      "native": "Native speaker"
+    },
+    "codes": {
+      "de": "German",
+      "en": "English",
+      "ar": "Arabic",
+      "tr": "Turkish",
+      "fa": "Persian (Farsi)",
+      "ru": "Russian",
+      "uk": "Ukrainian",
+      "ps": "Pashto",
+      "so": "Somali",
+      "ti": "Tigrinya",
+      "ku": "Kurdish",
+      "fr": "French",
+      "es": "Spanish",
+      "sq": "Albanian",
+      "ro": "Romanian",
+      "pl": "Polish",
+      "other": "Other language"
+    }
+  }
+}

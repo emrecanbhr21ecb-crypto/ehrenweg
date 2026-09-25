@@ -32,9 +32,18 @@ export const ORG = {
   cafe: 'org_cafe_mosaik',
 } as const
 
-/** Claim şekilleri — functions/src/common/roles.ts ile AYNI olmalı. */
+/**
+ * Claim şekilleri — functions/src/common/roles.ts ile AYNI olmalı.
+ *
+ * `email` gerçek token'da her zaman bulunur ve profil oluşturma kuralı
+ * (users create) belgedeki e-posta ile bunun eşleşmesini şart koşar.
+ */
 export const CLAIMS = {
-  participant: { role: 'participant', email_verified: true },
+  participant: {
+    role: 'participant',
+    email_verified: true,
+    email: 'alice@example.de',
+  },
   participantUnverified: { role: 'participant', email_verified: false },
   trainer: { role: 'trainer', email_verified: true },
   staff: {

@@ -5,6 +5,36 @@
   "notFound": "Nicht gefunden.",
   "appCheckFailed": "Sicherheitsprüfung fehlgeschlagen. Bitte App neu starten.",
 
+  "auth": {
+    "emailInUse": "Für diese E-Mail gibt es schon ein Konto. Melde dich an.",
+    "invalidEmail": "Diese E-Mail-Adresse sieht nicht richtig aus.",
+    "weakPassword": "Das Passwort ist zu kurz. Nimm mindestens 8 Zeichen.",
+    "invalidCredential": "E-Mail oder Passwort stimmt nicht.",
+    "userDisabled": "Dieses Konto wurde gesperrt. Melde dich beim Support.",
+    "tooManyRequests": "Zu viele Versuche. Warte einen Moment und versuche es erneut.",
+    "network": "Keine Verbindung. Prüfe dein Internet.",
+    "popupClosed": "Das Anmeldefenster wurde geschlossen.",
+    "popupBlocked": "Dein Browser hat das Anmeldefenster blockiert. Erlaube Pop-ups und versuche es erneut.",
+    "differentProvider": "Diese E-Mail ist schon mit einer anderen Anmeldeart verknüpft.",
+    "providerDisabled": "Diese Anmeldeart ist derzeit nicht verfügbar.",
+    "requiresRecentLogin": "Aus Sicherheitsgründen: bitte melde dich neu an.",
+    "notSignedIn": "Du bist nicht angemeldet.",
+    "unknown": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
+  },
+
+  "profile": {
+    "loadFailed": "Dein Profil konnte nicht geladen werden.",
+    "createFailed": "Dein Profil konnte nicht angelegt werden. Prüfe deine Verbindung.",
+    "saveFailed": "Speichern fehlgeschlagen. Bitte versuche es erneut."
+  },
+
+  "validation": {
+    "displayNameShort": "Bitte gib mindestens 2 Zeichen ein.",
+    "displayNameLong": "Der Name ist zu lang (max. 60 Zeichen).",
+    "bioLong": "Der Text ist zu lang (max. 400 Zeichen).",
+    "cityLong": "Der Ortsname ist zu lang (max. 80 Zeichen)."
+  },
+
   "scan": {
     "wrongCode": "Dieser QR-Code gehört nicht zu Ehrenweg.",
     "expired": "Der Code ist abgelaufen. Lass dir einen neuen zeigen.",

@@ -19,17 +19,19 @@ import {
   type Locale,
 } from '@/config/brand'
 
+import deCatalog from '@/locales/de/catalog.json'
 import deCommon from '@/locales/de/common.json'
 import deErrors from '@/locales/de/errors.json'
+import enCatalog from '@/locales/en/catalog.json'
 import enCommon from '@/locales/en/common.json'
 import enErrors from '@/locales/en/errors.json'
 
-export const NAMESPACES = ['common', 'errors'] as const
+export const NAMESPACES = ['common', 'errors', 'catalog'] as const
 export type Namespace = (typeof NAMESPACES)[number]
 
 export const resources = {
-  de: { common: deCommon, errors: deErrors },
-  en: { common: enCommon, errors: enErrors },
+  de: { common: deCommon, errors: deErrors, catalog: deCatalog },
+  en: { common: enCommon, errors: enErrors, catalog: enCatalog },
 } as const
 
 /** Kullanıcının seçtiği dilin saklandığı anahtar (localStorage). */

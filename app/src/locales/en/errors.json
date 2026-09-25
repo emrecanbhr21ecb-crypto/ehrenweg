@@ -5,6 +5,36 @@
   "notFound": "Not found.",
   "appCheckFailed": "Security check failed. Please restart the app.",
 
+  "auth": {
+    "emailInUse": "An account already exists for this email. Please sign in.",
+    "invalidEmail": "That email address doesn't look right.",
+    "weakPassword": "That password is too short. Use at least 8 characters.",
+    "invalidCredential": "Email or password is incorrect.",
+    "userDisabled": "This account has been disabled. Please contact support.",
+    "tooManyRequests": "Too many attempts. Wait a moment and try again.",
+    "network": "No connection. Check your internet.",
+    "popupClosed": "The sign-in window was closed.",
+    "popupBlocked": "Your browser blocked the sign-in window. Allow pop-ups and try again.",
+    "differentProvider": "This email is already linked to a different sign-in method.",
+    "providerDisabled": "This sign-in method is currently unavailable.",
+    "requiresRecentLogin": "For security reasons, please sign in again.",
+    "notSignedIn": "You are not signed in.",
+    "unknown": "Sign-in failed. Please try again."
+  },
+
+  "profile": {
+    "loadFailed": "Your profile could not be loaded.",
+    "createFailed": "Your profile could not be created. Check your connection.",
+    "saveFailed": "Saving failed. Please try again."
+  },
+
+  "validation": {
+    "displayNameShort": "Please enter at least 2 characters.",
+    "displayNameLong": "That name is too long (max. 60 characters).",
+    "bioLong": "That text is too long (max. 400 characters).",
+    "cityLong": "That place name is too long (max. 80 characters)."
+  },
+
   "scan": {
     "wrongCode": "This QR code does not belong to Ehrenweg.",
     "expired": "The code has expired. Ask for a new one.",

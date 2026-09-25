@@ -1,0 +1,74 @@
+{
+  "interests": {
+    "legend": "Interessen",
+    "hint": "Wähle mindestens eins. Danach schlagen wir dir passende Aktivitäten vor."
+  },
+  "categories": {
+    "environment": "Umwelt & Natur",
+    "elderly_care": "Senior:innen",
+    "language_teaching": "Sprache vermitteln",
+    "language_learning": "Sprache lernen",
+    "children_youth": "Kinder & Jugend",
+    "culture": "Kultur",
+    "sports": "Sport",
+    "digital_skills": "Digitale Fähigkeiten",
+    "community": "Nachbarschaft",
+    "other": "Sonstiges"
+  },
+  "skills": {
+    "legend": "Fähigkeiten",
+    "hint": "Optional. Organisationen sehen, wobei du helfen kannst.",
+    "teamwork": "Teamarbeit",
+    "communication": "Kommunikation",
+    "organisation": "Organisation",
+    "first_aid": "Erste Hilfe",
+    "cooking": "Kochen",
+    "gardening": "Gartenarbeit",
+    "childcare": "Kinderbetreuung",
+    "teaching": "Unterrichten",
+    "translating": "Übersetzen",
+    "it_support": "IT-Hilfe",
+    "social_media": "Social Media",
+    "photography": "Fotografie",
+    "music": "Musik",
+    "crafts": "Handwerk",
+    "driving": "Fahren",
+    "event_support": "Veranstaltungen"
+  },
+  "languages": {
+    "legend": "Sprachen, die du sprichst",
+    "hint": "Wichtig für Übersetzungen und passende Aktivitäten. Mindestens eine.",
+    "add": "Sprache hinzufügen",
+    "choose": "Bitte auswählen …",
+    "levelFor": "Niveau für {{language}}",
+    "removeFor": "{{language}} entfernen",
+    "levels": {
+      "A1": "A1 – Anfänger",
+      "A2": "A2 – Grundlagen",
+      "B1": "B1 – Mittelstufe",
+      "B2": "B2 – Gut",
+      "C1": "C1 – Sehr gut",
+      "C2": "C2 – Nahezu perfekt",
+      "native": "Muttersprache"
+    },
+    "codes": {
+      "de": "Deutsch",
+      "en": "Englisch",
+      "ar": "Arabisch",
+      "tr": "Türkisch",
+      "fa": "Persisch (Farsi)",
+      "ru": "Russisch",
+      "uk": "Ukrainisch",
+      "ps": "Paschtu",
+      "so": "Somali",
+      "ti": "Tigrinya",
+      "ku": "Kurdisch",
+      "fr": "Französisch",
+      "es": "Spanisch",
+      "sq": "Albanisch",
+      "ro": "Rumänisch",
+      "pl": "Polnisch",
+      "other": "Andere Sprache"
+    }
+  }
+}

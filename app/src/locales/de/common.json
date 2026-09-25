@@ -39,5 +39,133 @@
   "a11y": {
     "skipToContent": "Zum Inhalt springen",
     "mainNavigation": "Hauptnavigation"
+  },
+  "onboarding": {
+    "find": {
+      "emoji": "🔎",
+      "title": "Finde, was zu dir passt",
+      "body": "Ehrenamt und Kurse von Städten und Vereinen in deiner Nähe – nach Thema, Sprache und Entfernung gefiltert."
+    },
+    "join": {
+      "emoji": "🤝",
+      "title": "Mach einfach mit",
+      "body": "Anmelden, hingehen, den QR-Code vor Ort scannen. Deine Teilnahme wird sofort bestätigt."
+    },
+    "collect": {
+      "emoji": "🎫",
+      "title": "Sammle deinen Integrationspass",
+      "body": "Jede Teilnahme bringt Punkte, Stunden und Nachweise – für dich, für Ämter und für Bewerbungen."
+    },
+    "progress": "Schritt {{current}} von {{total}}",
+    "skip": "Überspringen",
+    "createAccount": "Konto erstellen",
+    "haveAccount": "Ich habe schon ein Konto"
+  },
+  "auth": {
+    "signUpTitle": "Konto erstellen",
+    "signUpSubtitle": "Kostenlos. Du brauchst nur eine E-Mail-Adresse.",
+    "signInTitle": "Anmelden",
+    "signInSubtitle": "Willkommen zurück.",
+    "displayName": "Name",
+    "displayNameHint": "So sehen dich Organisationen. Ein Vorname reicht.",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "passwordHint": "Mindestens {{count}} Zeichen.",
+    "ageConfirm": "Ich bin mindestens 16 Jahre alt.",
+    "termsPrefix": "Ich habe die",
+    "privacyLink": "Datenschutzerklärung",
+    "termsAnd": "und die",
+    "termsLink": "Nutzungsbedingungen",
+    "signUpAction": "Registrieren",
+    "signInAction": "Anmelden",
+    "signOut": "Abmelden",
+    "or": "oder",
+    "continueWithGoogle": "Mit Google fortfahren",
+    "haveAccountQuestion": "Schon ein Konto?",
+    "noAccountQuestion": "Noch kein Konto?",
+    "forgotPassword": "Passwort vergessen?",
+    "resetTitle": "Passwort zurücksetzen",
+    "resetSubtitle": "Wir senden dir einen Link zum Zurücksetzen.",
+    "resetAction": "Link senden",
+    "resetSent": "Wenn es ein Konto mit dieser E-Mail gibt, ist der Link unterwegs.",
+    "verifyTitle": "Bestätige deine E-Mail",
+    "verifyBody": "Wir haben eine E-Mail an {{email}} geschickt. Öffne den Link darin, dann geht es weiter.",
+    "verifyCheck": "Ich habe bestätigt",
+    "resendVerification": "E-Mail erneut senden",
+    "resendIn": "Erneut senden in {{seconds}} s",
+    "verificationResent": "E-Mail wurde erneut gesendet.",
+    "stillNotVerified": "Noch nicht bestätigt. Schau auch im Spam-Ordner nach.",
+    "verifySpamHint": "Keine E-Mail bekommen? Prüfe den Spam-Ordner oder sende sie erneut."
+  },
+  "setup": {
+    "stepLabel": "Schritt {{current}} von {{total}}",
+    "step1Title": "Erzähl uns von dir",
+    "step1Subtitle": "Nur das Nötigste – du kannst alles später ändern.",
+    "step2Title": "Was interessiert dich?",
+    "step2Subtitle": "Danach schlagen wir dir passende Aktivitäten vor.",
+    "finish": "Fertig – los geht's"
+  },
+  "home": {
+    "greeting": {
+      "morning": "Guten Morgen",
+      "afternoon": "Guten Tag",
+      "evening": "Guten Abend"
+    },
+    "greetingFallback": "Willkommen",
+    "summaryTitle": "Dein Stand",
+    "upcomingTitle": "Deine nächsten Termine",
+    "noUpcoming": "Du hast noch keine Anmeldung. Schau dich um – in deiner Stadt wird jede Hand gebraucht.",
+    "browseActivities": "Aktivitäten ansehen",
+    "yourInterests": "Deine Interessen",
+    "interestsHint": "Passende Vorschläge bauen darauf auf.",
+    "editInterests": "ändern"
+  },
+  "passport": {
+    "title": "Integrationspass",
+    "level": "Stufe",
+    "ip": "Punkte",
+    "hours": "Stunden",
+    "activities": "Teilnahmen",
+    "ringLabel": "Stufe {{level}}, {{name}}. {{percent}} Prozent bis zur nächsten Stufe.",
+    "nextLevel": "Noch {{activities}} Teilnahmen bis {{name}}",
+    "maxLevel": "Höchste Stufe erreicht.",
+    "emptyHint": "Sobald du an deiner ersten Aktivität teilnimmst, füllt sich dein Pass."
+  },
+  "levels": {
+    "1": "Neuankömmling",
+    "2": "Engagiert",
+    "3": "Brückenbauer:in",
+    "4": "Mentor:in",
+    "5": "Botschafter:in"
+  },
+  "roles": {
+    "participant": "Teilnehmende:r",
+    "trainer": "Trainer:in",
+    "platform_admin": "Administration"
+  },
+  "profile": {
+    "edit": "Profil bearbeiten",
+    "city": "Stadt",
+    "cityHint": "Damit finden wir Aktivitäten in deiner Nähe.",
+    "bio": "Über mich",
+    "bioHint": "Optional. Was möchtest du beitragen?",
+    "languages": "Sprachen",
+    "skills": "Fähigkeiten",
+    "interests": "Interessen",
+    "settings": "Einstellungen",
+    "accountEmail": "Angemeldet als {{email}}",
+    "legalLinks": "Impressum & Datenschutz"
+  },
+  "legal": {
+    "imprint": "Impressum",
+    "privacy": "Datenschutzerklärung",
+    "terms": "Nutzungsbedingungen",
+    "contact": "Fragen? Schreib uns an {{email}}"
+  },
+  "soon": {
+    "activities": "Hier findest du bald Ehrenamt und Kurse in deiner Nähe – mit Liste, Karte und Filtern. Dieser Bereich kommt im nächsten Entwicklungsschritt.",
+    "learn": "Sprachkurse, Bewerbungstrainings und Workshops von geprüften Trainer:innen – in Vorbereitung.",
+    "wallet": "Deine Punkte, Prämien und Gutscheine sammeln sich hier, sobald du an Aktivitäten teilnimmst.",
+    "scanTooltip": "QR-Anwesenheit kommt in Kürze."
   }
 }

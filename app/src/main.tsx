@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router'
 
 import App from '@/App'
+import { AuthProvider } from '@/lib/AuthProvider'
 import { initAppCheck } from '@/lib/firebase'
 import { watchSystemTheme } from '@/stores/theme'
 import '@/styles/theme.css'
@@ -33,7 +34,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

@@ -189,7 +189,7 @@ describe('users — profil', () => {
     )
   })
 
-  it('🔒 kullanıcı kendine yeni profil belgesi oluşturamaz', async () => {
+  it('🔒 kullanıcı kendine şişirilmiş puanla profil oluşturamaz', async () => {
     const db = env.authenticatedContext('uid_neu', CLAIMS.participant).firestore()
     await assertFails(
       setDoc(doc(db, 'users', 'uid_neu'), {
@@ -197,6 +197,146 @@ describe('users — profil', () => {
         stats: { ip: 5000 },
       }),
     )
+  })
+})
+
+/**
+ * Kayıt akışı — profil belgesini istemci oluşturuyor (DECISIONS.md §6, Blaze
+ * olmadığı için Cloud Functions devre dışı). Bu blok o kapının yalnızca
+ * "temiz" bir belgeye açıldığını kanıtlar.
+ */
+describe('users — kayıtta profil oluşturma (istemci)', () => {
+  const NEW_UID = 'uid_neu'
+
+  /** authService + userProfile'ın gönderdiği belgenin birebir aynısı. */
+  function freshProfile(overrides: Record<string, unknown> = {}) {
+    return {
+      displayName: 'Neu Benutzer',
+      bio: '',
+      city: '',
+      locale: 'de',
+      interests: [],
+      skills: [],
+      languages: [],
+      photoURL: null,
+      email: 'alice@example.de',
+      countryCode: 'DE',
+      roleDisplay: 'participant',
+      stats: {
+        ip: 0,
+        hours: 0,
+        activitiesCompleted: 0,
+        noShows: 0,
+        categoriesCount: 0,
+        level: 1,
+      },
+      trainerStatus: 'none',
+      createdAt: new Date(),
+      lastActiveAt: new Date(),
+      ...overrides,
+    }
+  }
+
+  it('temiz bir profil oluşturabilir', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertSucceeds(setDoc(doc(db, 'users', NEW_UID), freshProfile()))
+  })
+
+  it('🔒 başlangıç puanı sıfırdan farklı olamaz', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(
+        doc(db, 'users', NEW_UID),
+        freshProfile({
+          stats: {
+            ip: 9999,
+            hours: 0,
+            activitiesCompleted: 0,
+            noShows: 0,
+            categoriesCount: 0,
+            level: 1,
+          },
+        }),
+      ),
+    )
+  })
+
+  it('🔒 kendini baştan 5. seviye yapamaz', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(
+        doc(db, 'users', NEW_UID),
+        freshProfile({
+          stats: {
+            ip: 0,
+            hours: 0,
+            activitiesCompleted: 0,
+            noShows: 0,
+            categoriesCount: 0,
+            level: 5,
+          },
+        }),
+      ),
+    )
+  })
+
+  it('🔒 kendini onaylı eğitmen olarak oluşturamaz', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(
+        doc(db, 'users', NEW_UID),
+        freshProfile({ trainerStatus: 'approved' }),
+      ),
+    )
+  })
+
+  it('🔒 kendini admin olarak etiketleyemez', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(
+        doc(db, 'users', NEW_UID),
+        freshProfile({ roleDisplay: 'platform_admin' }),
+      ),
+    )
+  })
+
+  it('🔒 kendini bir kuruma üye olarak oluşturamaz', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(
+        doc(db, 'users', NEW_UID),
+        freshProfile({ orgId: ORG.neukoelln }),
+      ),
+    )
+  })
+
+  it('🔒 başkasının e-postasıyla profil oluşturamaz', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(
+        doc(db, 'users', NEW_UID),
+        freshProfile({ email: 'chef@bezirksamt-neukoelln.de' }),
+      ),
+    )
+  })
+
+  it('🔒 şemada olmayan alan ekleyemez', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(doc(db, 'users', NEW_UID), freshProfile({ isAdmin: true })),
+    )
+  })
+
+  it('🔒 başkasının uid\'si için profil oluşturamaz', async () => {
+    const db = env.authenticatedContext(NEW_UID, CLAIMS.participant).firestore()
+    await assertFails(
+      setDoc(doc(db, 'users', 'uid_fremd'), freshProfile()),
+    )
+  })
+
+  it('🔒 giriş yapmamış biri profil oluşturamaz', async () => {
+    const db = env.unauthenticatedContext().firestore()
+    await assertFails(setDoc(doc(db, 'users', NEW_UID), freshProfile()))
   })
 })
 

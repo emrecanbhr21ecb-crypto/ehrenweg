@@ -165,3 +165,52 @@ yapılabilir.
 | 7 | `package.json` henüz var olmayan dosyalara script tanımlıyor (`seed.ts`, `grantAdmin.ts`, `check-i18n.mjs`, `ledgerConsistencyCheck.ts`). Husky kurulu ama kanca yok, CI ve Prettier yapılandırması yok | 🟡 P03'te yazılacak |
 | 4 | Firebase build'i 606 kB (179 kB gzip) — Faz 1'de tembel yükleme | 🟡 planlı |
 | 5 | `attendanceSessions` ve `attendanceRecords`'a `orgId` eklendi (CLAUDE.md şemasında yoktu) — kuralların kurum yetkisini ek okuma yapmadan kontrol edebilmesi için gerekli | 🟢 bilinçli ekleme |
+
+---
+
+## Faz 1 — Auth, onboarding, profil (25 Eyl 2026)
+
+### ✅ Bitti
+
+**Firestore gerçek projelerde kuruldu:** `ehrenweg-dev` ve `ehrenweg-prod`,
+ikisi de **`europe-west3`**. Kurallar + 17 indeks dev'e dağıtıldı.
+⚠️ Dağıtım sırasında dikkat: `firebase deploy --only firestore` veritabanı
+yoksa **sormadan `nam5` (ABD) bölgesinde açıyor**. Bölge kalıcı olduğu için
+yeni projede önce `firestore:databases:create --location europe-west3`
+çalıştır, sonra deploy et.
+
+**Kod:**
+
+| Dosya | İçerik |
+|---|---|
+| `lib/authService.ts` | kayıt, giriş, Google, doğrulama, şifre sıfırlama; Firebase hata kodu → i18n anahtarı |
+| `lib/AuthProvider.tsx` | oturum + custom claim + canlı profil dinleme, tek kaynak |
+| `lib/userProfile.ts` | users/{uid} oluşturma / okuma / güncelleme |
+| `types/user.ts` | şema + zod doğrulama + rol tipleri |
+| `config/catalog.ts` | kategori, beceri, dil, CEFR, seviye eşikleri |
+| `components/ui.tsx` | Button, TextField, TextArea, Alert, Card, ChipToggle (WCAG AA) |
+| `components/ProfileFields.tsx` | ilgi/beceri/dil seçicileri |
+| `components/LevelRing.tsx` | seviye halkası + sayı kartları |
+| `components/AppShell.tsx` | başlık + alt menü (ortada QR butonu, Faz 3'e kadar kapalı) |
+| `pages/` | Welcome, SignUp, SignIn, VerifyEmail, ProfileSetup, Home, Profile, ProfileEdit, Legal, Placeholder |
+
+**Doğrulandı:**
+- `npm run build` ✅ · `tsc -b --noEmit` ✅ (tip güvenli i18n dahil)
+- `npm run test:rules` → **59 test, hepsi geçiyor** (49 eskisi + 10 yeni
+  profil-oluşturma saldırı senaryosu)
+- Tarayıcıda: onboarding üç kart, DE/EN anında geçiş, kayıt formu, yönlendirme
+  kapıları (`/` → `/welcome`) çalışıyor
+
+**Bilinçli sapma:** profil belgesini istemci oluşturuyor — Blaze kapalı
+olduğu için. Gerekçe ve güvenlik kanıtı: DECISIONS.md §7.
+
+### 🔜 Faz 1'den kalan / sonraki adım
+
+- Kayıt akışının canlı denemesi (gerçek e-posta ile) — proje sahibi yapacak
+- `.env.development.local` şu an `VITE_USE_EMULATORS=false`: `npm run dev`
+  gerçek `ehrenweg-dev` projesine bağlanıyor. Emülatörle çalışmak için
+  `true` yap
+- Emülatör hosting portu 5000 → **5050** değişti (macOS AirPlay 5000'i tutuyor)
+- Profil fotoğrafı yükleme: Storage Blaze'e bağlı, Blaze açılınca
+- App Check site key `.env`'e eklenmeli (konsolda kayıt yapıldı)
+- Faz 2: kurumlar + aktiviteler (liste, harita, detay, başvuru)

@@ -190,3 +190,44 @@ v24.12.0 ile birebir aynı → emülatör ile üretim arasında sürüm farkı y
   cevaplandı: **alan adı pilot sonrası** (Bölüm 6, yeni), **Play Console hesabı
   Türkiye'den** açılacak (Bölüm 1). Keystore'daki tam yasal ad ve şehir bilinçli
   olarak P11'e (Faz 8) ertelendi; ülke kodu `C=TR` olacak.
+
+---
+
+## 7. Profil belgesini Cloud Function değil İSTEMCİ oluşturuyor (25 Eyl 2026)
+
+**Karar:** `users/{uid}` belgesi, CLAUDE.md'nin öngördüğü `onUserCreate` Cloud
+Function'ı yerine istemci tarafından oluşturuluyor.
+
+**Neden:** Cloud Functions **Blaze planı** gerektiriyor. Proje sahibi 25 Eyl
+2026'da Blaze'i açmama kararı aldı (açılış için istenen tutar ~1.500 TL).
+Blaze olmadan tek bir fonksiyon bile dağıtılamıyor; profil belgesi sunucudan
+oluşturulamadığı için kayıt akışı tamamen tıkanıyordu.
+
+**Riski nasıl kapattık:** Güvenlik `firestore.rules`'a yıkıldı. `users` create
+kuralı yalnız şu belgeye izin veriyor:
+
+- yalnızca kendi `uid`'si (`isSelf`),
+- alan listesi sabit — şemada olmayan tek bir alan bile yazmayı reddettirir,
+- `stats` **birebir sıfır** olmak zorunda (ip, hours, activitiesCompleted,
+  noShows, categoriesCount = 0; level = 1),
+- `trainerStatus == 'none'`, `roleDisplay == 'participant'`,
+- `email` token'daki e-postayla aynı olmalı,
+- `orgId` hiç gönderilemez.
+
+`tests/firestore.rules.test.ts` içinde 10 yeni test bunu kanıtlıyor: kullanıcı
+kendine 9999 puan veremiyor, 5. seviyede başlayamıyor, kendini onaylı eğitmen
+veya admin yapamıyor, kuruma üye olarak doğamıyor, başkasının e-postasını
+yazamıyor, başkasının uid'sine belge açamıyor.
+
+**Blaze açıldığında ne olacak:** `allow create` tekrar `if false` olur ve
+`lib/userProfile.ts` içindeki `ensureUserProfile` bir blocking function'a
+(`beforeUserCreated`) taşınır. İki yer de o işaretle yorumlandı.
+
+---
+
+## Değişiklik günlüğü (devam)
+
+- **2026-09-25 (akşam)** — Faz 1 kodlandı: auth (e-posta/şifre + Google),
+  e-posta doğrulama, onboarding, profil kurulumu ve düzenleme, Integrationspass
+  iskeleti, DE/EN tam çeviri. Bölüm 7'deki sapma bu sırada verildi.
+  Firestore veritabanları **iki projede de `europe-west3`** olarak kuruldu.
