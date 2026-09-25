@@ -21,6 +21,7 @@ import { connectAuthEmulator, getAuth } from 'firebase/auth'
 import {
   connectFirestoreEmulator,
   initializeFirestore,
+  memoryLocalCache,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore'
@@ -66,10 +67,30 @@ export const auth = getAuth(app)
  * "internet yoksa çevrimdışı kuyruğa al" davranışı bunun üzerine kurulacak
  * (CLAUDE.md Bölüm 2, Faz 3).
  */
+/**
+ * Otomatik testlerde (Playwright, `--mode test`) kalıcı önbellek KAPALI.
+ *
+ * Neden: `persistentMultipleTabManager` IndexedDB üzerinde bir "lider sekme"
+ * seçimi yapıyor. Her testte sıfırdan açılan tarayıcıda bu seçim takılıyor ve
+ * istemci "client is offline" diyerek emülatöre hiç bağlanmıyor
+ * (25 Eyl 2026'da e2e testlerinde yakalandı — emülatör ayakta, REST ucu 403
+ * döndürüyor, yani ağ erişimi vardı; sorun kanalın hiç açılmamasıydı).
+ *
+ * Çevrimdışı kuyruk davranışı bundan etkilenmez: testte kapalı, geliştirme ve
+ * üretimde açık. Faz 3'te çevrimdışı yoklama ayrıca test edilecek.
+ */
+const IS_TEST = import.meta.env.MODE === 'test'
+
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }),
+  localCache: IS_TEST
+    ? memoryLocalCache()
+    : persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+
+  /**
+   * Emülatörde WebChannel akışı güvenilir kurulamıyor; uzun yoklama bunu aşıyor.
+   * ⚠️ Yalnız emülatörde: üretimde WebChannel daha hızlı ve daha az istek üretir.
+   */
+  ...(USE_EMULATORS ? { experimentalForceLongPolling: true } : {}),
 })
 
 export const storage = getStorage(app)

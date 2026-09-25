@@ -12,26 +12,23 @@ import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 
-import {
-  DEFAULT_LOCALE,
-  isRtl,
-  SUPPORTED_LOCALES,
-  type Locale,
-} from '@/config/brand'
+import { DEFAULT_LOCALE, isRtl, SUPPORTED_LOCALES, type Locale } from '@/config/brand'
 
 import deCatalog from '@/locales/de/catalog.json'
 import deCommon from '@/locales/de/common.json'
 import deErrors from '@/locales/de/errors.json'
+import deLegal from '@/locales/de/legal.json'
 import enCatalog from '@/locales/en/catalog.json'
 import enCommon from '@/locales/en/common.json'
 import enErrors from '@/locales/en/errors.json'
+import enLegal from '@/locales/en/legal.json'
 
-export const NAMESPACES = ['common', 'errors', 'catalog'] as const
+export const NAMESPACES = ['common', 'errors', 'catalog', 'legal'] as const
 export type Namespace = (typeof NAMESPACES)[number]
 
 export const resources = {
-  de: { common: deCommon, errors: deErrors, catalog: deCatalog },
-  en: { common: enCommon, errors: enErrors, catalog: enCatalog },
+  de: { common: deCommon, errors: deErrors, catalog: deCatalog, legal: deLegal },
+  en: { common: enCommon, errors: enErrors, catalog: enCatalog, legal: enLegal },
 } as const
 
 /** Kullanıcının seçtiği dilin saklandığı anahtar (localStorage). */
@@ -65,11 +62,7 @@ void i18n
     // yerel geri çağırma çalışır.) CI'daki `npm run check:i18n` scripti de
     // ayrıca tüm dilleri karşılaştırır.
     saveMissing: import.meta.env.DEV,
-    missingKeyHandler: (
-      lngs: readonly string[],
-      ns: string,
-      key: string,
-    ): void => {
+    missingKeyHandler: (lngs: readonly string[], ns: string, key: string): void => {
       if (import.meta.env.DEV) {
         console.warn(`[i18n] EKSİK ANAHTAR: ${ns}:${key} (${lngs.join(',')})`)
       }

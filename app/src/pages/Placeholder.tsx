@@ -9,7 +9,6 @@
 import { useTranslation } from 'react-i18next'
 
 import { Card } from '@/components/ui'
-import { BRAND } from '@/config/brand'
 
 /**
  * Çözümlenmiş METİN alır, anahtar değil — böylece tip güvenli i18n devrede
@@ -58,44 +57,15 @@ export function Wallet(): React.JSX.Element {
 }
 
 /**
- * Impressum / gizlilik / şartlar bağlantıları.
- *
- * Almanya'da Impressum yasal zorunluluk (TMG §5) ve uygulamanın her yerinden
- * ulaşılabilir olmalı — bu yüzden gerçek bir sayfa, "yakında" değil. Metinler
- * web sitesinde tutuluyor; Faz 7'de uygulama içine de gömülecek.
+ * Kurum paneli — Faz 2'de gelecek. Menüde yalnız org rolü olanlara görünür.
  */
-export function Legal(): React.JSX.Element {
+export function OrgPanel(): React.JSX.Element {
   const { t } = useTranslation()
+  return <ComingSoon title={t('nav.org')} body={t('soon.org')} emoji="🏛️" />
+}
 
-  const links = [
-    { href: BRAND.urls.imprint, key: 'legal.imprint' },
-    { href: BRAND.urls.privacy, key: 'legal.privacy' },
-    { href: BRAND.urls.terms, key: 'legal.terms' },
-  ] as const
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">{t('profile.legalLinks')}</h1>
-      <Card>
-        <ul className="divide-y divide-gray-200 dark:divide-ink-800">
-          {links.map((link) => (
-            <li key={link.key}>
-              <a
-                href={link.href}
-                target="_blank"
-                rel="noreferrer"
-                className="flex min-h-12 items-center justify-between gap-3 py-3 text-sm font-medium"
-              >
-                {t(link.key)}
-                <span aria-hidden="true">↗</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </Card>
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {t('legal.contact', { email: BRAND.supportEmail })}
-      </p>
-    </div>
-  )
+/** Platform yönetimi — Faz 2'de kurum doğrulama kuyruğuyla başlayacak. */
+export function AdminPanel(): React.JSX.Element {
+  const { t } = useTranslation()
+  return <ComingSoon title={t('nav.admin')} body={t('soon.admin')} emoji="🛡️" />
 }

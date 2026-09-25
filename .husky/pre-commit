@@ -1,0 +1,11 @@
+# Commit öncesi hızlı kapı (P03 madde 7).
+#
+# Burada YALNIZ saniyeler süren işler var. Kural testleri emülatör başlattığı
+# ve ~40 sn sürdüğü için commit'e değil CI'a bırakıldı — yavaş kanca, geliştiriciyi
+# --no-verify yazmaya iter ve kanca hiç çalışmamış olur.
+
+npx lint-staged
+
+# Çeviri bütünlüğü: Almanca'ya anahtar eklenip İngilizce'ye eklenmemesi en sık
+# yapılan hata ve tip denetimi bunu yakalamıyor.
+node scripts/check-i18n.mjs

@@ -1,0 +1,89 @@
+# Ehrenweg CI (P03 madde 7).
+#
+# Kapı sırası ucuzdan pahalıya: biçim → tip → lint → çeviri → birim test →
+# kural testleri → build. Erken kırılırsa pahalı adımlar hiç çalışmaz.
+#
+# Kural testleri emülatör (JDK 21+) istiyor; bu yüzden ayrı bir iş değil,
+# aynı işin içinde ve Java kurulumundan sonra çalışıyor.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Aynı dal için yeni push gelirse eskisini iptal et — CI kuyruğu şişmesin.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Node kurulumu
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            app/package-lock.json
+            functions/package-lock.json
+
+      # Firebase emülatörleri JDK 21+ istiyor (firebase-tools 15+).
+      - name: Java kurulumu
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Bağımlılıklar
+        run: |
+          npm ci
+          npm --prefix app ci
+          npm --prefix functions ci
+
+      - name: Biçim denetimi
+        run: npm run format:check
+
+      - name: Tip denetimi
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Çeviri bütünlüğü
+        run: npm run check:i18n
+
+      - name: Birim testleri
+        run: npm run test:app
+
+      # Emülatör jar'ları ilk çalıştırmada indiriliyor; önbelleğe al.
+      - name: Emülatör önbelleği
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}
+
+      - name: Güvenlik kuralı testleri
+        run: npm run test:rules
+
+      - name: Build
+        run: npm run build
+        env:
+          # Build sırasında gerçek anahtar gerekmiyor; lib/firebase.ts eksik
+          # değişkende hata fırlattığı için sahte emülatör değerleri veriliyor.
+          VITE_FIREBASE_API_KEY: ci-fake-key
+          VITE_FIREBASE_AUTH_DOMAIN: demo-ehrenweg.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: demo-ehrenweg
+          VITE_FIREBASE_STORAGE_BUCKET: demo-ehrenweg.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: '000000000000'
+          VITE_FIREBASE_APP_ID: '1:000000000000:web:cifake'
+          VITE_USE_EMULATORS: 'true'

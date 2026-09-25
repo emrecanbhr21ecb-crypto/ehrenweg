@@ -1,0 +1,95 @@
+{
+  "indexTitle": "Rechtliches",
+  "contactLine": "Fragen zum Datenschutz? Schreib an {{email}}",
+  "draftWarning": "Entwurf – dieser Text ist noch nicht juristisch geprüft. Mit [ ] markierte Stellen werden vor der Veröffentlichung ergänzt.",
+  "lastUpdated": "Stand: {{date}}",
+  "lastUpdatedDate": "25.09.2026",
+
+  "imprint": {
+    "title": "Impressum",
+    "provider": {
+      "heading": "Anbieter",
+      "body": "Angaben gemäß § 5 TMG:\n\n[ Vollständiger Name des Betreibers ]\n[ Straße und Hausnummer ]\n[ PLZ und Ort ]\nDeutschland"
+    },
+    "contact": {
+      "heading": "Kontakt",
+      "body": "E-Mail: ehrenwegde@gmail.com\nTelefon: [ Telefonnummer ]"
+    },
+    "responsible": {
+      "heading": "Inhaltlich verantwortlich",
+      "body": "Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:\n[ Name ], Anschrift wie oben.\n\nEhrenweg wird als Einzelunternehmen betrieben. Eine Eintragung im Handelsregister besteht nicht. Umsatzsteuer-Identifikationsnummer: [ falls vorhanden ]."
+    },
+    "dispute": {
+      "heading": "Streitbeilegung",
+      "body": "Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit. Wir sind nicht verpflichtet und nicht bereit, an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen."
+    }
+  },
+
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "controller": {
+      "heading": "Verantwortliche Stelle",
+      "body": "Verantwortlich im Sinne der DSGVO ist der im Impressum genannte Anbieter. Ein Datenschutzbeauftragter ist [ noch nicht benannt / Name ]."
+    },
+    "whatWeCollect": {
+      "heading": "Welche Daten wir verarbeiten",
+      "body": "• Kontodaten: E-Mail-Adresse, Name, Passwort (verschlüsselt bei Google Firebase)\n• Profilangaben, die du freiwillig machst: Stadt, gesprochene Sprachen mit Niveau, Fähigkeiten, Interessen, Kurzbeschreibung\n• Teilnahmedaten: an welchen Aktivitäten du teilgenommen hast, Stunden, Punkte, Stufe\n• Technische Daten: Zeitpunkt der letzten Nutzung, Gerätesprache"
+    },
+    "whatWeDoNotCollect": {
+      "heading": "Welche Daten wir bewusst NICHT erheben",
+      "body": "Ehrenweg fragt niemals nach Aufenthaltsstatus, Asylverfahren, Staatsangehörigkeit, Herkunft, Religion, Gesundheitsdaten oder politischer Überzeugung. Diese besonderen Kategorien nach Art. 9 DSGVO werden weder gespeichert noch an Organisationen weitergegeben.\n\nStandortdaten werden nur verarbeitet, wenn du die Berechtigung ausdrücklich erteilst, und nur für die Umkreissuche."
+    },
+    "purpose": {
+      "heading": "Zweck der Verarbeitung",
+      "body": "Vermittlung von Ehrenamts- und Bildungsangeboten, Nachweis deiner Teilnahme (Integrationspass), Vergabe von Punkten und Prämien sowie Schutz vor Missbrauch."
+    },
+    "legalBasis": {
+      "heading": "Rechtsgrundlage",
+      "body": "Art. 6 Abs. 1 lit. b DSGVO (Erfüllung des Nutzungsvertrags) für Konto und Teilnahme; Art. 6 Abs. 1 lit. a DSGVO (Einwilligung) für optionale Angaben, Standort und Benachrichtigungen; Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse) für Sicherheit und Missbrauchsabwehr."
+    },
+    "storage": {
+      "heading": "Speicherort und Speicherdauer",
+      "body": "Die Daten liegen bei Google Firebase in der Region europe-west3 (Frankfurt am Main, Deutschland).\n\nWenn du dein Konto löschst, werden alle personenbezogenen Daten innerhalb von 30 Tagen gelöscht. Buchungseinträge über ausgegebene Prämien werden aus buchhalterischen Gründen anonymisiert statt gelöscht – sie enthalten danach keinen Bezug mehr zu dir."
+    },
+    "processors": {
+      "heading": "Auftragsverarbeiter",
+      "body": "• Google Ireland Limited (Firebase: Authentifizierung, Datenbank, Hosting)\n• [ weitere Dienste werden hier ergänzt, sobald sie eingesetzt werden ]\n\nEine Weitergabe deiner Daten an Organisationen erfolgt nur, soweit es für deine Anmeldung zu einer Aktivität nötig ist: Name, Sprachen und Fähigkeiten."
+    },
+    "rights": {
+      "heading": "Deine Rechte",
+      "body": "Du hast das Recht auf Auskunft (Art. 15), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21).\n\nIn der App findest du dafür in Kürze die Funktionen „Meine Daten herunterladen“ und „Konto löschen“. Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren."
+    },
+    "contact": {
+      "heading": "Kontakt in Datenschutzfragen",
+      "body": "ehrenwegde@gmail.com"
+    }
+  },
+
+  "terms": {
+    "title": "Nutzungsbedingungen",
+    "scope": {
+      "heading": "Geltungsbereich",
+      "body": "Diese Bedingungen gelten für die Nutzung der App Ehrenweg. Ehrenweg vermittelt ehrenamtliche Tätigkeiten und Bildungsangebote; es entsteht dadurch kein Arbeitsverhältnis zwischen dir, Ehrenweg oder der Organisation."
+    },
+    "account": {
+      "heading": "Konto",
+      "body": "Du musst mindestens 16 Jahre alt sein. Gib bei der Anmeldung zutreffende Angaben an und gib dein Passwort nicht weiter. Pro Person ist ein Konto zulässig."
+    },
+    "conduct": {
+      "heading": "Verhalten",
+      "body": "Melde dich nur zu Aktivitäten an, zu denen du auch erscheinen möchtest. Belästigung, Diskriminierung und falsche Angaben führen zur Sperrung des Kontos."
+    },
+    "points": {
+      "heading": "Punkte und Prämien",
+      "body": "Integrationspunkte sind kein Geld, kein Zahlungsmittel und nicht übertragbar. Sie entstehen nur durch bestätigte Teilnahme und können bei Missbrauch zurückgenommen werden. Ein Anspruch auf eine bestimmte Prämie besteht nicht; Prämien werden von den jeweiligen Organisationen bereitgestellt.\n\n[ Hinweis zu Geldgutscheinen wird ergänzt, sobald die rechtliche Prüfung abgeschlossen ist. ]"
+    },
+    "liability": {
+      "heading": "Haftung",
+      "body": "Für Inhalt, Durchführung und Sicherheit einer Aktivität ist die veranstaltende Organisation verantwortlich. Ehrenweg haftet nicht für Schäden, die bei einer Aktivität entstehen, sondern nur für Vorsatz und grobe Fahrlässigkeit im Betrieb der App."
+    },
+    "termination": {
+      "heading": "Beendigung",
+      "body": "Du kannst dein Konto jederzeit löschen. Wir können ein Konto bei schwerwiegenden Verstößen sperren; bereits erworbene Teilnahmenachweise bleiben dir auf Anfrage erhalten."
+    }
+  }
+}

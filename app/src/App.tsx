@@ -16,7 +16,8 @@ import { AppShell } from '@/components/AppShell'
 import { FullPageLoader } from '@/components/ui'
 import { useAuth } from '@/lib/AuthProvider'
 import Home from '@/pages/Home'
-import { Activities, Learn, Legal, Wallet } from '@/pages/Placeholder'
+import { LegalIndex, LegalPageView } from '@/pages/Legal'
+import { Activities, AdminPanel, Learn, OrgPanel, Wallet } from '@/pages/Placeholder'
 import Profile from '@/pages/Profile'
 import ProfileEdit from '@/pages/ProfileEdit'
 import ProfileSetup from '@/pages/ProfileSetup'
@@ -26,20 +27,32 @@ import VerifyEmail from '@/pages/VerifyEmail'
 import Welcome from '@/pages/Welcome'
 import { isProfileComplete } from '@/types/user'
 
-/** Oturum gerektirmeyen yollar. */
-const PUBLIC_PATHS = ['/welcome', '/signin', '/signup', '/legal']
+/**
+ * Oturum gerektirmeyen yollar.
+ *
+ * `/legal` ve altındaki sayfalar bilerek herkese açık: Impressum'a ancak giriş
+ * yaparak ulaşılabilseydi TMG §5'in "kolay erişilebilir" şartı karşılanmazdı.
+ */
+const PUBLIC_PATHS = ['/welcome', '/signin', '/signup']
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/legal')
+}
 
 export default function App(): React.JSX.Element {
   const { t } = useTranslation()
   const location = useLocation()
-  const { status, user, profile, profileLoading } = useAuth()
+  const { status, user, profile, profileLoading, claims } = useAuth()
+
+  const isAdmin = claims.role === 'platform_admin'
+  const hasOrgRole = Object.keys(claims.orgs).length > 0
 
   // 1. Oturum henüz çözülmedi.
   if (status === 'loading') {
     return <FullPageLoader label={t('state.loading')} />
   }
 
-  const isPublic = PUBLIC_PATHS.includes(location.pathname)
+  const isPublic = isPublicPath(location.pathname)
 
   // 2. Oturum yok.
   if (status === 'signedOut' || !user) {
@@ -49,7 +62,22 @@ export default function App(): React.JSX.Element {
         <Route path="/welcome" element={<Welcome />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/legal" element={<div className="mx-auto max-w-md px-5 py-8"><Legal /></div>} />
+        <Route
+          path="/legal"
+          element={
+            <div className="mx-auto max-w-2xl px-5 py-8">
+              <LegalIndex />
+            </div>
+          }
+        />
+        <Route
+          path="/legal/:page"
+          element={
+            <div className="mx-auto max-w-2xl px-5 py-8">
+              <LegalPageView />
+            </div>
+          }
+        />
       </Routes>
     )
   }
@@ -83,10 +111,14 @@ export default function App(): React.JSX.Element {
   }
 
   // 6. Her şey tamam. Giriş/karşılama yollarına dönmeye çalışan kullanıcıyı
-  //    ana sayfaya al — geri tuşuyla kayıt ekranına düşmesin.
-  if (isPublic || location.pathname === '/setup' || location.pathname === '/verify-email') {
-    if (location.pathname !== '/legal') return <Navigate to="/" replace />
-  }
+  //    ana sayfaya al — geri tuşuyla kayıt ekranına düşmesin. (Hukuki sayfalar
+  //    hariç: onlara giriş yapmışken de ulaşılabilmeli.)
+  const isEntryPath =
+    PUBLIC_PATHS.includes(location.pathname) ||
+    location.pathname === '/setup' ||
+    location.pathname === '/verify-email'
+
+  if (isEntryPath) return <Navigate to="/" replace />
 
   return (
     <AppShell>
@@ -97,7 +129,14 @@ export default function App(): React.JSX.Element {
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<ProfileEdit />} />
-        <Route path="/legal" element={<Legal />} />
+        <Route path="/legal" element={<LegalIndex />} />
+        <Route path="/legal/:page" element={<LegalPageView />} />
+
+        {/* Rol kapıları: claim yoksa panel hiç yok — menüde gizlemek yetmez,
+            adres çubuğuna elle yazan kullanıcı da girememeli. */}
+        {hasOrgRole && <Route path="/org" element={<OrgPanel />} />}
+        {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>

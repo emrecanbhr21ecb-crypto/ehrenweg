@@ -8,6 +8,7 @@ import 'i18next'
 import type deCatalog from '@/locales/de/catalog.json'
 import type deCommon from '@/locales/de/common.json'
 import type deErrors from '@/locales/de/errors.json'
+import type deLegal from '@/locales/de/legal.json'
 
 declare module 'i18next' {
   interface CustomTypeOptions {
@@ -16,6 +17,7 @@ declare module 'i18next' {
       common: typeof deCommon
       errors: typeof deErrors
       catalog: typeof deCatalog
+      legal: typeof deLegal
     }
   }
 }

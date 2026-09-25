@@ -1,0 +1,95 @@
+{
+  "indexTitle": "Legal",
+  "contactLine": "Questions about privacy? Write to {{email}}",
+  "draftWarning": "Draft – this text has not yet been reviewed by a lawyer. Sections marked [ ] will be completed before release.",
+  "lastUpdated": "Last updated: {{date}}",
+  "lastUpdatedDate": "25 September 2026",
+
+  "imprint": {
+    "title": "Imprint",
+    "provider": {
+      "heading": "Provider",
+      "body": "Information pursuant to § 5 TMG:\n\n[ Full name of the operator ]\n[ Street and number ]\n[ Postcode and city ]\nGermany"
+    },
+    "contact": {
+      "heading": "Contact",
+      "body": "Email: ehrenwegde@gmail.com\nPhone: [ phone number ]"
+    },
+    "responsible": {
+      "heading": "Responsible for content",
+      "body": "Responsible for content pursuant to § 18 (2) MStV:\n[ Name ], address as above.\n\nEhrenweg is operated as a sole proprietorship. There is no commercial register entry. VAT identification number: [ if applicable ]."
+    },
+    "dispute": {
+      "heading": "Dispute resolution",
+      "body": "The European Commission provides a platform for online dispute resolution. We are neither obliged nor willing to participate in dispute resolution proceedings before a consumer arbitration board."
+    }
+  },
+
+  "privacy": {
+    "title": "Privacy policy",
+    "controller": {
+      "heading": "Data controller",
+      "body": "The controller within the meaning of the GDPR is the provider named in the imprint. A data protection officer has [ not yet been appointed / name ]."
+    },
+    "whatWeCollect": {
+      "heading": "What data we process",
+      "body": "• Account data: email address, name, password (encrypted at Google Firebase)\n• Profile details you provide voluntarily: city, spoken languages with level, skills, interests, short bio\n• Participation data: which activities you attended, hours, points, level\n• Technical data: time of last use, device language"
+    },
+    "whatWeDoNotCollect": {
+      "heading": "What we deliberately do NOT collect",
+      "body": "Ehrenweg never asks about residence status, asylum proceedings, nationality, origin, religion, health data or political opinion. These special categories under Art. 9 GDPR are neither stored nor shared with organisations.\n\nLocation data is only processed if you explicitly grant permission, and only for searching nearby activities."
+    },
+    "purpose": {
+      "heading": "Purpose of processing",
+      "body": "Matching you with volunteering and learning opportunities, documenting your participation (integration passport), awarding points and rewards, and protecting against misuse."
+    },
+    "legalBasis": {
+      "heading": "Legal basis",
+      "body": "Art. 6 (1) (b) GDPR (performance of the user agreement) for account and participation; Art. 6 (1) (a) GDPR (consent) for optional details, location and notifications; Art. 6 (1) (f) GDPR (legitimate interest) for security and abuse prevention."
+    },
+    "storage": {
+      "heading": "Storage location and retention",
+      "body": "Data is stored with Google Firebase in the europe-west3 region (Frankfurt am Main, Germany).\n\nIf you delete your account, all personal data is deleted within 30 days. Ledger records of issued rewards are anonymised rather than deleted for accounting reasons – afterwards they no longer relate to you."
+    },
+    "processors": {
+      "heading": "Processors",
+      "body": "• Google Ireland Limited (Firebase: authentication, database, hosting)\n• [ further services will be added here once they are used ]\n\nYour data is shared with an organisation only as far as necessary for your registration to an activity: name, languages and skills."
+    },
+    "rights": {
+      "heading": "Your rights",
+      "body": "You have the right to access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction (Art. 18), data portability (Art. 20) and objection (Art. 21).\n\nThe app will shortly provide “Download my data” and “Delete account” functions for this. You may also lodge a complaint with a data protection supervisory authority."
+    },
+    "contact": {
+      "heading": "Privacy contact",
+      "body": "ehrenwegde@gmail.com"
+    }
+  },
+
+  "terms": {
+    "title": "Terms of use",
+    "scope": {
+      "heading": "Scope",
+      "body": "These terms apply to the use of the Ehrenweg app. Ehrenweg connects people with voluntary activities and learning offers; this does not create an employment relationship between you, Ehrenweg or the organisation."
+    },
+    "account": {
+      "heading": "Account",
+      "body": "You must be at least 16 years old. Provide accurate details when registering and do not share your password. One account per person is permitted."
+    },
+    "conduct": {
+      "heading": "Conduct",
+      "body": "Only sign up for activities you intend to attend. Harassment, discrimination and false statements lead to account suspension."
+    },
+    "points": {
+      "heading": "Points and rewards",
+      "body": "Integration points are not money, not a means of payment and not transferable. They arise only from confirmed attendance and can be withdrawn in case of misuse. There is no entitlement to a particular reward; rewards are provided by the respective organisations.\n\n[ A note on cash vouchers will be added once the legal review is complete. ]"
+    },
+    "liability": {
+      "heading": "Liability",
+      "body": "The organisation running an activity is responsible for its content, delivery and safety. Ehrenweg is not liable for damages arising during an activity, only for intent and gross negligence in operating the app."
+    },
+    "termination": {
+      "heading": "Termination",
+      "body": "You can delete your account at any time. We may suspend an account for serious violations; proof of participation you have already earned remains available to you on request."
+    }
+  }
+}

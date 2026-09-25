@@ -10,7 +10,7 @@
  * (Faz 2) bağlamıyla birlikte istenecek.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 
@@ -29,16 +29,32 @@ export default function ProfileSetup(): React.JSX.Element {
 
   const [step, setStep] = useState<1 | 2>(1)
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '')
+  /**
+   * Profil belgesi bu ekran çizildikten SONRA gelebiliyor (Firestore'a yazma
+   * ile ilk anlık görüntü arasında birkaç yüz ms var). O durumda useState'in
+   * başlangıç değeri boş kalıyor, kullanıcı adını kayıtta girmiş olmasına
+   * rağmen "Weiter" düğmesi kilitli kalıyordu — 25 Eyl 2026'da e2e testinde
+   * yakalandı. Belge gelince formu bir kez dolduruyoruz.
+   */
+  const [hydrated, setHydrated] = useState(profile !== null)
   const [city, setCity] = useState(profile?.city ?? '')
-  const [languages, setLanguages] = useState<UserLanguage[]>(
-    profile?.languages ?? [],
-  )
-  const [interests, setInterests] = useState<CategoryId[]>(
-    profile?.interests ?? [],
-  )
+  const [languages, setLanguages] = useState<UserLanguage[]>(profile?.languages ?? [])
+  const [interests, setInterests] = useState<CategoryId[]>(profile?.interests ?? [])
   const [skills, setSkills] = useState<SkillId[]>(profile?.skills ?? [])
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+
+  // Yalnız ilk gelişte doldur: kullanıcı yazmaya başladıktan sonra gelen bir
+  // anlık görüntü yazdıklarının üzerine yazmamalı.
+  useEffect(() => {
+    if (hydrated || !profile) return
+    setDisplayName(profile.displayName)
+    setCity(profile.city)
+    setLanguages(profile.languages)
+    setInterests(profile.interests)
+    setSkills(profile.skills)
+    setHydrated(true)
+  }, [profile, hydrated])
 
   const step1Valid = displayName.trim().length >= 2 && languages.length > 0
   const step2Valid = interests.length > 0
