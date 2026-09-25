@@ -15,11 +15,7 @@ import { Alert, Button, Card, TextArea, TextField } from '@/components/ui'
 import type { CategoryId, SkillId } from '@/config/catalog'
 import { useAuth } from '@/lib/AuthProvider'
 import { updateUserProfile } from '@/lib/userProfile'
-import {
-  editableProfileSchema,
-  isValidationKey,
-  type UserLanguage,
-} from '@/types/user'
+import { editableProfileSchema, isValidationKey, type UserLanguage } from '@/types/user'
 
 export default function ProfileEdit(): React.JSX.Element {
   const { t } = useTranslation()

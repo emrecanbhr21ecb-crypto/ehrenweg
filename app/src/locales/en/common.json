@@ -157,11 +157,8 @@
     "legalLinks": "Imprint & privacy"
   },
   "soon": {
-    "activities": "Volunteering and courses near you will appear here – with list, map and filters. This section is coming in the next development step.",
     "learn": "Language courses, application training and workshops from verified trainers – in preparation.",
     "wallet": "Your points, rewards and vouchers collect here once you start attending activities.",
-    "org": "This is where you'll manage your organisation's activities: create them, accept applications, record attendance.",
-    "admin": "Verify organisations, moderate content, assign roles – this area is being built in the next step.",
     "scanTooltip": "QR attendance is coming soon."
   }
 }

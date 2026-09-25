@@ -8,7 +8,7 @@ Son güncelleme: 2026-09-24
 
 ---
 
-## 1. Parasal kupon ve sosyal yardım etkileşimi  🔴 ENGELLEYİCİ
+## 1. Parasal kupon ve sosyal yardım etkileşimi 🔴 ENGELLEYİCİ
 
 **Soru:** Gönüllülük karşılığı verilen parasal kupon, alıcının AsylbLG veya
 Bürgergeld ödemelerinden mahsup edilir mi? Çalışma izni kısıtı olan bir
@@ -22,11 +22,12 @@ Kod tarafı hazır, sadece bayrak kapalı. → `docs/DECISIONS.md` §3
 
 ---
 
-## 2. "Ehrenweg" marka müsaitliği  🟡 YAYINDAN ÖNCE
+## 2. "Ehrenweg" marka müsaitliği 🟡 YAYINDAN ÖNCE
 
 **Soru:** "Ehrenweg" adı marka olarak müsait mi?
 
 Kontrol edilecek yerler:
+
 - DPMA (Almanya) marka arama — https://register.dpma.de/DPMAregister/marke/einsteiger
 - EUIPO (AB) eSearch — https://euipo.europa.eu/eSearch/
 - Google Play mağaza araması (aynı adla uygulama var mı)
@@ -39,10 +40,9 @@ Kontrol edilecek yerler:
 
 ---
 
-## 3. Yaş sınırı ve ebeveyn onayı  🟡
+## 3. Yaş sınırı ve ebeveyn onayı 🟡
 
-**Soru:** DSGVO Art. 8 uyarınca Almanya'da dijital hizmet rızası için yaş sınırı
-16. 16–18 yaş arası gönüllülük aktivitelerine katılım için ebeveyn onayı
+**Soru:** DSGVO Art. 8 uyarınca Almanya'da dijital hizmet rızası için yaş sınırı 16. 16–18 yaş arası gönüllülük aktivitelerine katılım için ebeveyn onayı
 gerekiyor mu? Gerekiyorsa uygulama içinde mi toplanmalı, kurum mu almalı?
 
 **Mevcut teknik varsayım:** Kayıtta 16 yaş altı engellenir. 16–18 için ek onay

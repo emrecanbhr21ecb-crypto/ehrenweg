@@ -14,21 +14,46 @@ import { initReactI18next } from 'react-i18next'
 
 import { DEFAULT_LOCALE, isRtl, SUPPORTED_LOCALES, type Locale } from '@/config/brand'
 
+import deActivities from '@/locales/de/activities.json'
 import deCatalog from '@/locales/de/catalog.json'
 import deCommon from '@/locales/de/common.json'
 import deErrors from '@/locales/de/errors.json'
 import deLegal from '@/locales/de/legal.json'
+import deManage from '@/locales/de/manage.json'
+import enActivities from '@/locales/en/activities.json'
 import enCatalog from '@/locales/en/catalog.json'
 import enCommon from '@/locales/en/common.json'
 import enErrors from '@/locales/en/errors.json'
 import enLegal from '@/locales/en/legal.json'
+import enManage from '@/locales/en/manage.json'
 
-export const NAMESPACES = ['common', 'errors', 'catalog', 'legal'] as const
+export const NAMESPACES = [
+  'common',
+  'errors',
+  'catalog',
+  'legal',
+  'activities',
+  'manage',
+] as const
 export type Namespace = (typeof NAMESPACES)[number]
 
 export const resources = {
-  de: { common: deCommon, errors: deErrors, catalog: deCatalog, legal: deLegal },
-  en: { common: enCommon, errors: enErrors, catalog: enCatalog, legal: enLegal },
+  de: {
+    common: deCommon,
+    errors: deErrors,
+    catalog: deCatalog,
+    legal: deLegal,
+    activities: deActivities,
+    manage: deManage,
+  },
+  en: {
+    common: enCommon,
+    errors: enErrors,
+    catalog: enCatalog,
+    legal: enLegal,
+    activities: enActivities,
+    manage: enManage,
+  },
 } as const
 
 /** Kullanıcının seçtiği dilin saklandığı anahtar (localStorage). */

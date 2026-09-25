@@ -23,11 +23,9 @@ import {
 import type { User } from 'firebase/auth'
 
 import { readClaims, watchAuthState } from '@/lib/authService'
-import {
-  ensureUserProfile,
-  touchLastActive,
-  watchUserProfile,
-} from '@/lib/userProfile'
+import { watchMyMemberships } from '@/lib/organizations'
+import { ensureUserProfile, touchLastActive, watchUserProfile } from '@/lib/userProfile'
+import type { OrgMember, OrgRole } from '@/types/activity'
 import { DEFAULT_CLAIMS, type UserClaims, type UserDoc } from '@/types/user'
 
 export type AuthStatus = 'loading' | 'signedOut' | 'ready'
@@ -37,6 +35,16 @@ interface AuthContextValue {
   user: User | null
   claims: UserClaims
   profile: UserDoc | null
+  /**
+   * Kullanıcının kurum üyelikleri — `organizations/{orgId}/members/{uid}`.
+   *
+   * ⚠️ Neden claim'in yanında: claim'i yalnız sunucu yazabiliyor, Blaze kapalı
+   * olduğu için sunucu yok (docs/DECISIONS.md §8). Kurum rolü bu yüzden üyelik
+   * belgesinden okunuyor; `firestore.rules` de aynı iki kaynağa bakıyor.
+   */
+  memberships: OrgMember[]
+  /** claim ∪ üyelik belgeleri — yetki kararı buradan verilir. */
+  orgRoles: Record<string, OrgRole>
   /** Profil belgesi henüz okunmadıysa true (oturum var ama veri yolda). */
   profileLoading: boolean
   /** Firestore profil dinlemesi hata verdiyse i18n anahtarı. */
@@ -58,10 +66,12 @@ export function AuthProvider({
   const [profile, setProfile] = useState<UserDoc | null>(null)
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
+  const [memberships, setMemberships] = useState<OrgMember[]>([])
 
   // Profil aboneliği kullanıcı değişince kapatılmalı; ref'te tutuyoruz ki
   // iki farklı etki (auth + profil) birbirini iptal etmesin.
   const unsubProfile = useRef<(() => void) | null>(null)
+  const unsubMemberships = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     return watchAuthState((nextUser) => {
@@ -69,15 +79,31 @@ export function AuthProvider({
 
       unsubProfile.current?.()
       unsubProfile.current = null
+      unsubMemberships.current?.()
+      unsubMemberships.current = null
 
       if (!nextUser) {
         setClaims(DEFAULT_CLAIMS)
         setProfile(null)
+        setMemberships([])
         setProfileLoading(false)
         setProfileError(null)
         setStatus('signedOut')
         return
       }
+
+      // Kurum üyelikleri profilden bağımsız dinlenir: profil belgesi
+      // gelmemiş olsa bile kurum paneli erişimi doğru hesaplansın.
+      unsubMemberships.current = watchMyMemberships(
+        nextUser.uid,
+        setMemberships,
+        (error) => {
+          // Üyelik sorgusu düşerse kullanıcı yalnızca kurum panelini göremez;
+          // uygulamanın kalanı çalışmaya devam etmeli.
+          console.error('[auth] Kurum üyelikleri okunamadı:', error)
+          setMemberships([])
+        },
+      )
 
       setProfileLoading(true)
       setProfileError(null)
@@ -115,6 +141,7 @@ export function AuthProvider({
   useEffect(() => {
     return () => {
       unsubProfile.current?.()
+      unsubMemberships.current?.()
     }
   }, [])
 
@@ -127,9 +154,38 @@ export function AuthProvider({
     setUser(Object.assign(Object.create(Object.getPrototypeOf(current)), current))
   }, [user])
 
+  const orgRoles = useMemo<Record<string, OrgRole>>(() => {
+    const merged: Record<string, OrgRole> = { ...claims.orgs }
+    for (const member of memberships) {
+      // Claim varsa o kazanır: sunucu yazdığı için daha güvenilir kaynaktır.
+      if (!merged[member.orgId]) merged[member.orgId] = member.role
+    }
+    return merged
+  }, [claims.orgs, memberships])
+
   const value = useMemo<AuthContextValue>(
-    () => ({ status, user, claims, profile, profileLoading, profileError, refresh }),
-    [status, user, claims, profile, profileLoading, profileError, refresh],
+    () => ({
+      status,
+      user,
+      claims,
+      profile,
+      memberships,
+      orgRoles,
+      profileLoading,
+      profileError,
+      refresh,
+    }),
+    [
+      status,
+      user,
+      claims,
+      profile,
+      memberships,
+      orgRoles,
+      profileLoading,
+      profileError,
+      refresh,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

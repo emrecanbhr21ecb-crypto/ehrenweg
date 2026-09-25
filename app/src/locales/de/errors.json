@@ -4,7 +4,6 @@
   "permissionDenied": "Dafür fehlt dir die Berechtigung.",
   "notFound": "Nicht gefunden.",
   "appCheckFailed": "Sicherheitsprüfung fehlgeschlagen. Bitte App neu starten.",
-
   "auth": {
     "emailInUse": "Für diese E-Mail gibt es schon ein Konto. Melde dich an.",
     "invalidEmail": "Diese E-Mail-Adresse sieht nicht richtig aus.",
@@ -21,20 +20,33 @@
     "notSignedIn": "Du bist nicht angemeldet.",
     "unknown": "Anmeldung fehlgeschlagen. Bitte versuche es erneut."
   },
-
   "profile": {
     "loadFailed": "Dein Profil konnte nicht geladen werden.",
     "createFailed": "Dein Profil konnte nicht angelegt werden. Prüfe deine Verbindung.",
     "saveFailed": "Speichern fehlgeschlagen. Bitte versuche es erneut."
   },
-
   "validation": {
     "displayNameShort": "Bitte gib mindestens 2 Zeichen ein.",
     "displayNameLong": "Der Name ist zu lang (max. 60 Zeichen).",
     "bioLong": "Der Text ist zu lang (max. 400 Zeichen).",
-    "cityLong": "Der Ortsname ist zu lang (max. 80 Zeichen)."
+    "cityLong": "Der Ortsname ist zu lang (max. 80 Zeichen).",
+    "orgNameShort": "Bitte gib mindestens 3 Zeichen ein.",
+    "orgNameLong": "Der Name ist zu lang (max. 120 Zeichen).",
+    "cityRequired": "Bitte gib eine Stadt an.",
+    "urlInvalid": "Das sieht nicht wie eine vollständige Adresse aus (mit https://).",
+    "emailInvalid": "Diese E-Mail-Adresse sieht nicht richtig aus.",
+    "titleRequired": "Bitte gib den Titel in mindestens einer Sprache an.",
+    "descriptionRequired": "Bitte beschreibe die Aktivität in mindestens einer Sprache.",
+    "addressRequired": "Bitte gib eine Adresse an oder markiere die Aktivität als online.",
+    "languageRequired": "Bitte wähle mindestens eine Sprache.",
+    "startRequired": "Bitte gib einen Beginn an.",
+    "endRequired": "Bitte gib ein Ende an.",
+    "endBeforeStart": "Das Ende muss nach dem Beginn liegen.",
+    "deadlineAfterStart": "Der Anmeldeschluss muss vor dem Beginn liegen.",
+    "capacityRange": "Bitte gib zwischen 1 und 1000 Plätze an.",
+    "ipRange": "Höchstens 60 Punkte pro Aktivität.",
+    "uidRequired": "Bitte gib eine Nutzer-ID an."
   },
-
   "scan": {
     "wrongCode": "Dieser QR-Code gehört nicht zu Ehrenweg.",
     "expired": "Der Code ist abgelaufen. Lass dir einen neuen zeigen.",
@@ -43,11 +55,22 @@
     "geoTooFar": "Du bist zu weit vom Veranstaltungsort entfernt.",
     "alreadyScanned": "Du hast dich hier schon eingetragen."
   },
-
   "voucher": {
     "invalid": "Gutschein ungültig.",
     "expired": "Gutschein abgelaufen.",
     "alreadyRedeemed": "Gutschein wurde bereits eingelöst.",
     "wrongOrganisation": "Dieser Gutschein gehört zu einer anderen Organisation."
+  },
+  "apply": {
+    "notPublished": "Diese Aktivität ist nicht mehr verfügbar.",
+    "full": "Alle Plätze sind vergeben.",
+    "deadlinePassed": "Der Anmeldeschluss ist vorbei.",
+    "alreadyApplied": "Du hast dich hier schon angemeldet.",
+    "started": "Diese Aktivität hat schon begonnen."
+  },
+  "organisation": {
+    "loadFailed": "Die Organisation konnte nicht geladen werden.",
+    "saveFailed": "Speichern fehlgeschlagen.",
+    "notVerified": "Eure Organisation ist noch nicht geprüft."
   }
 }

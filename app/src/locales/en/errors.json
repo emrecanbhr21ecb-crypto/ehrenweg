@@ -4,7 +4,6 @@
   "permissionDenied": "You do not have permission for this.",
   "notFound": "Not found.",
   "appCheckFailed": "Security check failed. Please restart the app.",
-
   "auth": {
     "emailInUse": "An account already exists for this email. Please sign in.",
     "invalidEmail": "That email address doesn't look right.",
@@ -21,20 +20,33 @@
     "notSignedIn": "You are not signed in.",
     "unknown": "Sign-in failed. Please try again."
   },
-
   "profile": {
     "loadFailed": "Your profile could not be loaded.",
     "createFailed": "Your profile could not be created. Check your connection.",
     "saveFailed": "Saving failed. Please try again."
   },
-
   "validation": {
     "displayNameShort": "Please enter at least 2 characters.",
     "displayNameLong": "That name is too long (max. 60 characters).",
     "bioLong": "That text is too long (max. 400 characters).",
-    "cityLong": "That place name is too long (max. 80 characters)."
+    "cityLong": "That place name is too long (max. 80 characters).",
+    "orgNameShort": "Please enter at least 3 characters.",
+    "orgNameLong": "The name is too long (max. 120 characters).",
+    "cityRequired": "Please enter a city.",
+    "urlInvalid": "That does not look like a full address (with https://).",
+    "emailInvalid": "This email address does not look right.",
+    "titleRequired": "Please provide the title in at least one language.",
+    "descriptionRequired": "Please describe the activity in at least one language.",
+    "addressRequired": "Please give an address or mark the activity as online.",
+    "languageRequired": "Please choose at least one language.",
+    "startRequired": "Please give a start time.",
+    "endRequired": "Please give an end time.",
+    "endBeforeStart": "The end must be after the start.",
+    "deadlineAfterStart": "The sign-up deadline must be before the start.",
+    "capacityRange": "Please enter between 1 and 1000 places.",
+    "ipRange": "60 points per activity at most.",
+    "uidRequired": "Please enter a user ID."
   },
-
   "scan": {
     "wrongCode": "This QR code does not belong to Ehrenweg.",
     "expired": "The code has expired. Ask for a new one.",
@@ -43,11 +55,22 @@
     "geoTooFar": "You are too far from the venue.",
     "alreadyScanned": "You have already checked in here."
   },
-
   "voucher": {
     "invalid": "Voucher is invalid.",
     "expired": "Voucher has expired.",
     "alreadyRedeemed": "Voucher has already been redeemed.",
     "wrongOrganisation": "This voucher belongs to a different organisation."
+  },
+  "apply": {
+    "notPublished": "This activity is no longer available.",
+    "full": "All places are taken.",
+    "deadlinePassed": "The sign-up deadline has passed.",
+    "alreadyApplied": "You have already signed up here.",
+    "started": "This activity has already started."
+  },
+  "organisation": {
+    "loadFailed": "The organisation could not be loaded.",
+    "saveFailed": "Saving failed.",
+    "notVerified": "Your organisation has not been verified yet."
   }
 }

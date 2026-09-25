@@ -41,7 +41,9 @@ export interface EhrenwegClaims {
 export const DEFAULT_CLAIMS: EhrenwegClaims = { role: 'participant' }
 
 export function isPlatformRole(value: unknown): value is PlatformRole {
-  return typeof value === 'string' && (PLATFORM_ROLES as readonly string[]).includes(value)
+  return (
+    typeof value === 'string' && (PLATFORM_ROLES as readonly string[]).includes(value)
+  )
 }
 
 export function isOrgRole(value: unknown): value is OrgRole {

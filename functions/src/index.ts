@@ -10,6 +10,7 @@
  *
  *   Faz 1 → onUserCreate, deleteMyAccount, exportMyData, setUserRole
  *   Faz 2 → submitActivity, reviewActivity, applyToActivity, decideApplication
+ *           approveOrganization, setOrgMember, removeOrgMember   ✅ yazıldı
  *   Faz 3 → startAttendanceSession, getCurrentCode, submitScan, approveLateScans
  *   Faz 4 → issueVoucher, buyReward, getVoucherQr, redeemVoucher, revokeVoucher
  *   Faz 5 → reviewTrainerApplication
@@ -23,6 +24,22 @@ import { onCall } from 'firebase-functions/v2/https'
 
 import { REGION } from './common/config'
 import { requireAuth } from './common/guards'
+
+/**
+ * Faz 2 uçları. ⚠️ Blaze kapalı olduğu için HENÜZ DAĞITILMADI — kod derleniyor
+ * ve hazır bekliyor (docs/DECISIONS.md §7). Aynı iş şu an istemci + Firestore
+ * kuralları ile yapılıyor; geçiş tek bayrakla olacak:
+ * app/src/lib/backend.ts → CLOUD_FUNCTIONS_ENABLED = true
+ */
+export {
+  submitActivity,
+  reviewActivity,
+  applyToActivity,
+  withdrawApplication,
+  decideApplication,
+} from './activities'
+
+export { approveOrganization, setOrgMember, removeOrgMember } from './organizations'
 
 /**
  * Altyapı sağlık kontrolü.

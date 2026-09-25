@@ -43,7 +43,9 @@ export default function Home(): React.JSX.Element {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {t(`home.greeting.${greetingKey(new Date())}` as 'home.greeting.morning')}
         </p>
-        <h1 className="text-2xl font-bold">{firstName || t('home.greetingFallback')}</h1>
+        <h1 className="text-2xl font-bold">
+          {firstName || t('home.greetingFallback')}
+        </h1>
       </header>
 
       {stats && (

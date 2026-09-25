@@ -57,8 +57,27 @@ service cloud.firestore {
       return claims().get('orgs', {});
     }
 
+    // ---------------------------------------------------------------
+    // Kurum rolü: ÖNCE custom claim, yoksa üyelik belgesi.
+    //
+    // ⚠️ SAPMA (docs/DECISIONS.md §8). CLAUDE.md Bölüm 14 yalnız claim diyor.
+    // Claim'i yalnızca Cloud Functions yazabilir; Blaze kapalı olduğu için
+    // sunucu yok. Bu yüzden `organizations/{orgId}/members/{uid}` belgesi
+    // ikinci kaynak. Güvenlik eşdeğer, çünkü o belgeyi yalnızca:
+    //   · mevcut bir org_admin, ya da
+    //   · platform_admin, ya da
+    //   · kurumu HENÜZ BAŞVURU AŞAMASINDA açan kişi (kendi adına, tek sefer)
+    // yazabiliyor. Kullanıcıya dönen bir yetki yükseltme zinciri yok.
+    // Claim geldiği gün bu okuma fazladan kalır, zarar vermez.
+    // ---------------------------------------------------------------
+    function memberRole(orgId) {
+      let path = /databases/$(database)/documents/organizations/$(orgId)/members/$(uid());
+      return exists(path) ? get(path).data.get('role', 'none') : 'none';
+    }
+
     function orgRole(orgId) {
-      return orgs().get(orgId, 'none');
+      // Ternary kısa devre yapar: claim'de varsa üyelik belgesi HİÇ okunmaz.
+      return orgs().keys().hasAny([orgId]) ? orgs()[orgId] : memberRole(orgId);
     }
 
     // Admin her kurumda yetkilidir.
@@ -88,6 +107,16 @@ service cloud.firestore {
     // Bir alanın değeri hiç değişmemiş mi? (sunucu alanlarını kilitler)
     function unchanged(field) {
       return !(field in request.resource.data.diff(resource.data).affectedKeys());
+    }
+
+    // Kurum belgesi — aktivite kuralları doğrulama durumunu buradan okur.
+    // (Aynı get() bir değerlendirme içinde önbelleklenir, tekrar ücret yok.)
+    function orgDoc(orgId) {
+      return get(/databases/$(database)/documents/organizations/$(orgId)).data;
+    }
+
+    function orgIsVerified(orgId) {
+      return orgDoc(orgId).get('verified', false) == true;
     }
 
     // ---------------------------------------------------------------------
@@ -147,9 +176,11 @@ service cloud.firestore {
         allow read, write: if isSelf(userId);
       }
 
-      // users/{uid}/applications/{activityId} — başvurular
-      // Başvuru applyToActivity onCall fonksiyonuyla yapılır (kapasite ve
-      // son başvuru tarihi kontrolü transaction gerektirir).
+      // users/{uid}/applications — KULLANILMIYOR.
+      // Başvuru tek yerde durur: activities/{id}/applicants/{uid}
+      // (gerekçe: app/src/types/activity.ts, Application açıklaması).
+      // Kural yine de burada: eski bir istemci sürümü yazmaya kalkarsa
+      // sessizce ikinci bir gerçek kaynak oluşmasın.
       match /applications/{activityId} {
         allow read: if isSelf(userId) || isAdmin();
         allow write: if false;
@@ -160,20 +191,102 @@ service cloud.firestore {
     // organizations — kurumlar
     // ---------------------------------------------------------------------
     match /organizations/{orgId} {
-      // Doğrulanmış kurumları giriş yapmış herkes görür; doğrulanmamışı
-      // yalnızca kendi personeli ve admin görür.
-      allow get: if signedIn() && (resource.data.verified == true
-                                   || orgStaff(orgId));
-      allow list: if signedIn();
-
-      // Kurum kaydı/doğrulaması Cloud Function ile (CLAUDE.md Bölüm 4:
-      // "Bir kurum kendi başına kayıt olamaz").
-      allow write: if false;
-
-      match /members/{memberUid} {
-        allow read: if isSelf(memberUid) || orgStaff(orgId);
-        allow write: if false;  // rol değişimi = claim değişimi = sunucu işi
+      // Doğrulanmış kurumu giriş yapmış herkes görür; doğrulanmamışı yalnız
+      // kendi personeli, başvuruyu yapan kişi ve admin görür.
+      function canSeeOrg() {
+        return resource.data.get('verified', false) == true
+               || resource.data.get('appliedBy', '') == uid()
+               || orgStaff(orgId)
+               || isAdmin();
       }
+
+      allow get: if signedIn() && canSeeOrg();
+
+      // list kuralı HER BELGE için ayrı değerlendirilir: doğrulanmamış bir
+      // kurumu kapsayan sorgu, personeli olmayan kullanıcıda komple düşer.
+      allow list: if signedIn() && canSeeOrg();
+
+      // ---------------------------------------------------------------
+      // BAŞVURU (CLAUDE.md Bölüm 4: "Bir kurum kendi başına kayıt olamaz")
+      //
+      // Kayıt olabilir ama YETKİ KAZANAMAZ: verified=false ve status='pending'
+      // zorunlu, bütçe alanı yasak, parasal kupon kapalı. Bu hâldeki kurum
+      // aktivite yayınlayamaz (aşağıdaki activities kuralı verified arıyor).
+      // ---------------------------------------------------------------
+      allow create: if verified()
+                    && request.resource.data.appliedBy == uid()
+                    && request.resource.data.verified == false
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.reviewedBy == null
+                    && request.resource.data.features.cashVouchers == false
+                    && !('budget' in request.resource.data)
+                    && !('seed' in request.resource.data)
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() >= 3
+                    && request.resource.data.name.size() <= 120;
+
+      // İNCELEME — yalnız platform admin. `approveOrganization` (Bölüm 12).
+      allow update: if isAdmin()
+                    && onlyFields(['verified', 'status', 'reviewedBy',
+                                   'reviewedAt', 'reviewNote',
+                                   'features', 'logoURL'])
+                    && request.resource.data.reviewedBy == uid();
+
+      // PROFİL DÜZENLEME — kurum yöneticisi. Doğrulama ve bütçe alanlarına
+      // dokunamaz; dokunabilseydi kendi kurumunu "geprüft" yapardı.
+      allow update: if orgAdmin(orgId)
+                    && onlyFields(['logoURL', 'website', 'contactEmail',
+                                   'description', 'city'])
+                    && unchanged('verified')
+                    && unchanged('status');
+
+      allow delete: if false;
+
+      // -----------------------------------------------------------------
+      // organizations/{orgId}/members/{uid} — kurum ekibi
+      // -----------------------------------------------------------------
+      match /members/{memberUid} {
+        function validRole() {
+          return request.resource.data.role in
+                 ['org_admin', 'org_staff', 'redemption_officer', 'partner'];
+        }
+
+        function consistent() {
+          return request.resource.data.uid == memberUid
+                 && request.resource.data.orgId == orgId
+                 && validRole();
+        }
+
+        allow get: if isSelf(memberUid) || orgStaff(orgId) || isAdmin();
+        allow list: if orgStaff(orgId) || isAdmin();
+
+        // Kullanıcının "hangi kurumlardayım" sorgusu (collectionGroup).
+        // Sorgu `where('uid','==',me)` ile geldiği için başkasının üyeliği
+        // hiçbir koşulda dönmez.
+        allow create: if consistent() && (
+                        orgAdmin(orgId)
+                        // İLK YÖNETİCİ: kurumu başvuru anında açan kişi,
+                        // aynı commit içinde kendini org_admin yazar.
+                        // getAfter → başvuru belgesi gerçekten bu commit'te
+                        // ve 'pending' durumunda oluşuyor mu?
+                        || (isSelf(memberUid)
+                            && request.resource.data.role == 'org_admin'
+                            && getAfter(/databases/$(database)/documents/organizations/$(orgId))
+                                 .data.appliedBy == uid()
+                            && getAfter(/databases/$(database)/documents/organizations/$(orgId))
+                                 .data.status == 'pending')
+                      );
+
+        allow update: if consistent() && orgAdmin(orgId);
+        allow delete: if orgAdmin(orgId);
+      }
+    }
+
+    // Collection group: "hangi kurumlarda üyeyim?"
+    // Sorgu kısıtı ile kural birebir örtüşmezse Firestore sorguyu reddeder,
+    // yani kimse başkasının üyeliğini listeleyemez.
+    match /{path=**}/members/{memberUid} {
+      allow list: if signedIn() && resource.data.get('uid', '') == uid();
     }
 
     // ---------------------------------------------------------------------
@@ -181,27 +294,208 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     match /categories/{categoryId} {
       allow read: if signedIn();
-      allow write: if false;
+      // Kategori sözlüğü koddaki CATEGORY_IDS ile aynı; Firestore kopyasını
+      // yalnız platform admin (ve seed scripti, Admin SDK ile) yazar.
+      allow write: if isAdmin();
     }
 
     // ---------------------------------------------------------------------
     // activities — aktiviteler ve eğitimler
     // ---------------------------------------------------------------------
     match /activities/{activityId} {
-      // Yayınlananı giriş yapmış herkes görür.
-      // Taslak / incelemedeki yalnızca ilgili kurum personeline ve admine açık.
-      allow get: if signedIn() && (
-                    resource.data.status == 'published'
-                    || resource.data.status == 'completed'
-                    || orgStaff(resource.data.orgId)
-                    || (isTrainer() && resource.data.get('trainerUid', '') == uid())
-                  );
-      allow list: if signedIn();
 
-      // Oluşturma/güncelleme submitActivity + reviewActivity onCall ile.
-      // Sebep: çok dilli alan doğrulaması, moderasyon durumu ve stats
-      // (applicants/attendees) sunucu denetiminde olmalı.
-      allow write: if false;
+      // -----------------------------------------------------------------
+      // OKUMA — CLAUDE.md Bölüm 14:
+      // "status == 'published' herkes (giriş yapmış); taslaklar yalnız
+      //  ilgili kurum üyeleri."
+      //
+      // `list` de aynı koşulu kullanıyor: kural her belge için ayrı
+      // değerlendirildiğinden, taslakları kapsayan bir sorgu kurum
+      // personeli olmayan kullanıcıda komple reddedilir.
+      // -----------------------------------------------------------------
+      function canSeeActivity() {
+        return resource.data.status == 'published'
+               || resource.data.status == 'completed'
+               || resource.data.status == 'cancelled'
+               || orgStaff(resource.data.orgId)
+               || isAdmin()
+               || (isTrainer() && resource.data.get('trainerUid', '') == uid());
+      }
+
+      allow get: if signedIn() && canSeeActivity();
+      allow list: if signedIn() && canSeeActivity();
+
+      // -----------------------------------------------------------------
+      // OLUŞTURMA — kurum personeli, HER ZAMAN taslak olarak.
+      //
+      // Doğrudan 'published' yazılamaz: yayın kararı platform admin'in
+      // (reviewActivity). Sayaçlar sıfırdan başlar, `seed` işareti
+      // istemciden gelemez (o yalnız seed scriptinin damgası).
+      // -----------------------------------------------------------------
+      function contentFieldsValid() {
+        return request.resource.data.capacity is int
+               && request.resource.data.capacity >= 1
+               && request.resource.data.capacity <= 1000
+               && request.resource.data.rewards.ip is int
+               && request.resource.data.rewards.ip >= 0
+               && request.resource.data.rewards.ip <= 60
+               && request.resource.data.hoursCredited >= 0
+               && request.resource.data.hoursCredited <= 24
+               && request.resource.data.minLevel is int
+               && request.resource.data.minLevel >= 0
+               && request.resource.data.minLevel <= 5
+               && request.resource.data.startAt is timestamp
+               && request.resource.data.endAt is timestamp
+               && request.resource.data.endAt > request.resource.data.startAt;
+      }
+
+      allow create: if verified()
+                    && orgStaff(request.resource.data.orgId)
+                    && request.resource.data.createdBy == uid()
+                    && request.resource.data.status == 'draft'
+                    && request.resource.data.stats == { 'applicants': 0, 'attendees': 0 }
+                    && request.resource.data.reviewedBy == null
+                    && !('seed' in request.resource.data)
+                    && contentFieldsValid();
+
+      // Taslak silinebilir; yayınlanmış/incelemedeki aktivite SİLİNMEZ —
+      // başvuran birinin geçmişi altından çekilmesin (iptal edilir).
+      allow delete: if orgStaff(resource.data.orgId)
+                    && resource.data.status == 'draft'
+                    && resource.data.stats.applicants == 0;
+
+      // -----------------------------------------------------------------
+      // GÜNCELLEME 1/3 — içerik düzenleme (kurum personeli).
+      // Durum, sahiplik, sayaç ve moderasyon alanlarına DOKUNAMAZ.
+      // -----------------------------------------------------------------
+      allow update: if orgStaff(resource.data.orgId)
+                    && resource.data.status in ['draft', 'pending_review', 'published']
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['orgId', 'createdBy', 'status', 'stats', 'seed',
+                                  'submittedAt', 'reviewedBy', 'reviewedAt',
+                                  'reviewNote', 'createdAt'])
+                    && contentFieldsValid();
+
+      // -----------------------------------------------------------------
+      // GÜNCELLEME 2/3 — durum geçişleri (submitActivity / reviewActivity).
+      //
+      // İzinli geçişler:
+      //   kurum : draft → pending_review     (onaya gönder)
+      //           pending_review → draft     (incelemeden geri çek)
+      //           published → cancelled      (iptal)
+      //           draft/pending_review → cancelled
+      //   admin : pending_review → published (kurum DOĞRULANMIŞSA)
+      //           pending_review → draft     (gerekçeyle reddet)
+      //           published → cancelled      (moderasyon)
+      // Başka hiçbir geçiş yok; özellikle draft → published YOK.
+      // -----------------------------------------------------------------
+      function statusOnly() {
+        return request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['status', 'submittedAt', 'reviewedBy',
+                           'reviewedAt', 'reviewNote']);
+      }
+
+      function from() { return resource.data.status; }
+      function to()   { return request.resource.data.status; }
+
+      allow update: if statusOnly() && orgStaff(resource.data.orgId) && (
+                         (from() == 'draft' && to() == 'pending_review')
+                      || (from() == 'pending_review' && to() == 'draft')
+                      || (from() in ['draft', 'pending_review', 'published']
+                          && to() == 'cancelled')
+                    );
+
+      allow update: if statusOnly() && isAdmin()
+                    && request.resource.data.reviewedBy == uid()
+                    && (
+                         (from() == 'pending_review' && to() == 'published'
+                          && orgIsVerified(resource.data.orgId))
+                      || (from() == 'pending_review' && to() == 'draft')
+                      || (from() == 'published' && to() == 'cancelled')
+                    );
+
+      // -----------------------------------------------------------------
+      // GÜNCELLEME 3/3 — kontenjan sayacı (applyToActivity / geri çekme).
+      //
+      // 🔒 Sayaç tek başına oynatılamaz. `getAfter`, AYNI COMMIT içinde
+      // çağıranın kendi başvuru belgesinin oluştuğunu/geri çekildiğini
+      // doğruluyor. Yani +1 için gerçekten bir başvuru yazılmış olmalı,
+      // −1 için de o başvuru 'withdrawn' olmalı. Başkasının adına ya da
+      // boşa sayaç değiştirmek mümkün değil.
+      // `attendees` bu yoldan asla değişmez (Faz 3, yoklama işi).
+      // -----------------------------------------------------------------
+      function myApplicantAfter() {
+        return getAfter(/databases/$(database)/documents/activities/$(activityId)/applicants/$(uid())).data;
+      }
+
+      allow update: if signedIn()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stats'])
+                    && request.resource.data.stats.attendees == resource.data.stats.attendees
+                    && (
+                         (request.resource.data.stats.applicants == resource.data.stats.applicants + 1
+                          && myApplicantAfter().status == 'applied')
+                      || (request.resource.data.stats.applicants == resource.data.stats.applicants - 1
+                          && myApplicantAfter().status == 'withdrawn')
+                    );
+
+      // =================================================================
+      // activities/{id}/applicants/{uid} — başvurular
+      //
+      // CLAUDE.md Bölüm 12 `applyToActivity`: kontenjan ve son başvuru
+      // kontrolü. Cloud Function olmadığı için kontroller BURADA:
+      // aktivite belgesi get() ile okunup kapasite, tarih ve durum
+      // doğrulanıyor. İstemci transaction'ı yalnız yarışı çözüyor.
+      // =================================================================
+      match /applicants/{applicantUid} {
+        function act() {
+          return get(/databases/$(database)/documents/activities/$(activityId)).data;
+        }
+
+        allow get: if isSelf(applicantUid) || orgStaff(act().orgId) || isAdmin();
+        allow list: if orgStaff(act().orgId) || isAdmin();
+
+        allow create: if isSelf(applicantUid)
+                      && verified()
+                      && act().status == 'published'
+                      && act().requiresApplication == true
+                      && act().stats.applicants < act().capacity
+                      && request.time < act().startAt
+                      && (act().applicationDeadline == null
+                          || request.time < act().applicationDeadline)
+                      && request.resource.data.uid == uid()
+                      && request.resource.data.activityId == activityId
+                      && request.resource.data.orgId == act().orgId
+                      && request.resource.data.status == 'applied'
+                      && request.resource.data.attended == false
+                      && request.resource.data.decidedAt == null
+                      && request.resource.data.decidedBy == null
+                      && request.resource.data.decisionNote == ''
+                      && request.resource.data.message is string
+                      && request.resource.data.message.size() <= 500;
+
+        // Katılımcı kendi başvurusunu geri çeker. Başka hiçbir alana
+        // dokunamaz — özellikle `attended` ve `status: accepted` yasak.
+        allow update: if isSelf(applicantUid)
+                      && onlyFields(['status', 'withdrawnAt'])
+                      && resource.data.status in ['applied', 'accepted']
+                      && request.resource.data.status == 'withdrawn';
+
+        // `decideApplication` — kurum kabul/red.
+        allow update: if orgStaff(act().orgId)
+                      && onlyFields(['status', 'decidedAt', 'decidedBy', 'decisionNote'])
+                      && resource.data.status == 'applied'
+                      && request.resource.data.status in ['accepted', 'rejected']
+                      && request.resource.data.decidedBy == uid();
+
+        // Başvuru silinmez: kontenjan sayacı silinen belgeyi kanıtlayamaz
+        // ve kurumun "kaç kişi vazgeçti" görünürlüğü kaybolur.
+        allow delete: if false;
+      }
+    }
+
+    // "Başvurularım" — collection group. Sorgu `where('uid','==',me)`.
+    match /{path=**}/applicants/{applicantUid} {
+      allow list: if signedIn() && resource.data.get('uid', '') == uid();
     }
 
     // ---------------------------------------------------------------------

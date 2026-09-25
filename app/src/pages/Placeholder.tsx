@@ -1,9 +1,10 @@
 /**
- * Henüz yazılmamış sekmelerin dürüst boş durumu (Activities, Learn, Wallet).
+ * Henüz yazılmamış sekmelerin dürüst boş durumu (Learn, Wallet).
  *
  * "Yakında" demek yerine ne zaman geleceğini söylüyoruz — kullanıcı boş bir
- * ekrana bakıp uygulamanın bozuk olduğunu düşünmesin. Faz 2/4'te bu bileşen
- * gerçek sayfalarla değiştirilip silinecek.
+ * ekrana bakıp uygulamanın bozuk olduğunu düşünmesin. Activities, Kurum ve
+ * Yönetim Faz 2'de gerçek sayfalara dönüştü; Learn ve Wallet Faz 4/5'te
+ * dönüşünce bu dosya tamamen silinecek.
  */
 
 import { useTranslation } from 'react-i18next'
@@ -39,13 +40,6 @@ export function ComingSoon({
   )
 }
 
-export function Activities(): React.JSX.Element {
-  const { t } = useTranslation()
-  return (
-    <ComingSoon title={t('nav.activities')} body={t('soon.activities')} emoji="🗺️" />
-  )
-}
-
 export function Learn(): React.JSX.Element {
   const { t } = useTranslation()
   return <ComingSoon title={t('nav.learn')} body={t('soon.learn')} emoji="🎓" />
@@ -54,18 +48,4 @@ export function Learn(): React.JSX.Element {
 export function Wallet(): React.JSX.Element {
   const { t } = useTranslation()
   return <ComingSoon title={t('nav.wallet')} body={t('soon.wallet')} emoji="🎁" />
-}
-
-/**
- * Kurum paneli — Faz 2'de gelecek. Menüde yalnız org rolü olanlara görünür.
- */
-export function OrgPanel(): React.JSX.Element {
-  const { t } = useTranslation()
-  return <ComingSoon title={t('nav.org')} body={t('soon.org')} emoji="🏛️" />
-}
-
-/** Platform yönetimi — Faz 2'de kurum doğrulama kuyruğuyla başlayacak. */
-export function AdminPanel(): React.JSX.Element {
-  const { t } = useTranslation()
-  return <ComingSoon title={t('nav.admin')} body={t('soon.admin')} emoji="🛡️" />
 }

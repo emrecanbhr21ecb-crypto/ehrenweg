@@ -9,17 +9,17 @@ Son güncelleme: 2026-09-25
 
 ## 1. Kimlik ve hesaplar
 
-| Konu | Karar | Not |
-|---|---|---|
-| Uygulama adı | **Ehrenweg** | Her dilde aynı, çevrilmez |
-| Firebase / destek hesabı | **ehrenwegde@gmail.com** | Firebase projeleri bu hesap altında açılır; CLI'ya eklendi ✅ |
-| Destek e-postası | **ehrenwegde@gmail.com** | `support@ehrenweg.de` yerine; alan adı alınırsa yönlendirme kurulabilir |
-| **Play Console geliştirici hesabı** | **ehrenwegde@gmail.com** | Firebase ile AYNI hesap (proje sahibi 24 Eyl 2026'da netleştirdi) |
-| **Play Console hesabının ülkesi** | **Türkiye** | Proje sahibi 25 Eyl 2026'da netleştirdi. Hesap Türkiye'den açılacak; uygulama yine Almanya'da yayınlanacak |
-| Tüzel kimlik | **Şahıs** (dernek/şirket değil) | Play Console ve Apple Developer hesabı şahıs adına açılacak |
-| GitHub hesabı | `emrecanbhr21ecb-crypto` | Repo: **private** `ehrenweg` |
-| Android applicationId | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) | |
-| iOS bundle ID | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) | |
+| Konu                                | Karar                                          | Not                                                                                                        |
+| ----------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Uygulama adı                        | **Ehrenweg**                                   | Her dilde aynı, çevrilmez                                                                                  |
+| Firebase / destek hesabı            | **ehrenwegde@gmail.com**                       | Firebase projeleri bu hesap altında açılır; CLI'ya eklendi ✅                                              |
+| Destek e-postası                    | **ehrenwegde@gmail.com**                       | `support@ehrenweg.de` yerine; alan adı alınırsa yönlendirme kurulabilir                                    |
+| **Play Console geliştirici hesabı** | **ehrenwegde@gmail.com**                       | Firebase ile AYNI hesap (proje sahibi 24 Eyl 2026'da netleştirdi)                                          |
+| **Play Console hesabının ülkesi**   | **Türkiye**                                    | Proje sahibi 25 Eyl 2026'da netleştirdi. Hesap Türkiye'den açılacak; uygulama yine Almanya'da yayınlanacak |
+| Tüzel kimlik                        | **Şahıs** (dernek/şirket değil)                | Play Console ve Apple Developer hesabı şahıs adına açılacak                                                |
+| GitHub hesabı                       | `emrecanbhr21ecb-crypto`                       | Repo: **private** `ehrenweg`                                                                               |
+| Android applicationId               | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) |                                                                                                            |
+| iOS bundle ID                       | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) |                                                                                                            |
 
 **AÇIK (P11 / Faz 8'e ertelendi, 25 Eyl 2026):** İmza anahtarındaki
 (`keytool -dname`) tam yasal ad ve şehir. Proje sahibi "keystore üretilirken
@@ -89,7 +89,8 @@ vardır. Hukuki görüş gelene kadar kapalı kalır, sonra tek bayrakla açıl�
 
 Demo aktiviteler: Hasenheide park temizliği, Seniorenbegleitung,
 Deutsch-Sprachcafé, English conversation club, Tafel gıda dağıtımı vb.
-+ 1 partner kafe + her rolden 1 test kullanıcısı.
+
+- 1 partner kafe + her rolden 1 test kullanıcısı.
 
 ### 🔴 Demo içerik kuralı (proje sahibinin talimatı, 24 Eyl 2026)
 
@@ -126,11 +127,11 @@ değerlendirilecek. Bu bir "sonra bakarız" değil, bilinçli erteleme.
 
 Gerekçe: alan adı üç yerde gerekiyor ve üçünün de bedava karşılığı var —
 
-| Nerede gerekiyor | Alan adı olmadan | Not |
-|---|---|---|
-| Play Console gizlilik politikası URL'si (**zorunlu alan**) | `https://ehrenweg-prod.web.app/privacy` | Firebase Hosting her projeye bedava veriyor |
-| App Links (linke tıklayınca uygulama açılsın) | `https://ehrenweg-prod.web.app/a/{activityId}` | `assetlinks.json` bu adresten de yayınlanabilir |
-| PDF pasaport doğrulama QR'ı | `https://ehrenweg-prod.web.app/verify/{id}` | |
+| Nerede gerekiyor                                           | Alan adı olmadan                               | Not                                             |
+| ---------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------- |
+| Play Console gizlilik politikası URL'si (**zorunlu alan**) | `https://ehrenweg-prod.web.app/privacy`        | Firebase Hosting her projeye bedava veriyor     |
+| App Links (linke tıklayınca uygulama açılsın)              | `https://ehrenweg-prod.web.app/a/{activityId}` | `assetlinks.json` bu adresten de yayınlanabilir |
+| PDF pasaport doğrulama QR'ı                                | `https://ehrenweg-prod.web.app/verify/{id}`    |                                                 |
 
 Yani teknik hiçbir şey alan adı yüzünden beklemiyor. Tek kayıp kurumsal
 görünüm: bir belediyeye `.web.app` adresi vermek zayıf durur. O yüzden pilot
@@ -153,26 +154,26 @@ Bkz. `docs/LEGAL_OPEN_QUESTIONS.md`.
 Bunlar iş kuralı değil, teknik zorunluluk olduğu için sorulmadan uygulandı.
 İtirazın varsa söyle, değiştiririm.
 
-| Konu | Karar | Neden |
-|---|---|---|
-| Makine | macOS (Darwin 25.2) | CLAUDE.md Bölüm 16'daki `keystore.properties` örneği Linux yolu veriyordu; bizde `/Users/emrecanbuhur/ehrenweg-keys/...` olacak |
-| `JAVA_HOME` | `/opt/homebrew/opt/openjdk@**21**` | firebase-tools 15 artık **JDK 21+** şart koşuyor; sistemde 17 varsayılandı. 21 zaten kuruluydu, kurulum gerekmedi |
-| Cloud Functions bölgesi | `europe-west3` | CLAUDE.md Bölüm 1A — Firestore ile aynı bölge |
-| **Functions Node sürümü** | **`nodejs24`** | ↓ aşağıya bak |
-| React | **19.2** (CLAUDE.md 18 diyordu) | create-vite artık 19 veriyor; 18'e düşürmek gereksiz risk |
-| Linter | **oxlint** (CLAUDE.md ESLint diyordu) | Vite varsayılanı; react-hooks kuralları var, kat kat hızlı. Prettier + Husky yine kuruldu |
-| TypeScript | 6.0, `strict: true` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` | CLAUDE.md "strict" diyor; scaffold'da açık gelmiyordu, elle eklendi |
+| Konu                      | Karar                                                                           | Neden                                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Makine                    | macOS (Darwin 25.2)                                                             | CLAUDE.md Bölüm 16'daki `keystore.properties` örneği Linux yolu veriyordu; bizde `/Users/emrecanbuhur/ehrenweg-keys/...` olacak |
+| `JAVA_HOME`               | `/opt/homebrew/opt/openjdk@**21**`                                              | firebase-tools 15 artık **JDK 21+** şart koşuyor; sistemde 17 varsayılandı. 21 zaten kuruluydu, kurulum gerekmedi               |
+| Cloud Functions bölgesi   | `europe-west3`                                                                  | CLAUDE.md Bölüm 1A — Firestore ile aynı bölge                                                                                   |
+| **Functions Node sürümü** | **`nodejs24`**                                                                  | ↓ aşağıya bak                                                                                                                   |
+| React                     | **19.2** (CLAUDE.md 18 diyordu)                                                 | create-vite artık 19 veriyor; 18'e düşürmek gereksiz risk                                                                       |
+| Linter                    | **oxlint** (CLAUDE.md ESLint diyordu)                                           | Vite varsayılanı; react-hooks kuralları var, kat kat hızlı. Prettier + Husky yine kuruldu                                       |
+| TypeScript                | 6.0, `strict: true` + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` | CLAUDE.md "strict" diyor; scaffold'da açık gelmiyordu, elle eklendi                                                             |
 
 ### Neden Node 20 değil, Node 24?
 
 CLAUDE.md "Node 20" diyor ama o tarih geçmiş. `firebase-tools` 15.22.4'ün
 kendi runtime tablosundan okundu:
 
-| Runtime | Durum | Kapanma tarihi |
-|---|---|---|
-| nodejs20 | GA | **2026-10-30** ← bir ay sonra |
-| nodejs22 | GA | 2028-10-31 |
-| **nodejs24** | GA | 2028-10-31 |
+| Runtime      | Durum | Kapanma tarihi                |
+| ------------ | ----- | ----------------------------- |
+| nodejs20     | GA    | **2026-10-30** ← bir ay sonra |
+| nodejs22     | GA    | 2028-10-31                    |
+| **nodejs24** | GA    | 2028-10-31                    |
 
 `nodejs24` seçildi: en uzun destek **ve** geliştirme makinesindeki Node
 v24.12.0 ile birebir aynı → emülatör ile üretim arasında sürüm farkı yok.
@@ -184,8 +185,8 @@ v24.12.0 ile birebir aynı → emülatör ile üretim arasında sürüm farkı y
 - **2026-09-24** — İlk sürüm. Firestore `europe-west3`, parasal kupon kapalı,
   pilot Berlin-Neukölln, GitHub private repo, şahıs kimliği,
   `ehrenwegde@gmail.com`.
-  *(Not: bu satır ilk yazımda sehven `eur3` diyordu; Bölüm 2'deki karar
-  `europe-west3`'tür, 25 Eyl 2026'da düzeltildi.)*
+  _(Not: bu satır ilk yazımda sehven `eur3` diyordu; Bölüm 2'deki karar
+  `europe-west3`'tür, 25 Eyl 2026'da düzeltildi.)_
 - **2026-09-25** — P00 tamamlandı. Bölüm 17'de açık kalan son iki soru
   cevaplandı: **alan adı pilot sonrası** (Bölüm 6, yeni), **Play Console hesabı
   Türkiye'den** açılacak (Bölüm 1). Keystore'daki tam yasal ad ve şehir bilinçli
@@ -225,9 +226,80 @@ yazamıyor, başkasının uid'sine belge açamıyor.
 
 ---
 
+## 8. Kurum rolü claim yerine üyelik belgesinden de okunuyor (Faz 2)
+
+**Karar tarihi:** 25 Eylül 2026 · **Durum:** geçici, Blaze'e bağlı
+
+**CLAUDE.md ne diyor:** Bölüm 14 — "Kurum yetkisi:
+`request.auth.token.orgs[orgId] in ['org_admin','org_staff']` (claim'e
+kurum-rol haritası koy)." Bölüm 4 — claim'leri yalnızca Cloud Function
+değiştirebilir.
+
+**Neden sapıldı:** İkisi birlikte, Blaze kapalıyken, kurum özelliğini
+tamamen imkânsız kılıyor. Claim'i yalnız sunucu yazabilir; sunucu
+(Cloud Functions) Blaze istiyor; Blaze açık değil. Yani hiçbir kullanıcı
+hiçbir kurumda hiçbir zaman yetki kazanamazdı — Faz 2'nin tamamı ölü
+doğardı.
+
+**Ne yapıldı:** `firestore.rules` içindeki `orgRole(orgId)` **önce claim'e**
+bakıyor, orada kayıt yoksa `organizations/{orgId}/members/{uid}` belgesine
+düşüyor:
+
+```
+function orgRole(orgId) {
+  return orgs().keys().hasAny([orgId]) ? orgs()[orgId] : memberRole(orgId);
+}
+```
+
+Ternary kısa devre yaptığı için claim varsa üyelik belgesi hiç okunmaz —
+Blaze geldiğinde ek okuma maliyeti de kendiliğinden sıfırlanır.
+
+**Neden güvenlik eşdeğer:** Üyelik belgesini yazabilen üç taraf var ve
+üçü de yetki zincirinin dışına çıkamıyor:
+
+1. mevcut bir `org_admin` (zaten o kurumda tam yetkili),
+2. `platform_admin`,
+3. kurumu **başvuru anında** açan kişi — yalnız kendi adına, yalnız
+   `status == 'pending'` olan kurumda, `getAfter()` ile aynı commit
+   doğrulanarak. O kurum `verified: false` olduğu için hiçbir şey
+   yayınlayamaz; doğrulama yine platform admin'den geçer.
+
+Yani kullanıcının kendi kendine yetki üretebileceği bir yol yok. Rastgele
+bir kişi başkasının kurumuna kendini ekleyemez; eklediği kendi kurumu da
+admin onayına kadar işlevsizdir.
+
+**Aynı gerekçeyle Faz 2'de istemciye açılanlar** (hepsi kuralla sınırlı):
+
+| İş                 | Kural nasıl koruyor                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| Kurum başvurusu    | `verified == false`, `status == 'pending'`, `appliedBy == uid`, bütçe alanı yasak                 |
+| Aktivite oluşturma | yalnız `org_staff`+, her zaman `draft`, `stats` sıfır, IP ≤ 60                                    |
+| Durum geçişi       | geçiş tablosu kuralda; `draft → published` YOK, yayın yalnız admin ve yalnız doğrulanmış kurumda  |
+| Başvuru            | aktivite `get()` ile okunup kontenjan, son başvuru tarihi ve durum doğrulanıyor                   |
+| Kontenjan sayacı   | yalnız ±1, `getAfter()` ile aynı commit'teki kendi başvurusu kanıtlanarak; `attendees` dokunulmaz |
+| Kabul/red          | yalnız o kurumun personeli, yalnız `applied → accepted/rejected`                                  |
+
+**Blaze açıldığında ne olacak:** `app/src/lib/backend.ts` içindeki
+`CLOUD_FUNCTIONS_ENABLED` `true` yapılır (fonksiyonlar
+`functions/src/activities.ts` ve `organizations.ts` içinde yazılı ve
+derleniyor), kuraldaki istemci `allow create/update` blokları `if false`
+olur, `memberRole` düşüşü fazlalık olarak kalır.
+
+---
+
 ## Değişiklik günlüğü (devam)
 
 - **2026-09-25 (akşam)** — Faz 1 kodlandı: auth (e-posta/şifre + Google),
   e-posta doğrulama, onboarding, profil kurulumu ve düzenleme, Integrationspass
   iskeleti, DE/EN tam çeviri. Bölüm 7'deki sapma bu sırada verildi.
   Firestore veritabanları **iki projede de `europe-west3`** olarak kuruldu.
+- **2026-09-25 (gece)** — Faz 2 kodlandı: kurum başvurusu ve doğrulama
+  kuyruğu, kurum ekibi, aktivite oluşturma/moderasyon akışı, katılımcı
+  liste+harita+detay, başvuru/geri çekme, Başvurularım, seed verisi.
+  Bölüm 8'deki sapma bu sırada verildi. Harita için **Leaflet + OpenStreetMap**
+  seçildi (anahtar yok, faturalandırma yok, kullanıcı izleme yok).
+  Kapak görseli şimdilik **bağlantı** olarak giriliyor — dosya yükleme
+  Storage, Storage da Blaze istiyor.
+  Proje sahibinin talimatıyla bu fazda **otomatik test yazılmadı**
+  (kural testleri ve Playwright e2e atlandı); hedef yatırımcıya
+  gösterilebilir dolu bir uygulama.

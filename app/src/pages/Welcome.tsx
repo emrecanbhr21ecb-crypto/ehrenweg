@@ -30,9 +30,7 @@ export default function Welcome(): React.JSX.Element {
         <p className="text-3xl font-bold tracking-tight text-primary-800 dark:text-primary-200">
           {BRAND.name}
         </p>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          {t('slogan')}
-        </p>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{t('slogan')}</p>
       </header>
 
       <nav aria-label={t('language.label')} className="mb-8 flex justify-center gap-2">
@@ -72,14 +70,19 @@ export default function Welcome(): React.JSX.Element {
       <div
         className="my-6 flex justify-center gap-2"
         role="group"
-        aria-label={t('onboarding.progress', { current: slide + 1, total: INTRO_SLIDES.length })}
+        aria-label={t('onboarding.progress', {
+          current: slide + 1,
+          total: INTRO_SLIDES.length,
+        })}
       >
         {INTRO_SLIDES.map((key, index) => (
           <span
             key={key}
             className={[
               'h-2 rounded-full transition-all',
-              index === slide ? 'w-6 bg-primary-700' : 'w-2 bg-gray-300 dark:bg-ink-700',
+              index === slide
+                ? 'w-6 bg-primary-700'
+                : 'w-2 bg-gray-300 dark:bg-ink-700',
             ].join(' ')}
           />
         ))}

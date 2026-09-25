@@ -153,7 +153,10 @@ export default function SignIn(): React.JSX.Element {
 
       <p className="mt-6 text-center text-sm">
         {t('auth.noAccountQuestion')}{' '}
-        <Link to="/signup" className="font-semibold text-primary-700 underline dark:text-primary-300">
+        <Link
+          to="/signup"
+          className="font-semibold text-primary-700 underline dark:text-primary-300"
+        >
           {t('auth.signUpAction')}
         </Link>
       </p>

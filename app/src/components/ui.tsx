@@ -18,8 +18,7 @@ const BUTTON_STYLES: Record<ButtonVariant, string> = {
     'bg-primary-700 text-white hover:bg-primary-800 active:bg-primary-900 disabled:bg-primary-700/50',
   secondary:
     'border border-primary-700 text-primary-800 hover:bg-primary-50 dark:text-primary-200 dark:hover:bg-primary-950/60',
-  ghost:
-    'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-ink-800',
+  ghost: 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-ink-800',
   danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
 }
 
@@ -76,54 +75,54 @@ interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   hint?: string | undefined
 }
 
-export const TextField = forwardRef<HTMLInputElement, FieldProps>(
-  function TextField({ label, error, hint, className, id, ...rest }, ref) {
-    const generatedId = useId()
-    const inputId = id ?? generatedId
-    const errorId = `${inputId}-error`
-    const hintId = `${inputId}-hint`
+export const TextField = forwardRef<HTMLInputElement, FieldProps>(function TextField(
+  { label, error, hint, className, id, ...rest },
+  ref,
+) {
+  const generatedId = useId()
+  const inputId = id ?? generatedId
+  const errorId = `${inputId}-error`
+  const hintId = `${inputId}-hint`
 
-    const describedBy =
-      [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(' ') ||
-      undefined
+  const describedBy =
+    [error ? errorId : null, hint ? hintId : null].filter(Boolean).join(' ') ||
+    undefined
 
-    return (
-      <div className="space-y-1.5">
-        <label htmlFor={inputId} className="block text-sm font-medium">
-          {label}
-        </label>
-        <input
-          {...rest}
-          id={inputId}
-          ref={ref}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={describedBy}
-          className={twMerge(
-            'min-h-11 w-full rounded-xl border px-3.5 py-2.5 text-base',
-            'bg-white dark:bg-ink-900',
-            error
-              ? 'border-red-500 dark:border-red-400'
-              : 'border-gray-300 dark:border-ink-700',
-            className,
-          )}
-        />
-        {hint && (
-          <p id={hintId} className="text-xs text-gray-500 dark:text-gray-400">
-            {hint}
-          </p>
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={inputId} className="block text-sm font-medium">
+        {label}
+      </label>
+      <input
+        {...rest}
+        id={inputId}
+        ref={ref}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        className={twMerge(
+          'min-h-11 w-full rounded-xl border px-3.5 py-2.5 text-base',
+          'bg-white dark:bg-ink-900',
+          error
+            ? 'border-red-500 dark:border-red-400'
+            : 'border-gray-300 dark:border-ink-700',
+          className,
         )}
-        {error && (
-          <p id={errorId} className="text-sm text-red-600 dark:text-red-400">
-            {error}
-          </p>
-        )}
-      </div>
-    )
-  },
-)
+      />
+      {hint && (
+        <p id={hintId} className="text-xs text-gray-500 dark:text-gray-400">
+          {hint}
+        </p>
+      )}
+      {error && (
+        <p id={errorId} className="text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+})
 
-interface TextAreaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string
   error?: string | undefined
   hint?: string | undefined
@@ -176,8 +175,7 @@ const ALERT_STYLES: Record<AlertTone, string> = {
   info: 'bg-sky-50 text-sky-900 dark:bg-sky-950/60 dark:text-sky-100',
   success:
     'bg-emerald-50 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-100',
-  warning:
-    'bg-amber-50 text-amber-900 dark:bg-amber-950/60 dark:text-amber-100',
+  warning: 'bg-amber-50 text-amber-900 dark:bg-amber-950/60 dark:text-amber-100',
   error: 'bg-red-50 text-red-900 dark:bg-red-950/60 dark:text-red-100',
 }
 
@@ -251,6 +249,171 @@ export function ChipToggle({
     >
       {children}
     </button>
+  )
+}
+
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string
+  error?: string | undefined
+  hint?: string | undefined
+}
+
+export function SelectField({
+  label,
+  error,
+  hint,
+  className,
+  id,
+  children,
+  ...rest
+}: SelectProps): React.JSX.Element {
+  const generatedId = useId()
+  const fieldId = id ?? generatedId
+  const errorId = `${fieldId}-error`
+
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={fieldId} className="block text-sm font-medium">
+        {label}
+      </label>
+      <select
+        {...rest}
+        id={fieldId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
+        className={twMerge(
+          'min-h-11 w-full rounded-xl border px-3 py-2.5 text-base',
+          'bg-white dark:bg-ink-900',
+          error
+            ? 'border-red-500 dark:border-red-400'
+            : 'border-gray-300 dark:border-ink-700',
+          className,
+        )}
+      >
+        {children}
+      </select>
+      {hint && <p className="text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
+      {error && (
+        <p id={errorId} className="text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Açık/kapalı anahtarı.
+ *
+ * Gerçek bir `<input type="checkbox">` üstüne kuruludur — ekran okuyucu ve
+ * klavye davranışı tarayıcıdan gelsin diye. `role="switch"` görsel anahtarın
+ * ne olduğunu söyler.
+ */
+export function Switch({
+  checked,
+  onChange,
+  label,
+  hint,
+  disabled,
+}: {
+  checked: boolean
+  onChange: (next: boolean) => void
+  label: string
+  hint?: string
+  disabled?: boolean
+}): React.JSX.Element {
+  const id = useId()
+  return (
+    <div className="flex items-start gap-3">
+      <input
+        id={id}
+        type="checkbox"
+        role="switch"
+        checked={checked}
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.checked)}
+        className="mt-1 size-5 shrink-0 accent-primary-700"
+      />
+      <label htmlFor={id} className="text-sm">
+        <span className="font-medium">{label}</span>
+        {hint && (
+          <span className="block text-xs text-gray-500 dark:text-gray-400">{hint}</span>
+        )}
+      </label>
+    </div>
+  )
+}
+
+type BadgeTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info'
+
+const BADGE_STYLES: Record<BadgeTone, string> = {
+  neutral: 'bg-gray-100 text-gray-700 dark:bg-ink-800 dark:text-gray-300',
+  success:
+    'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/50 dark:text-emerald-100',
+  warning: 'bg-amber-100 text-amber-900 dark:bg-amber-900/50 dark:text-amber-100',
+  danger: 'bg-red-100 text-red-900 dark:bg-red-900/50 dark:text-red-100',
+  info: 'bg-sky-100 text-sky-900 dark:bg-sky-900/50 dark:text-sky-100',
+}
+
+export function Badge({
+  tone = 'neutral',
+  children,
+  className,
+}: {
+  tone?: BadgeTone
+  children: React.ReactNode
+  className?: string
+}): React.JSX.Element {
+  return (
+    <span
+      className={twMerge(
+        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
+        BADGE_STYLES[tone],
+        className,
+      )}
+    >
+      {children}
+    </span>
+  )
+}
+
+/**
+ * Doğrulanmış kurum rozeti (CLAUDE.md Bölüm 4).
+ *
+ * İkonun yanında her zaman metin var: renk ve simge tek başına bilgi taşımaz
+ * (WCAG 1.4.1). `title` değil görünür metin — dokunmatikte title okunmaz.
+ */
+export function VerifiedBadge({ label }: { label: string }): React.JSX.Element {
+  return (
+    <Badge tone="success">
+      <span aria-hidden="true">✓</span>
+      {label}
+    </Badge>
+  )
+}
+
+export function EmptyState({
+  emoji,
+  title,
+  body,
+  action,
+}: {
+  emoji: string
+  title: string
+  body: string
+  action?: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <Card className="text-center">
+      <p className="text-4xl" aria-hidden="true">
+        {emoji}
+      </p>
+      <h2 className="mt-3 text-base font-semibold">{title}</h2>
+      <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+        {body}
+      </p>
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
+    </Card>
   )
 }
 

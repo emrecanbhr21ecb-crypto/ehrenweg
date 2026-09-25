@@ -11,12 +11,7 @@ import { z } from 'zod'
 import type { Timestamp } from 'firebase/firestore'
 
 import { SUPPORTED_LOCALES } from '@/config/brand'
-import {
-  CATEGORY_IDS,
-  CEFR_LEVELS,
-  LANGUAGE_CODES,
-  SKILL_IDS,
-} from '@/config/catalog'
+import { CATEGORY_IDS, CEFR_LEVELS, LANGUAGE_CODES, SKILL_IDS } from '@/config/catalog'
 
 export const userLanguageSchema = z.object({
   code: z.enum(LANGUAGE_CODES),
@@ -44,12 +39,7 @@ export const EMPTY_STATS: UserStats = {
   level: 1,
 }
 
-export const trainerStatusSchema = z.enum([
-  'none',
-  'pending',
-  'approved',
-  'rejected',
-])
+export const trainerStatusSchema = z.enum(['none', 'pending', 'approved', 'rejected'])
 export type TrainerStatus = z.infer<typeof trainerStatusSchema>
 
 /**
@@ -112,15 +102,19 @@ export interface UserDoc extends EditableProfile {
  * yalnızca ekranda göstermek içindir; yetki kararı custom claim ile verilir
  * (CLAUDE.md Bölüm 14 kural 2).
  */
-export const PLATFORM_ROLES = [
-  'participant',
-  'trainer',
-  'platform_admin',
-] as const
+export const PLATFORM_ROLES = ['participant', 'trainer', 'platform_admin'] as const
 export type PlatformRole = (typeof PLATFORM_ROLES)[number]
 
-/** Kurum rolleri — claim içinde `{ [orgId]: role }` haritası olarak gelir. */
-export const ORG_ROLES = ['org_admin', 'org_staff', 'redemption_officer'] as const
+/**
+ * Kurum rolleri — claim içinde `{ [orgId]: role }` haritası olarak gelir.
+ * Liste `functions/src/common/roles.ts` ve `types/activity.ts` ile AYNI olmalı.
+ */
+export const ORG_ROLES = [
+  'org_admin',
+  'org_staff',
+  'redemption_officer',
+  'partner',
+] as const
 export type OrgRole = (typeof ORG_ROLES)[number]
 
 export interface UserClaims {
@@ -137,9 +131,7 @@ export const DEFAULT_CLAIMS: UserClaims = {
 
 /** Kullanıcının herhangi bir kurumda personel yetkisi var mı? */
 export function hasOrgAccess(claims: UserClaims): boolean {
-  return (
-    claims.role === 'platform_admin' || Object.keys(claims.orgs).length > 0
-  )
+  return claims.role === 'platform_admin' || Object.keys(claims.orgs).length > 0
 }
 
 /**

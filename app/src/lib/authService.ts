@@ -115,11 +115,7 @@ export async function signUpWithEmail({
   displayName,
 }: SignUpInput): Promise<User> {
   try {
-    const { user } = await createUserWithEmailAndPassword(
-      auth,
-      email.trim(),
-      password,
-    )
+    const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password)
     const name = displayName.trim()
     if (name) await updateProfile(user, { displayName: name })
     await sendEmailVerification(user)
@@ -129,10 +125,7 @@ export async function signUpWithEmail({
   }
 }
 
-export async function signInWithEmail(
-  email: string,
-  password: string,
-): Promise<User> {
+export async function signInWithEmail(email: string, password: string): Promise<User> {
   try {
     const { user } = await signInWithEmailAndPassword(auth, email.trim(), password)
     return user
@@ -201,9 +194,7 @@ export async function readClaims(
 }
 
 function isPlatformRole(value: unknown): value is PlatformRole {
-  return (
-    value === 'participant' || value === 'trainer' || value === 'platform_admin'
-  )
+  return value === 'participant' || value === 'trainer' || value === 'platform_admin'
 }
 
 function isOrgMap(value: unknown): value is Record<string, OrgRole> {
@@ -217,9 +208,7 @@ function isOrgMap(value: unknown): value is Record<string, OrgRole> {
 }
 
 /** Oturum durumu aboneliği — AuthProvider dışında kullanılmamalı. */
-export function watchAuthState(
-  onChange: (user: User | null) => void,
-): () => void {
+export function watchAuthState(onChange: (user: User | null) => void): () => void {
   return onAuthStateChanged(auth, onChange)
 }
 

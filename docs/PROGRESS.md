@@ -1,21 +1,21 @@
 # Ehrenweg — İlerleme (PROGRESS)
 
-Son güncelleme: 2026-09-25
+Son güncelleme: 2026-09-25 (gece, Faz 2)
 
 ## Faz durumu
 
-| Faz   | İçerik                                                           | Durum   |
-| ----- | ---------------------------------------------------------------- | ------- |
-| **0** | Ortam, Firebase projeleri, monorepo iskeleti, CI, emülatör, seed | 🟡 ~%60 |
-| 1     | Auth, onboarding, i18n, profil, roller/claim                     | ⬜      |
-| 2     | Kurumlar ve aktiviteler                                          | ⬜      |
-| 3     | QR yoklama, pasaport, IP, seviye, rozet                          | ⬜      |
-| 4     | Cüzdan, ledger, kupon, vezne                                     | ⬜      |
-| 5     | Trainer yolu                                                     | ⬜      |
-| 6     | Push, duyuru, AI uçları                                          | ⬜      |
-| 7     | Analitik, PDF, DSGVO                                             | ⬜      |
-| 8     | Android derleme, imzalama, Play iç test                          | ⬜      |
-| 9     | Sertleştirme, prod deploy                                        | ⬜      |
+| Faz   | İçerik                                                           | Durum |
+| ----- | ---------------------------------------------------------------- | ----- |
+| **0** | Ortam, Firebase projeleri, monorepo iskeleti, CI, emülatör, seed | ✅    |
+| 1     | Auth, onboarding, i18n, profil, roller/claim                     | ✅    |
+| 2     | Kurumlar ve aktiviteler                                          | ✅    |
+| 3     | QR yoklama, pasaport, IP, seviye, rozet                          | ⬜    |
+| 4     | Cüzdan, ledger, kupon, vezne                                     | ⬜    |
+| 5     | Trainer yolu                                                     | ⬜    |
+| 6     | Push, duyuru, AI uçları                                          | ⬜    |
+| 7     | Analitik, PDF, DSGVO                                             | ⬜    |
+| 8     | Android derleme, imzalama, Play iç test                          | ⬜    |
+| 9     | Sertleştirme, prod deploy                                        | ⬜    |
 
 ---
 
@@ -249,3 +249,92 @@ PDF yol haritasındaki 9 maddenin durumu:
 
 **Ayrıca:** Husky pre-commit kancası (lint-staged + çeviri denetimi),
 GitHub Actions CI (biçim → tip → lint → çeviri → birim → kural → build).
+
+---
+
+## Faz 2 — Kurumlar ve aktiviteler (25 Eyl 2026, gece)
+
+Bitme ölçütü (CLAUDE.md Bölüm 15): _"Kurum aktivite yayınlıyor, katılımcı
+başvuruyor, admin onaylıyor."_ → akışın tamamı kodlandı ve derleniyor.
+
+### Kurum tarafı
+
+| #   | İş                                                                                                                                                                                               | Durum |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| 1   | Kurum başvuru formu → admin onay kuyruğu → doğrulanmış rozeti                                                                                                                                    | ✅    |
+| 2   | Kurum ekibi: üye ekleme/çıkarma, rol verme (`org_admin`)                                                                                                                                         | ✅    |
+| 3   | Aktivite formu: DE/EN başlık+açıklama, Leichte Sprache, kategori, beceriler, adres + harita pini, online, tarih/saat, son başvuru, kontenjan, başvuru gerekli mi, min. seviye, IP, kapak görseli | ✅    |
+| 4   | Taslak → onaya gönder → yayında akışı, incelemeden geri çekme, iptal, taslak silme                                                                                                               | ✅    |
+| 5   | Başvuranlar listesi, kabul/red + kısa gerekçe                                                                                                                                                    | ✅    |
+
+### Platform admin
+
+- `pending_review` aktiviteler: onayla / **gerekçeyle** reddet (reddedilen
+  silinmez, `draft`'a döner ve gerekçe kuruma görünür) ✅
+- Kurum kuyruğu: e-posta alan adı ve website kontrolüyle onay/red ✅
+
+### Katılımcı tarafı
+
+- Liste **ve harita** görünümü (Leaflet + OpenStreetMap) ✅
+- Filtreler: kategori, tarih aralığı, mesafe, dil, online, arama ✅
+- Konum **opsiyonel**: izin verilmezse şehir seçimiyle mesafe ölçülüyor ✅
+- Detay: Leichte-Sprache anahtarı, takvime ekle (`.ics`, 1 gün önce VALARM),
+  paylaş, başvur / başvuruyu geri çek ✅
+- "Bir gün önce hatırlat" yerel bildirimi ✅
+  (Android/iOS'te `@capacitor/local-notifications`; tarayıcıda yalnız sekme
+  açıkken — arayüz bunu dürüstçe söylüyor ve takvim dosyasını öneriyor)
+- Profilde **Başvurularım**: başvurdu / kabul / red / cevap gelmedi ✅
+
+### Veri ve güvenlik
+
+- `firestore.rules` genişletildi: organizations (başvuru + inceleme + profil),
+  members (collection group dahil), activities (okuma, oluşturma, içerik
+  düzenleme, durum geçiş tablosu, kontenjan sayacı), applicants (başvuru,
+  geri çekme, kurum kararı). **dev projesine dağıtıldı.** ✅
+- Kontenjan ve son başvuru kontrolü kuralda: aktivite belgesi `get()` ile
+  okunup doğrulanıyor; sayaç `getAfter()` ile aynı commit'teki başvuruya
+  bağlanıyor, tek başına oynatılamıyor
+- `firestore.indexes.json`: `applications` collection-group indeksi
+  `applicants` ile değişti, `activities(orgId, startAt desc)` eklendi,
+  `applicants.uid` ve `members.uid` için COLLECTION_GROUP alan geçersiz
+  kılmaları eklendi. **dev'e dağıtıldı** ✅
+- `functions/src/activities.ts` + `organizations.ts`: Bölüm 12'deki
+  `submitActivity`, `reviewActivity`, `applyToActivity` (transaction),
+  `decideApplication`, `approveOrganization`, `setOrgMember`,
+  `removeOrgMember` **yazıldı ve derleniyor — ama Blaze kapalı olduğu için
+  DAĞITILMADI.** Geçiş tek bayrak: `app/src/lib/backend.ts`
+
+### Seed
+
+`scripts/seed.ts` + `scripts/unseed.ts`:
+10 kategori, **Bezirksamt Berlin-Neukölln** (doğrulanmış) + Café Mosaik,
+**12 aktivite** (10 yayında, 1 taslak, 1 incelemede) — gerçek Neukölln
+adresleri ve koordinatlarıyla, hepsi çift dilli ve Leichte Sprache özetli.
+Her belge `seed: true`; arayüzde hiçbir "demo" afişi yok.
+
+```
+npm run seed              # emülatöre
+npm run seed:dev          # ehrenweg-dev projesine (kimlik gerekir)
+npm run unseed:dev        # yalnız seed:true belgeleri siler
+```
+
+### ⚠️ Bu fazda BİLEREK yapılmayanlar
+
+- **Otomatik test yok.** Proje sahibi 25 Eyl'de "test turu yok, hedef APK"
+  dedi. Kural testleri (`tests/firestore.rules.test.ts`) ve Playwright e2e
+  bu faz için yazılmadı; var olan Faz 1 testleri duruyor. Kurallar yine de
+  tam yazıldı ve emülatörde derlendi.
+- **Kapak görseli yükleme yok** — Storage, Blaze istiyor. Alan bağlantı
+  olarak duruyor, veri modeli hazır.
+- **Kurum üyesi e-posta ile davet edilemiyor** — kurum `users` koleksiyonunda
+  arama yapamaz (veri minimizasyonu). Kişi profilindeki "Nutzer-ID"yi kuruma
+  verir. E-posta daveti Faz 6'da (push/e-posta ile).
+
+### 🔜 Sıradaki
+
+- **Capacitor Android projesi hiç kurulmadı** (`android/` klasörü yok) —
+  APK için önce o kurulmalı (Faz 8 / P13'ün ilk adımı)
+- Demo veriyi `ehrenweg-dev`'e yazmak için kimlik gerekiyor:
+  `gcloud auth application-default login` **ya da** konsoldan servis hesabı
+  anahtarı → `npm run seed:dev -- --key <yol>`
+- Faz 3: QR yoklama, pasaport, IP, seviye, rozet

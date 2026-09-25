@@ -157,11 +157,8 @@
     "legalLinks": "Impressum & Datenschutz"
   },
   "soon": {
-    "activities": "Hier findest du bald Ehrenamt und Kurse in deiner Nähe – mit Liste, Karte und Filtern. Dieser Bereich kommt im nächsten Entwicklungsschritt.",
     "learn": "Sprachkurse, Bewerbungstrainings und Workshops von geprüften Trainer:innen – in Vorbereitung.",
     "wallet": "Deine Punkte, Prämien und Gutscheine sammeln sich hier, sobald du an Aktivitäten teilnimmst.",
-    "org": "Hier verwaltest du bald die Aktivitäten deiner Organisation: anlegen, Anmeldungen annehmen, Anwesenheit erfassen.",
-    "admin": "Organisationen prüfen, Inhalte moderieren, Rollen vergeben – dieser Bereich wird im nächsten Schritt aufgebaut.",
     "scanTooltip": "QR-Anwesenheit kommt in Kürze."
   }
 }

@@ -92,10 +92,11 @@ export function AppShell({
   children: React.ReactNode
 }): React.JSX.Element {
   const { t } = useTranslation()
-  const { claims } = useAuth()
+  const { claims, orgRoles } = useAuth()
 
   const isAdmin = claims.role === 'platform_admin'
-  const hasOrgRole = Object.keys(claims.orgs).length > 0
+  // Kurum rolü claim'de VEYA üyelik belgesinde olabilir (docs/DECISIONS.md §8).
+  const hasOrgRole = Object.keys(orgRoles).length > 0
 
   return (
     <div className="flex min-h-dvh flex-col">

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 
 import { LevelRing, StatTile } from '@/components/LevelRing'
+import { MyApplications } from '@/components/MyApplications'
 import { Alert, Button, Card } from '@/components/ui'
 import { CATEGORY_META } from '@/config/catalog'
 import { SUPPORTED_LOCALES, type Locale } from '@/config/brand'
@@ -26,7 +27,8 @@ const THEME_OPTIONS: ThemePreference[] = ['light', 'dark', 'system']
 export default function Profile(): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
-  const { user, profile, claims } = useAuth()
+  const { user, profile, claims, orgRoles } = useAuth()
+  const hasOrgRole = Object.keys(orgRoles).length > 0
   const preference = useThemeStore((s) => s.preference)
   const setPreference = useThemeStore((s) => s.setPreference)
 
@@ -52,9 +54,7 @@ export default function Profile(): React.JSX.Element {
 
         <h1 className="mt-4 text-xl font-bold">{profile?.displayName ?? ''}</h1>
         {profile?.city && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            📍 {profile.city}
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">📍 {profile.city}</p>
         )}
         {claims.role === 'platform_admin' && (
           <p className="mt-2 rounded-full bg-accent-100 px-3 py-1 text-xs font-semibold text-accent-900">
@@ -67,7 +67,11 @@ export default function Profile(): React.JSX.Element {
           </p>
         )}
 
-        <Button variant="secondary" className="mt-5" onClick={() => void navigate('/profile/edit')}>
+        <Button
+          variant="secondary"
+          className="mt-5"
+          onClick={() => void navigate('/profile/edit')}
+        >
           {t('profile.edit')}
         </Button>
       </Card>
@@ -78,7 +82,11 @@ export default function Profile(): React.JSX.Element {
         </h2>
         <div className="grid grid-cols-3 gap-3">
           <StatTile label={t('passport.ip')} value={stats.ip} emoji="⭐" />
-          <StatTile label={t('passport.hours')} value={Math.round(stats.hours)} emoji="⏱️" />
+          <StatTile
+            label={t('passport.hours')}
+            value={Math.round(stats.hours)}
+            emoji="⏱️"
+          />
           <StatTile
             label={t('passport.activities')}
             value={stats.activitiesCompleted}
@@ -91,6 +99,8 @@ export default function Profile(): React.JSX.Element {
           </Alert>
         )}
       </section>
+
+      <MyApplications />
 
       {profile && profile.languages.length > 0 && (
         <section aria-labelledby="languages-heading">
@@ -153,6 +163,27 @@ export default function Profile(): React.JSX.Element {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* Kurum panelinin giriş kapısı. Alt menüde yalnız kurum rolü olanlara
+          ikon çıkıyor; bir belediye çalışanı ilk kez kayıt olduğunda başvuru
+          formunu buradan bulur. */}
+      {!hasOrgRole && (
+        <section aria-labelledby="org-heading">
+          <h2 id="org-heading" className="mb-3 text-sm font-semibold">
+            {t('nav.org')}
+          </h2>
+          <Card className="space-y-3">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {t('org.noOrgBody', { ns: 'manage' })}
+            </p>
+            <Link to="/org/apply">
+              <Button variant="secondary">
+                {t('org.noOrgAction', { ns: 'manage' })}
+              </Button>
+            </Link>
+          </Card>
         </section>
       )}
 

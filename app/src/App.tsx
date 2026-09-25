@@ -15,9 +15,16 @@ import { Navigate, Route, Routes, useLocation } from 'react-router'
 import { AppShell } from '@/components/AppShell'
 import { FullPageLoader } from '@/components/ui'
 import { useAuth } from '@/lib/AuthProvider'
+import Activities from '@/pages/Activities'
+import ActivityDetail from '@/pages/ActivityDetail'
+import AdminPanel from '@/pages/admin/AdminPanel'
 import Home from '@/pages/Home'
 import { LegalIndex, LegalPageView } from '@/pages/Legal'
-import { Activities, AdminPanel, Learn, OrgPanel, Wallet } from '@/pages/Placeholder'
+import ActivityForm from '@/pages/org/ActivityForm'
+import OrgApplicants from '@/pages/org/OrgApplicants'
+import OrgApply from '@/pages/org/OrgApply'
+import OrgPanel from '@/pages/org/OrgPanel'
+import { Learn, Wallet } from '@/pages/Placeholder'
 import Profile from '@/pages/Profile'
 import ProfileEdit from '@/pages/ProfileEdit'
 import ProfileSetup from '@/pages/ProfileSetup'
@@ -45,9 +52,6 @@ export default function App(): React.JSX.Element {
   const { status, user, profile, profileLoading, claims } = useAuth()
 
   const isAdmin = claims.role === 'platform_admin'
-  const hasOrgRole = Object.keys(claims.orgs).length > 0
-
-  // 1. Oturum henüz çözülmedi.
   if (status === 'loading') {
     return <FullPageLoader label={t('state.loading')} />
   }
@@ -125,6 +129,7 @@ export default function App(): React.JSX.Element {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/activities" element={<Activities />} />
+        <Route path="/activities/:activityId" element={<ActivityDetail />} />
         <Route path="/learn" element={<Learn />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/profile" element={<Profile />} />
@@ -132,9 +137,21 @@ export default function App(): React.JSX.Element {
         <Route path="/legal" element={<LegalIndex />} />
         <Route path="/legal/:page" element={<LegalPageView />} />
 
-        {/* Rol kapıları: claim yoksa panel hiç yok — menüde gizlemek yetmez,
+        {/* Kurum paneli herkese açık bir KAPIDIR: üyesi olmayan kullanıcı
+            burada "organizasyon anmelden" davetini görür. Asıl koruma
+            firestore.rules tarafında — panel görünse bile üye olmayan
+            kullanıcı hiçbir kurum verisini okuyup yazamaz. */}
+        <Route path="/org" element={<OrgPanel />} />
+        <Route path="/org/apply" element={<OrgApply />} />
+        <Route path="/org/activities/new" element={<ActivityForm />} />
+        <Route path="/org/activities/:activityId/edit" element={<ActivityForm />} />
+        <Route
+          path="/org/activities/:activityId/applicants"
+          element={<OrgApplicants />}
+        />
+
+        {/* Yönetim yalnız platform_admin claim'iyle; menüde gizlemek yetmez,
             adres çubuğuna elle yazan kullanıcı da girememeli. */}
-        {hasOrgRole && <Route path="/org" element={<OrgPanel />} />}
         {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
 
         <Route path="*" element={<Navigate to="/" replace />} />

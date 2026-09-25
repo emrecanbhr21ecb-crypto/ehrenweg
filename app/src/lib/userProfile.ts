@@ -27,11 +27,7 @@ import type { User } from 'firebase/auth'
 
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from '@/config/brand'
 import { db } from '@/lib/firebase'
-import {
-  EMPTY_STATS,
-  type EditableProfile,
-  type UserDoc,
-} from '@/types/user'
+import { EMPTY_STATS, type EditableProfile, type UserDoc } from '@/types/user'
 
 export const USERS_COLLECTION = 'users'
 

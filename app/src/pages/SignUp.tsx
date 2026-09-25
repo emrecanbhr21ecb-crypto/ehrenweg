@@ -173,14 +173,22 @@ export default function SignUp(): React.JSX.Element {
           <span className="h-px flex-1 bg-gray-200 dark:bg-ink-800" />
         </div>
 
-        <Button variant="secondary" full onClick={() => void handleGoogle()} disabled={busy}>
+        <Button
+          variant="secondary"
+          full
+          onClick={() => void handleGoogle()}
+          disabled={busy}
+        >
           {t('auth.continueWithGoogle')}
         </Button>
       </Card>
 
       <p className="mt-6 text-center text-sm">
         {t('auth.haveAccountQuestion')}{' '}
-        <Link to="/signin" className="font-semibold text-primary-700 underline dark:text-primary-300">
+        <Link
+          to="/signin"
+          className="font-semibold text-primary-700 underline dark:text-primary-300"
+        >
           {t('auth.signInAction')}
         </Link>
       </p>
