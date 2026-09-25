@@ -24,6 +24,8 @@ const db = getFirestore()
 
 export const DEMO_EMAIL = 'demo@ehrenweg.de'
 export const DEMO_PASSWORD = 'EhrenwegDemo2026!'
+/** Gösterim cüzdanının başlangıç puanı. */
+const DEMO_IP = 500
 const ORG = 'seed_org_neukoelln'
 
 async function main(): Promise<void> {
@@ -69,13 +71,17 @@ async function main(): Promise<void> {
       countryCode: 'DE',
       roleDisplay: 'participant',
       orgId: ORG,
+      // Gösterim için başlangıç puanı: ödül mağazası boş bir cüzdanla
+      // denenemiyor. Deftere karşılık bir `adjustment` kaydı da yazılıyor,
+      // yoksa `npm run ledger:check` haklı olarak sapma bildirirdi.
       stats: {
-        ip: 0,
-        hours: 0,
-        activitiesCompleted: 0,
+        ip: DEMO_IP,
+        hours: 12,
+        activitiesCompleted: 4,
         noShows: 0,
-        categoriesCount: 0,
-        level: 1,
+        categoriesCount: 2,
+        level: 2,
+        consecutiveNoShows: 0,
       },
       trainerStatus: 'none',
       createdAt: FieldValue.serverTimestamp(),
@@ -94,6 +100,23 @@ async function main(): Promise<void> {
       email: DEMO_EMAIL,
       addedBy: 'seed',
       addedAt: FieldValue.serverTimestamp(),
+      seed: true,
+    },
+    { merge: true },
+  )
+
+  // Defter karşılığı — Bölüm 7.3: bakiye defterden yeniden hesaplanabilmeli.
+  await db.doc(`ledger/demo_seed_grant`).set(
+    {
+      uid,
+      type: 'adjustment',
+      amount: DEMO_IP,
+      currency: 'IP',
+      refId: 'demo',
+      orgId: ORG,
+      actorUid: 'seed',
+      reason: 'demo_account_seed',
+      createdAt: FieldValue.serverTimestamp(),
       seed: true,
     },
     { merge: true },

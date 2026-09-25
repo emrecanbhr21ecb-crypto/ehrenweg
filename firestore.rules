@@ -259,6 +259,36 @@ service cloud.firestore {
                                        awardedEntry());
 
       // ---------------------------------------------------------------
+      // IP HARCAMA — ödül mağazasından alım (CLAUDE.md Bölüm 7.2).
+      //
+      // Kullanıcı kendi puanını DÜŞÜREBİLİR ama yalnız aynı commit'te
+      // bastığı kuponun fiyatı kadar. Artıramaz, başka alana dokunamaz,
+      // eksiye düşemez. `lastSpendId` hangi kuponun ödendiğini söylüyor.
+      //
+      // "Bakiyeyi düşürmek zararsız" değil: düşürülmeden kupon basılsaydı
+      // ödül bedava olurdu, fazla düşürülseydi defter tutmazdı.
+      // ---------------------------------------------------------------
+      function spentVoucher() {
+        return getAfter(/databases/$(database)/documents/vouchers/$(request.resource.data.lastSpendId)).data;
+      }
+
+      allow update: if isSelf(userId)
+                    && onlyFields(['stats', 'lastSpendId'])
+                    && spentVoucher().uid == userId
+                    && request.resource.data.stats.ip
+                         == resource.data.stats.ip - spentVoucher().costIp
+                    && request.resource.data.stats.ip >= 0
+                    && request.resource.data.stats.hours == resource.data.stats.hours
+                    && request.resource.data.stats.activitiesCompleted
+                         == resource.data.stats.activitiesCompleted
+                    && request.resource.data.stats.categoriesCount
+                         == resource.data.stats.categoriesCount
+                    && request.resource.data.stats.noShows == resource.data.stats.noShows
+                    && request.resource.data.stats.consecutiveNoShows
+                         == resource.data.stats.consecutiveNoShows
+                    && request.resource.data.stats.level == resource.data.stats.level;
+
+      // ---------------------------------------------------------------
       // NO-SHOW CEZASI — CLAUDE.md Bölüm 6 (item 7)
       //
       // Hangi aktiviteden dolayı ceza verildiği `lastNoShowActivityId` ile
@@ -857,37 +887,289 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     match /rewardTemplates/{templateId} {
       allow get, list: if signedIn();
-      // Bütçe alanları (totalBudgetCents, issuedCount) sunucu alanıdır.
-      allow write: if false;
+
+      // -----------------------------------------------------------------
+      // ŞABLON OLUŞTURMA — yalnız kurum yöneticisi (CLAUDE.md Bölüm 7.1).
+      //
+      // 🔒 `cash_voucher` GERÇEK PARADIR. Bölüm 7.6 + Bölüm 10: kurum bazında
+      // açılır, varsayılan KAPALI, açma yetkisi yalnız platform admin'de
+      // (organizations update kuralında `features` yalnız admin'e açık).
+      // Kural kurumun bayrağını okuyup doğruluyor — arayüzde seçeneği
+      // gizlemek yetmez, doğrudan yazmayı deneyen istemci de düşmeli.
+      // -----------------------------------------------------------------
+      function cashAllowed(orgId) {
+        return orgDoc(orgId).get('features', {}).get('cashVouchers', false) == true;
+      }
+
+      allow create: if orgAdmin(request.resource.data.orgId)
+                    && request.resource.data.createdBy == uid()
+                    && request.resource.data.valueCents is int
+                    && request.resource.data.valueCents >= 0
+                    && request.resource.data.valueCents <= 50000
+                    && request.resource.data.costIp is int
+                    && request.resource.data.costIp >= 0
+                    && request.resource.data.costIp <= 10000
+                    && request.resource.data.validityDays is int
+                    && request.resource.data.validityDays >= 1
+                    && request.resource.data.validityDays <= 730
+                    && request.resource.data.maxPerUserPerMonth is int
+                    && request.resource.data.maxPerUserPerMonth >= 1
+                    && request.resource.data.maxPerUserPerMonth <= 50
+                    && (request.resource.data.kind != 'cash_voucher'
+                        || cashAllowed(request.resource.data.orgId))
+                    // Sayaçlar SIFIRDAN başlar; dolu bir sayaçla şablon
+                    // açmak bütçe kontrolünü baştan yanıltırdı.
+                    && request.resource.data.issuedCount == 0
+                    && request.resource.data.spentCents == 0
+                    && !('seed' in request.resource.data);
+
+      // Kurum içeriği düzenler; SAYAÇLARA ve kuruma dokunamaz.
+      allow update: if orgAdmin(resource.data.orgId)
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['orgId', 'createdBy', 'issuedCount',
+                                  'spentCents', 'seed', 'createdAt'])
+                    && (request.resource.data.kind != 'cash_voucher'
+                        || cashAllowed(resource.data.orgId));
+
+      // -----------------------------------------------------------------
+      // BÜTÇE SAYACI — kupon basılırken (docs/DECISIONS.md §10).
+      //
+      // 🔒 Bütçe AŞILAMAZ (Bölüm 7.1). Kural `resource.data`yı, yani commit
+      // anındaki GERÇEK değeri kullanıyor; istemcinin okuması bayat olsa
+      // bile tavan tutuyor. İki kişi aynı anda son kuponu almaya çalışırsa
+      // ikincisi tam burada düşer.
+      //
+      // `lastVoucherId` hangi kuponun basıldığını söylüyor; `getAfter` ile
+      // o kuponun AYNI COMMIT'te, bu şablondan ve doğru değerle açıldığı
+      // doğrulanıyor. Yoksa sayaç boşuna oynatılabilirdi.
+      // -----------------------------------------------------------------
+      function issuedVoucher() {
+        return getAfter(/databases/$(database)/documents/vouchers/$(request.resource.data.lastVoucherId)).data;
+      }
+
+      allow update: if signedIn()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['issuedCount', 'spentCents', 'lastVoucherId'])
+                    && request.resource.data.issuedCount
+                         == resource.data.issuedCount + 1
+                    && request.resource.data.spentCents
+                         == resource.data.spentCents + resource.data.valueCents
+                    && (resource.data.totalBudgetCents == null
+                        || request.resource.data.spentCents
+                             <= resource.data.totalBudgetCents)
+                    && issuedVoucher().templateId == templateId
+                    && issuedVoucher().valueCents == resource.data.valueCents
+                    && issuedVoucher().uid == uid();
+
+      allow delete: if false;
+
+      // -----------------------------------------------------------------
+      // Kişi başı aylık sınır (CLAUDE.md Bölüm 7.5).
+      //
+      // Ay anahtarı yerine DÖNEM BAŞLANGICI saklanıyor: kural takvim ayını
+      // hesaplayamaz ama "başlangıç + 31 gün geçti mi" sorusunu sorabilir.
+      // Damga `request.time` olmak zorunda, yani geriye çekilip sınır
+      // sıfırlanamıyor.
+      // -----------------------------------------------------------------
+      match /holders/{holderUid} {
+        function template() {
+          return get(/databases/$(database)/documents/rewardTemplates/$(templateId)).data;
+        }
+
+        allow get: if isSelf(holderUid) || orgAdmin(template().orgId) || isAdmin();
+        allow list: if orgAdmin(template().orgId) || isAdmin();
+
+        // İlk alım ya da yeni dönem: sayaç 1'den başlar.
+        allow create: if isSelf(holderUid)
+                      && request.resource.data.uid == uid()
+                      && request.resource.data.count == 1
+                      && request.resource.data.periodStart == request.time
+                      && template().maxPerUserPerMonth >= 1;
+
+        allow update: if isSelf(holderUid)
+                      && onlyFields(['count', 'periodStart'])
+                      && (
+                           // Aynı dönem: sayaç bir artar, sınırı aşamaz.
+                           (request.resource.data.periodStart == resource.data.periodStart
+                            && request.resource.data.count == resource.data.count + 1
+                            && request.resource.data.count <= template().maxPerUserPerMonth
+                            && request.time < resource.data.periodStart + duration.value(31, 'd'))
+                        || // Dönem doldu: sıfırdan başla.
+                           (request.time >= resource.data.periodStart + duration.value(31, 'd')
+                            && request.resource.data.periodStart == request.time
+                            && request.resource.data.count == 1)
+                         );
+
+        allow delete: if false;
+      }
     }
 
     // ---------------------------------------------------------------------
     // vouchers — verilmiş kuponlar  💶
     // ---------------------------------------------------------------------
     match /vouchers/{voucherId} {
+
+      function template() {
+        return get(/databases/$(database)/documents/rewardTemplates/$(request.resource.data.templateId)).data;
+      }
+
+      // Veznenin/partnerin yetkisi: kuponu basan kurum ya da indirimi veren
+      // işletme. Başka kurumun kuponu okutulamaz (Bölüm 7.4).
+      function canRedeem(voucher) {
+        return inOrg(voucher.orgId, ['redemption_officer', 'org_admin'])
+               || (voucher.partnerOrgId != null
+                   && inOrg(voucher.partnerOrgId, ['partner', 'org_admin']));
+      }
+
       // Kullanıcı kendi kuponunu görür. Kupon QR'ı BU BELGEDEN üretilmez —
-      // getVoucherQr onCall 60 sn ömürlü imzalı token döndürür (Bölüm 7.4),
+      // 60 sn ömürlü token ayrı, okunamayan bir alt belgede (Bölüm 7.4),
       // böylece ekran görüntüsü tekrar kullanılamaz.
       allow get: if signedIn() && (resource.data.uid == uid()
-                                   || orgStaff(resource.data.orgId)
+                                   || canRedeem(resource.data)
                                    || isAdmin());
-      allow list: if signedIn() && (isAdmin() || orgStaff(resource.data.orgId));
-      allow write: if false;
+      allow list: if signedIn() && (resource.data.uid == uid()
+                                    || isAdmin()
+                                    || orgStaff(resource.data.orgId));
+
+      // -----------------------------------------------------------------
+      // `buyReward` — IP ile ödül alma (CLAUDE.md Bölüm 7.2).
+      //
+      // Kupon kullanıcının kendi cihazından basılıyor (Blaze kapalı,
+      // docs/DECISIONS.md §10) ama tek bir alanı bile serbest değil:
+      //   · değer, tür, süre, IP fiyatı → ŞABLONDAN kopyalanmak zorunda
+      //   · şablon aktif olmalı
+      //   · aynı commit'te bütçe sayacı ve aylık sayaç artmalı
+      //   · aynı commit'te kullanıcının IP'si tam `costIp` kadar düşmeli
+      // Yani "kendime bedava 500 € kupon basayım" mümkün değil.
+      // -----------------------------------------------------------------
+      // Bu üçlü şart olmadan kupon basmak BEDAVA olurdu: kullanıcı kuponu
+      // yazar, bütçeye ve kendi puanına hiç dokunmazdı. Testler bu açığı
+      // yakaladı (tests/rewards.rules.test.ts "IP düşmeden kupon basılamaz").
+      function templatePath() {
+        return /databases/$(database)/documents/rewardTemplates/$(request.resource.data.templateId);
+      }
+
+      function budgetCommitted() {
+        return getAfter(templatePath()).data.spentCents
+                 == get(templatePath()).data.spentCents + request.resource.data.valueCents
+               && getAfter(templatePath()).data.issuedCount
+                 == get(templatePath()).data.issuedCount + 1;
+      }
+
+      function ipPaid() {
+        // Bedava ödüllerde (costIp == 0) düşülecek puan yok.
+        return request.resource.data.costIp == 0
+               || getAfter(/databases/$(database)/documents/users/$(uid())).data.stats.ip
+                    == get(/databases/$(database)/documents/users/$(uid())).data.stats.ip
+                       - request.resource.data.costIp;
+      }
+
+      allow create: if verified()
+                    && request.resource.data.uid == uid()
+                    && budgetCommitted()
+                    && ipPaid()
+                    && template().active == true
+                    && request.resource.data.orgId == template().orgId
+                    && request.resource.data.kind == template().kind
+                    && request.resource.data.valueCents == template().valueCents
+                    && request.resource.data.discountPercent == template().discountPercent
+                    && request.resource.data.costIp == template().costIp
+                    && request.resource.data.status == 'issued'
+                    && request.resource.data.redeemedAt == null
+                    && request.resource.data.redeemedBy == null
+                    && request.resource.data.issuedAt == request.time
+                    // Geçerlilik süresi şablondaki günden uzun olamaz.
+                    && request.resource.data.expiresAt
+                         <= request.time + duration.value(template().validityDays, 'd')
+                    && request.resource.data.expiresAt > request.time
+                    && !('seed' in request.resource.data);
+
+      // -----------------------------------------------------------------
+      // `redeemVoucher` — vezne/partner kullanıldı işaretler (Bölüm 7.4).
+      //
+      // Dört kontrol: imza (okunamayan token belgesi), süre, durum, kurum
+      // yetkisi. Kupon `issued` değilse ikinci kullanım imkânsız.
+      // -----------------------------------------------------------------
+      function liveToken() {
+        return get(/databases/$(database)/documents/vouchers/$(voucherId)/qr/current).data;
+      }
+
+      function tokenPath() {
+        return /databases/$(database)/documents/vouchers/$(voucherId)/qr/current;
+      }
+
+      allow update: if canRedeem(resource.data)
+                    && onlyFields(['status', 'redeemedAt', 'redeemedBy',
+                                   'redemptionOrgId', 'presentedNonce'])
+                    && resource.data.status == 'issued'
+                    && request.resource.data.status == 'redeemed'
+                    && request.resource.data.redeemedBy == uid()
+                    && request.resource.data.redeemedAt == request.time
+                    && request.time < resource.data.expiresAt
+                    && exists(tokenPath())
+                    && request.resource.data.presentedNonce == liveToken().nonce
+                    && request.time < liveToken().expiresAt;
+
+      // `revokeVoucher` — kurum yöneticisi iptal eder.
+      allow update: if orgAdmin(resource.data.orgId)
+                    && onlyFields(['status'])
+                    && resource.data.status == 'issued'
+                    && request.resource.data.status == 'revoked';
+
+      // `expireVouchers` — süresi geçmişi işaretleme. Yalnız gerçekten
+      // geçmişse; "süresi doldu" diyerek kuponu erken öldürmek yasak.
+      allow update: if orgAdmin(resource.data.orgId)
+                    && onlyFields(['status'])
+                    && resource.data.status == 'issued'
+                    && request.resource.data.status == 'expired'
+                    && request.time > resource.data.expiresAt;
+
+      // Kupon SİLİNMEZ: defterin karşılığı bu belge.
+      allow delete: if false;
+
+      // -----------------------------------------------------------------
+      // 60 saniyelik gösterim token'ı (CLAUDE.md Bölüm 7.4).
+      //
+      // 🔒 HİÇBİR istemciye OKUNMAZ — vezne bile. Vezne taradığı nonce'u
+      // yazıyor, karşılaştırmayı kural yapıyor.
+      //
+      // Kupon sahibi yazabiliyor ama `expiresAt == request.time + 60 sn`
+      // şartı yüzünden uzun ömürlü token üretemiyor. Ekran görüntüsü 60
+      // saniye sonra ölü.
+      // -----------------------------------------------------------------
+      match /qr/{tokenId} {
+        function voucher() {
+          return get(/databases/$(database)/documents/vouchers/$(voucherId)).data;
+        }
+
+        allow read: if false;
+        allow write: if signedIn()
+                     && voucher().uid == uid()
+                     && voucher().status == 'issued'
+                     && request.resource.data.nonce is string
+                     && request.resource.data.nonce.size() >= 16
+                     // Ömür ARALIKLA sınırlanıyor, eşitlikle değil: istemci
+                     // saati ile sunucu saati arasındaki gecikme/kayma
+                     // yüzünden tam eşitlik hiçbir zaman tutmazdı. Üst sınır
+                     // 90 sn — 60 sn hedefi + makul kayma payı. Uzun ömürlü
+                     // token üretip ekran görüntüsü paylaşmak yine imkânsız.
+                     && request.resource.data.expiresAt > request.time
+                     && request.resource.data.expiresAt
+                          <= request.time + duration.value(90, 's');
+      }
     }
 
     // ---------------------------------------------------------------------
     // ledger — DEĞİŞMEZ muhasebe defteri  💶
     // ---------------------------------------------------------------------
     match /ledger/{txId} {
-      // Yalnızca EKLEME. Silme/güncelleme hiçbir koşulda yok —
+      // Yalnızca EKLEME. Silme/güncelleme hiçbir koşulda yok (Bölüm 7.3) —
       // tutarlılık scripti defterden bakiye yeniden hesaplayabilmeli.
       allow get, list: if signedIn() && (resource.data.uid == uid()
                                          || orgAdmin(resource.data.get('orgId', ''))
                                          || isAdmin());
 
-      // `ip_award` kaydı yalnız aynı commit'te açılan pasaport girdisiyle
-      // birlikte yazılabilir ve tutarı o girdiyle BİREBİR aynı olmak
-      // zorunda. Defter ile pasaport böylece hiç ayrışamıyor.
+      // `ip_award` — katılım puanı. Tutar pasaport girdisiyle BİREBİR aynı.
       function refEntry() {
         return getAfter(/databases/$(database)/documents/passportEntries/$(request.resource.data.refId)).data;
       }
@@ -900,6 +1182,43 @@ service cloud.firestore {
                     && refEntry().orgId == request.resource.data.orgId
                     && refEntry().ipAwarded == request.resource.data.amount;
 
+      // Kupon hareketleri — tutar aynı commit'teki kuponla eşleşmek zorunda.
+      function refVoucher() {
+        return getAfter(/databases/$(database)/documents/vouchers/$(request.resource.data.refId)).data;
+      }
+
+      // `ip_spend` — ödül mağazasından alım. Tutar NEGATİF (harcama).
+      allow create: if request.resource.data.type == 'ip_spend'
+                    && request.resource.data.currency == 'IP'
+                    && request.resource.data.uid == uid()
+                    && request.resource.data.actorUid == uid()
+                    && refVoucher().uid == uid()
+                    && request.resource.data.amount == -refVoucher().costIp;
+
+      // `voucher_issue` — kurumun bütçesinden çıkan değer.
+      allow create: if request.resource.data.type == 'voucher_issue'
+                    && request.resource.data.currency == 'EUR'
+                    && request.resource.data.uid == uid()
+                    && refVoucher().uid == uid()
+                    && request.resource.data.amount == refVoucher().valueCents
+                    && request.resource.data.orgId == refVoucher().orgId;
+
+      // `voucher_redeem` — vezne ödedi. Yazan taraf vezne/partner.
+      allow create: if request.resource.data.type == 'voucher_redeem'
+                    && request.resource.data.currency == 'EUR'
+                    && request.resource.data.actorUid == uid()
+                    && refVoucher().status == 'redeemed'
+                    && refVoucher().redeemedBy == uid()
+                    && request.resource.data.uid == refVoucher().uid
+                    && request.resource.data.amount == -refVoucher().valueCents;
+
+      // `voucher_revoke` — kurum iptal etti.
+      allow create: if request.resource.data.type == 'voucher_revoke'
+                    && request.resource.data.actorUid == uid()
+                    && orgAdmin(request.resource.data.orgId)
+                    && refVoucher().status == 'revoked';
+
+      // 🔒 Bölüm 7.3: defter DEĞİŞMEZ.
       allow update, delete: if false;
     }
 
@@ -945,7 +1264,15 @@ service cloud.firestore {
     // ---------------------------------------------------------------------
     match /auditLog/{entryId} {
       allow get, list: if isAdmin();
-      allow write: if false;
+
+      // CLAUDE.md Bölüm 7.5: "tüm manuel onaylar auditLog'a."
+      // Sunucu olmadığı için kaydı işlemi yapan cihaz yazıyor. Yalnız
+      // EKLEME ve yalnız kendi adına; değiştirilemez, silinemez.
+      allow create: if signedIn()
+                    && request.resource.data.actorUid == uid()
+                    && request.resource.data.action is string
+                    && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
     }
 
     // ---------------------------------------------------------------------

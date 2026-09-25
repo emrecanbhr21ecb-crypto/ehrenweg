@@ -14,6 +14,9 @@ import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 
 import { ActivityCard } from '@/components/ActivityCard'
+import { OrgReconciliation } from '@/pages/org/Reconciliation'
+import { OrgRedeem } from '@/pages/org/Redeem'
+import { OrgRewards } from '@/pages/org/Rewards'
 import {
   Alert,
   Badge,
@@ -48,7 +51,7 @@ import {
   type Organization,
 } from '@/types/activity'
 
-type Tab = 'activities' | 'members' | 'profile'
+type Tab = 'activities' | 'members' | 'rewards' | 'redeem' | 'report' | 'profile'
 
 // ---------------------------------------------------------------------------
 
@@ -507,7 +510,7 @@ function ProfileTab({
 // ---------------------------------------------------------------------------
 
 export default function OrgPanel(): React.JSX.Element {
-  const { t } = useTranslation(['manage', 'common'])
+  const { t } = useTranslation(['manage', 'common', 'wallet'])
   const { orgRoles, memberships } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [tab, setTab] = useState<Tab>('activities')
@@ -565,6 +568,9 @@ export default function OrgPanel(): React.JSX.Element {
   const TABS: { id: Tab; label: string }[] = [
     { id: 'activities', label: t('manage:org.tabActivities') },
     { id: 'members', label: t('manage:org.tabMembers') },
+    { id: 'rewards', label: t('wallet:org.tabRewards') },
+    { id: 'redeem', label: t('wallet:org.tabRedeem') },
+    { id: 'report', label: t('wallet:org.tabReport') },
     { id: 'profile', label: t('manage:org.tabProfile') },
   ]
 
@@ -635,6 +641,25 @@ export default function OrgPanel(): React.JSX.Element {
         ))}
 
       {tab === 'members' && <MembersTab orgId={activeOrgId} isOrgAdmin={isOrgAdmin} />}
+
+      {/* Ödül şablonları ve bütçe yalnız kurum yöneticisinde: para
+          tanımlamak personel yetkisi değil (CLAUDE.md Bölüm 7.1). */}
+      {tab === 'rewards' &&
+        (isOrgAdmin ? (
+          <OrgRewards organization={organization} />
+        ) : (
+          <Alert tone="info">{t('manage:members.onlyAdmin')}</Alert>
+        ))}
+
+      {/* Kasa: vezne görevlisi ve partner de girebilir. */}
+      {tab === 'redeem' && <OrgRedeem orgId={activeOrgId} />}
+
+      {tab === 'report' &&
+        (isOrgAdmin ? (
+          <OrgReconciliation organization={organization} />
+        ) : (
+          <Alert tone="info">{t('manage:members.onlyAdmin')}</Alert>
+        ))}
 
       {tab === 'profile' && <ProfileTab organization={organization} />}
     </div>

@@ -68,7 +68,14 @@ async function unseed(): Promise<void> {
   console.log(`→ Proje: ${projectId}${emulator ? ' (emülatör)' : ' (GERÇEK)'}`)
 
   let total = 0
-  for (const collection of ['activities', 'organizations', 'categories', 'config']) {
+  for (const collection of [
+    'activities',
+    'organizations',
+    'categories',
+    'config',
+    'rewardTemplates',
+    'vouchers',
+  ]) {
     const count = await clear(collection)
     console.log(`  ${collection}: ${count} belge silindi`)
     total += count

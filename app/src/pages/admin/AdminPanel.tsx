@@ -16,9 +16,96 @@ import { Alert, Badge, Button, Card, Spinner, TextArea } from '@/components/ui'
 import { useAuth } from '@/lib/AuthProvider'
 import { reviewActivity, watchPendingActivities } from '@/lib/activities'
 import { reviewOrganization, watchPendingOrganizations } from '@/lib/organizations'
+import { compareBalances, type ConsistencyResult } from '@/lib/ledgerCheck'
+import { db } from '@/lib/firebase'
+import { collection, getDocs, limit, query } from 'firebase/firestore'
 import type { Activity, Organization } from '@/types/activity'
+import type { LedgerEntry } from '@/types/reward'
 
-type Tab = 'organisations' | 'activities'
+type Tab = 'organisations' | 'activities' | 'ledger'
+
+/**
+ * Defter tutarlılık kontrolü — CLAUDE.md Bölüm 7.3 ve 7.7.
+ *
+ * Defterden bakiyeleri yeniden hesaplayıp `users.stats.ip` ile karşılaştırır.
+ * Tutmuyorsa bir yerde kural delinmiş ya da yarım kalmış bir commit var
+ * demektir; ikisi de sessizce geçilmemesi gereken şeyler.
+ *
+ * Aynı hesap `scripts/ledgerConsistencyCheck.ts` içinde de var ve mantık
+ * `lib/ledgerCheck.ts`ten PAYLAŞILIYOR — iki ayrı hesap iki ayrı "doğru"
+ * üretirdi.
+ */
+function LedgerCheck(): React.JSX.Element {
+  const { t } = useTranslation(['wallet', 'manage'])
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<ConsistencyResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function run(): Promise<void> {
+    setBusy(true)
+    setError(null)
+    try {
+      const ledgerSnapshot = await getDocs(
+        query(collection(db, 'ledger'), limit(10_000)),
+      )
+      const entries = ledgerSnapshot.docs.map((doc) => doc.data() as LedgerEntry)
+
+      const usersSnapshot = await getDocs(query(collection(db, 'users'), limit(5_000)))
+      const stored = new Map<string, number>()
+      for (const user of usersSnapshot.docs) {
+        stored.set(user.id, (user.get('stats.ip') as number | undefined) ?? 0)
+      }
+
+      setResult(compareBalances(entries, stored))
+    } catch (caught) {
+      console.error('[admin] Defter kontrolü başarısız:', caught)
+      setError(t('wallet:consistency.failed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <header>
+        <h2 className="text-lg font-semibold">{t('wallet:consistency.title')}</h2>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          {t('wallet:consistency.subtitle')}
+        </p>
+      </header>
+
+      {error && <Alert tone="error">{error}</Alert>}
+
+      <Button loading={busy} onClick={() => void run()}>
+        {busy ? t('wallet:consistency.running') : t('wallet:consistency.run')}
+      </Button>
+
+      {result &&
+        (result.mismatches.length === 0 ? (
+          <Alert tone="success">
+            {t('wallet:consistency.clean', { users: result.usersChecked })}
+          </Alert>
+        ) : (
+          <Card className="space-y-2">
+            <Badge tone="danger">
+              {t('wallet:consistency.issues', { count: result.mismatches.length })}
+            </Badge>
+            <ul className="space-y-1 text-sm">
+              {result.mismatches.map((mismatch) => (
+                <li key={mismatch.uid} className="font-mono text-xs">
+                  {t('wallet:consistency.userMismatch', {
+                    uid: mismatch.uid,
+                    stored: mismatch.stored,
+                    computed: mismatch.computed,
+                  })}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        ))}
+    </div>
+  )
+}
 
 /** Gerekçeli reddetme kutusu — onay/red her iki kuyrukta da aynı şekilde çalışır. */
 function ReviewBox({
@@ -282,12 +369,13 @@ function ActivityQueue(): React.JSX.Element {
 }
 
 export default function AdminPanel(): React.JSX.Element {
-  const { t } = useTranslation('manage')
+  const { t } = useTranslation(['manage', 'wallet'])
   const [tab, setTab] = useState<Tab>('organisations')
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'organisations', label: t('admin.tabOrganisations') },
     { id: 'activities', label: t('admin.tabActivities') },
+    { id: 'ledger', label: t('consistency.title', { ns: 'wallet' }) },
   ]
 
   return (
@@ -318,7 +406,9 @@ export default function AdminPanel(): React.JSX.Element {
         ))}
       </nav>
 
-      {tab === 'organisations' ? <OrganisationQueue /> : <ActivityQueue />}
+      {tab === 'organisations' && <OrganisationQueue />}
+      {tab === 'activities' && <ActivityQueue />}
+      {tab === 'ledger' && <LedgerCheck />}
     </div>
   )
 }

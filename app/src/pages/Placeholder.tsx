@@ -1,9 +1,9 @@
 /**
- * Henüz yazılmamış sekmelerin dürüst boş durumu (Learn, Wallet).
+ * Henüz yazılmamış sekmenin dürüst boş durumu (Learn).
  *
  * "Yakında" demek yerine ne zaman geleceğini söylüyoruz — kullanıcı boş bir
  * ekrana bakıp uygulamanın bozuk olduğunu düşünmesin. Activities, Kurum ve
- * Yönetim Faz 2'de gerçek sayfalara dönüştü; Learn ve Wallet Faz 4/5'te
+ * Yönetim Faz 2'de, Wallet Faz 4'te gerçek sayfaya dönüştü; Learn Faz 5'te
  * dönüşünce bu dosya tamamen silinecek.
  */
 
@@ -43,9 +43,4 @@ export function ComingSoon({
 export function Learn(): React.JSX.Element {
   const { t } = useTranslation()
   return <ComingSoon title={t('nav.learn')} body={t('soon.learn')} emoji="🎓" />
-}
-
-export function Wallet(): React.JSX.Element {
-  const { t } = useTranslation()
-  return <ComingSoon title={t('nav.wallet')} body={t('soon.wallet')} emoji="🎁" />
 }

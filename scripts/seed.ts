@@ -648,6 +648,70 @@ const SCORING = {
   version: 1,
 }
 
+/**
+ * Ödül şablonları — CLAUDE.md Bölüm 7.
+ *
+ * ⚠️ `cash_voucher` BİLEREK YOK. Bölüm 10: parasal kupon hukuki görüş gelene
+ * kadar kapalı ve Neukölln'ün `features.cashVouchers` bayrağı false. Seed'e
+ * koymak, kapalı olması gereken bir özelliği demo verisiyle açmak olurdu.
+ */
+const REWARD_TEMPLATES = [
+  {
+    id: 'seed_tpl_cafe',
+    orgId: CAFE,
+    kind: 'gift_voucher',
+    title: { de: 'Kaffee & Kuchen im Café Mosaik', en: 'Coffee & cake at Café Mosaik' },
+    description: {
+      de: 'Ein Heißgetränk und ein Stück Kuchen – einzulösen an der Theke.',
+      en: 'One hot drink and a slice of cake – redeem at the counter.',
+    },
+    valueCents: 650,
+    discountPercent: 0,
+    partnerOrgId: null,
+    costIp: 80,
+    validityDays: 90,
+    totalBudgetCents: 32_500,
+    maxPerUserPerMonth: 2,
+  },
+  {
+    id: 'seed_tpl_bvg',
+    orgId: NEUKOELLN,
+    kind: 'gift_voucher',
+    title: { de: 'BVG-Kurzstrecke (4 Fahrten)', en: 'BVG short trip (4 rides)' },
+    description: {
+      de: 'Vier Kurzstreckenfahrten für den Weg zum Ehrenamt.',
+      en: 'Four short-trip rides to get to your volunteering.',
+    },
+    valueCents: 880,
+    discountPercent: 0,
+    partnerOrgId: null,
+    costIp: 120,
+    validityDays: 120,
+    totalBudgetCents: 44_000,
+    maxPerUserPerMonth: 1,
+  },
+  {
+    id: 'seed_tpl_buch',
+    orgId: NEUKOELLN,
+    kind: 'discount',
+    title: {
+      de: '20 % im Buchladen am Richardplatz',
+      en: '20 % at the Richardplatz bookshop',
+    },
+    description: {
+      de: 'Zwanzig Prozent auf Bücher und Lernmaterial.',
+      en: 'Twenty percent off books and study material.',
+    },
+    valueCents: 0,
+    discountPercent: 20,
+    partnerOrgId: CAFE,
+    costIp: 40,
+    validityDays: 180,
+    totalBudgetCents: null,
+    maxPerUserPerMonth: 3,
+  },
+] as const
+
 // --- Yazma -----------------------------------------------------------------
 
 async function seed(): Promise<void> {
@@ -753,7 +817,8 @@ async function seed(): Promise<void> {
   const published = ACTIVITIES.filter((a) => a.status === 'published').length
   console.log(
     `✔ ${CATEGORIES.length} kategori, ${ORGANIZATIONS.length} kurum, ` +
-      `${ACTIVITIES.length} aktivite (${published} yayında) + puan kuralları yazıldı.`,
+      `${ACTIVITIES.length} aktivite (${published} yayında), ` +
+      `${REWARD_TEMPLATES.length} ödül şablonu + puan kuralları yazıldı.`,
   )
   console.log('  Hepsi `seed: true` işaretli — "npm run unseed" ile silinir.')
 }

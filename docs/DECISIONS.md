@@ -387,6 +387,95 @@ firebase functions:secrets:set ATTENDANCE_HMAC_SECRET --project ehrenweg-prod
 
 ---
 
+## 10. Para akışı sunucusuz nasıl güvenli oldu (Faz 4)
+
+**Karar tarihi:** 26 Eylül 2026 · **Durum:** geçici, Blaze'e bağlı
+
+CLAUDE.md Bölüm 7.2 tek cümlede kesiyor: **"Kupon verme yalnızca sunucu
+tarafında."** Blaze kapalı, sunucu yok. Bu bölüm o cümleyi nasıl
+karşıladığımızı ve neyi karşılayamadığımızı anlatıyor.
+
+### 10.1 Kuponu kim basıyor
+
+Kuponu kullanıcının cihazı basıyor — ama **tek bir alanı bile serbest
+değil.** `firestore.rules` aşağıdakilerin HEPSİNİ aynı commit'te zorluyor;
+biri tutmazsa commit tamamen düşüyor:
+
+| Kısıt                            | Nasıl                                                                         |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| Değer/tür/süre/fiyat uydurulamaz | hepsi şablondan `get()` ile doğrulanıyor                                      |
+| Bütçe aşılamaz                   | `spentCents + valueCents <= totalBudgetCents`, commit anındaki gerçek değerle |
+| Bütçe atlanamaz                  | `getAfter` ile şablon sayacının arttığı kanıtlanıyor                          |
+| Puan ödenmeden alınamaz          | `getAfter(users).stats.ip == get(users).stats.ip - costIp`                    |
+| Puan eksiye inemez               | `stats.ip >= 0`                                                               |
+| Aylık sınır aşılamaz             | `holders/{uid}` sayacı, dönem damgası `request.time`                          |
+| Defter ayrışamaz                 | `ip_spend` ve `voucher_issue` tutarları kuponla birebir                       |
+
+Son iki satır **testin yakaladığı gerçek bir açıktan** doğdu: ilk yazdığım
+kuralda kupon `create` yalnız kendi şeklini doğruluyordu, yani kullanıcı
+bütçeye ve puanına hiç dokunmadan kendine kupon basabiliyordu. Test
+("IP düşmeden kupon basılamaz") geçmedi ve kural `budgetCommitted()` +
+`ipPaid()` ile kapatıldı. Bu, testleri neden bu fazın parçası saydığımızın
+somut kanıtı.
+
+### 10.2 60 saniyelik kupon QR'ı
+
+Faz 3'teki yoklama QR'ıyla aynı numara: **imza hesaplanmıyor, saklanıyor.**
+
+Kupon sahibinin cihazı rastgele bir nonce üretip `vouchers/{id}/qr/current`
+belgesine yazıyor; o belge **hiçbir istemciye okunmuyor** (vezne ve admin
+dahil, testli). Vezne taradığı nonce'u kupona yazıyor, karşılaştırmayı kural
+yapıyor.
+
+Kritik ayrıntı: token'ı kullanıcı kendi yazıyor ama kural ömrünü
+`request.time < expiresAt <= request.time + 90 sn` aralığına hapsediyor.
+Yani uzun ömürlü bir token üretip ekran görüntüsünü paylaşmak mümkün değil.
+
+⚠️ Aralık kullanıldı, eşitlik değil: `expiresAt == request.time + 60 sn`
+yazmıştım, ağ gecikmesi ve saat kayması yüzünden hiçbir zaman tutmazdı.
+90 sn üst sınır 60 sn hedefi + makul kayma payı.
+
+### 10.3 Bonuslar ve zamanlayıcılar
+
+- `expireVouchers` günlük zamanlayıcı yok → süre dolumu **görüntüleme
+  anında** hesaplanıyor (`effectiveVoucherStatus`) ve kurum paneli elle
+  işaretleyebiliyor. Kural zaten süresi geçmiş kuponu kullandırmıyor, yani
+  işaret gecikmesi güvenlik sorunu değil, yalnız rapor kozmetiği.
+- "Olağan dışı onay oranı için admin uyarısı" (Bölüm 7.5) için zamanlanmış
+  analiz yok; admin panelindeki **defter kontrolü** manuel karşılığı.
+
+### 10.4 PDF raporu
+
+PDF kütüphanesi eklenmedi. Mutabakat raporu CSV olarak iniyor, PDF için
+tarayıcının yazdırma penceresi kullanılıyor (telefon ve masaüstü ikisi de
+"PDF olarak kaydet" veriyor). 300 kB'lık bir kütüphaneyi pakete koymak,
+hedef kitlenin mobil verisine ödettiğimiz gereksiz bir bedel olurdu.
+
+CSV **noktalı virgülle** ayrılıyor ve BOM ile başlıyor: Alman Excel'i
+virgülü ondalık ayırıcı sayıyor ve BOM olmadan UTF-8'i tanımıyor. Rapor bir
+belediye muhasebesine gidecek; orada açılamayan dosya işe yaramaz.
+
+### 10.5 Parasal kupon kapalı
+
+`cash_voucher` kodda var, hiçbir kurumda açık değil.
+`organizations.features.cashVouchers` varsayılan `false` ve yalnız platform
+admin açabiliyor (kurum yöneticisi kendi kurumunda AÇAMIYOR — testli).
+Gerekçe ve cevaplanması gereken altı hukuki soru:
+`docs/LEGAL_OPEN_QUESTIONS.md` §9.
+
+### Blaze açıldığında
+
+`app/src/lib/backend.ts` → `CLOUD_FUNCTIONS_ENABLED = true`.
+`functions/src/rewards.ts` içindeki `buyReward`, `getVoucherQr`,
+`redeemVoucher`, `revokeVoucher`, `expireVouchers` devreye girer; kuraldaki
+istemci yazma izinleri `if false` olur. QR yükü biçimi DEĞİŞMEZ.
+
+```
+firebase functions:secrets:set VOUCHER_HMAC_SECRET --project ehrenweg-prod
+```
+
+---
+
 ## Değişiklik günlüğü (devam)
 
 - **2026-09-25 (akşam)** — Faz 1 kodlandı: auth (e-posta/şifre + Google),
@@ -407,3 +496,8 @@ firebase functions:secrets:set ATTENDANCE_HMAC_SECRET --project ehrenweg-prod
   kuyruk, opsiyonel GPS, geç onay, pasaport/IP/seviye/rozet, no-show cezası,
   fotoğraflı katılım iddiası. Bölüm 9'daki üç sapma bu sırada verildi.
   Kural testleri **81/81 yeşil** (21'i Faz 3'ün saldırı senaryoları).
+- **2026-09-26 (Faz 4)** — Cüzdan: ödül şablonları, bütçe, IP ile ödül alma,
+  60 sn imzalı kupon QR'ı, vezne ekranı, mutabakat raporu, defter tutarlılık
+  kontrolü. Bölüm 10'daki sapmalar bu sırada verildi. Kural testi
+  **104/104 yeşil**; biri gerçek bir "bedava kupon" açığını yakaladı ve
+  kural düzeltildi.

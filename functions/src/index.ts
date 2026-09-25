@@ -13,7 +13,8 @@
  *           approveOrganization, setOrgMember, removeOrgMember   ✅ yazıldı
  *   Faz 3 → startAttendanceSession, getCurrentCode, submitScan, approveLateScans,
  *           onAttendanceConfirmed, markNoShows                     ✅ yazıldı
- *   Faz 4 → issueVoucher, buyReward, getVoucherQr, redeemVoucher, revokeVoucher
+ *   Faz 4 → buyReward, getVoucherQr, redeemVoucher, revokeVoucher,
+ *           expireVouchers                                         ✅ yazıldı
  *   Faz 5 → reviewTrainerApplication
  *   Faz 6 → monthlySummary, deadlineReminders, sendAnnouncement, ai*
  *   Faz 7 → orgMonthlyReport, passportPdf

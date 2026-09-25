@@ -1,6 +1,6 @@
 # Ehrenweg — İlerleme (PROGRESS)
 
-Son güncelleme: 2026-09-26 (Faz 3)
+Son güncelleme: 2026-09-26 (Faz 4)
 
 ## Faz durumu
 
@@ -414,3 +414,110 @@ Emülatörde sır gerekmiyor; istemci yolu HMAC kullanmıyor (DECISIONS §9.1).
 
 Faz 4: cüzdan — ödül şablonları, bütçe, ledger, IP ile ödül alma, 60 sn
 imzalı kupon QR'ı, vezne/partner tarama, mutabakat raporu.
+
+---
+
+## Faz 4 — Cüzdan, ödüller, kuponlar (26 Eyl 2026)
+
+Bitme ölçütü (CLAUDE.md Bölüm 15): _"Ledger tutarlılık scripti hatasız;
+ekran görüntüsüyle ikinci kullanım reddediliyor."_ → ikisi de sağlandı;
+ikincisi kural testiyle kanıtlı.
+
+### Kurum paneli
+
+| #   | İş                                                                                                                | Durum |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ----- |
+| 1   | Ödül şablonu: 4 tür, toplam bütçe, kişi başı aylık sınır, geçerlilik, partner işletme                             | ✅    |
+| 1   | `cash_voucher` yalnız `features.cashVouchers` açık kurumda; varsayılan kapalı, açma yetkisi yalnız platform admin | ✅    |
+| 5   | Aylık mutabakat raporu: CSV indir + yazdır/PDF; verilen, kullanılan, süresi dolan, kalan bütçe                    | ✅    |
+| —   | Süresi dolan kuponları işaretleme (zamanlayıcının elle karşılığı)                                                 | ✅    |
+
+### Katılımcı — Wallet
+
+| #   | İş                                                                                      | Durum |
+| --- | --------------------------------------------------------------------------------------- | ----- |
+| 2   | IP bakiyesi, ödül mağazası, kuponlarım (aktif/kullanıldı/süresi doldu), hareket geçmişi | ✅    |
+| 2   | Kupon detayında **60 saniyede yenilenen** imzalı QR (`EHRENWEG:VCH:` öneki)             | ✅    |
+| 2   | QR'ın yanında kullanıcının adı ve profil fotoğrafı                                      | ✅    |
+
+### Vezne / partner
+
+| #   | İş                                                                                       | Durum |
+| --- | ---------------------------------------------------------------------------------------- | ----- |
+| 4   | Kupon tara → geçerli/geçersiz, tutar, ad + fotoğrafla kimlik eşleştirme → "Ödendi" onayı | ✅    |
+| 4   | Günlük işlem listesi ve toplam                                                           | ✅    |
+| —   | "Uygulama ödeme yapmaz" uyarısı ekranda (Bölüm 7.4)                                      | ✅    |
+
+### Suistimal önlemleri (item 6)
+
+- Kişi başı aylık sınır: `rewardTemplates/{id}/holders/{uid}` sayacı, dönem
+  damgası `request.time` ile uydurulamaz ✅
+- Aynı QR'ın ikinci kullanımı: kupon `issued` değilse reddediliyor ✅
+- Tüm elle para işlemleri `auditLog`'a (yalnız ekleme, değiştirilemez) ✅
+- Olağan dışı durum tespiti: admin panelindeki **defter kontrolü** ✅
+
+### Defter tutarlılığı (item 7)
+
+`scripts/ledgerConsistencyCheck.ts` — defterden IP bakiyelerini ve kurum
+harcamalarını yeniden hesaplayıp saklanan değerlerle karşılaştırıyor. Hiçbir
+şeyi DÜZELTMİYOR, yalnız raporluyor: para tarafında sessizce onarmak asıl
+hatayı görünmez kılardı. Aynı hesap `lib/ledgerCheck.ts`ten paylaşılıyor ve
+admin panelinden de tetiklenebiliyor.
+
+```
+npm run ledger:check              # emülatör
+npm run ledger:check:prod         # ehrenweg-prod
+```
+
+### Testler (item 8) — `tests/rewards.rules.test.ts`, 23 test
+
+İstenen altı senaryonun hepsi:
+
+| İstenen                            | Test                                              |
+| ---------------------------------- | ------------------------------------------------- |
+| Bütçe aşımı                        | 🔒 BÜTÇE AŞILAMAZ                                 |
+| Eşzamanlı iki buyReward            | 🔒 EŞZAMANLI iki alımda ikincisi düşer            |
+| Süresi geçmiş QR                   | 🔒 SÜRESİ GEÇMİŞ QR reddedilir                    |
+| Ekran görüntüsüyle ikinci kullanım | 🔒 EKRAN GÖRÜNTÜSÜ ile ikinci kullanım reddedilir |
+| Başka kurumun kuponunu okutma      | 🔒 BAŞKA KURUMUN veznesi bu kuponu okutamaz       |
+| İstemciden ledger'a yazma          | 🔒 istemci kendi başına ledger kaydı yazamaz      |
+
+Ayrıca: token belgesi kimseye okunmuyor (vezne + admin dahil), uzun ömürlü
+token üretilemiyor, kullanıcı kendi puanını artıramıyor, kurum kendi
+kurumunda parasal kuponu açamıyor, defter değiştirilemiyor/silinemiyor.
+
+**Tüm kural testleri: 104/104 yeşil** (Faz 1+2: 60, Faz 3: 21, Faz 4: 23).
+
+### ⚠️ Testin yakaladığı gerçek açık
+
+İlk yazdığım kural, kupon `create`'inde yalnız kuponun kendi şeklini
+doğruluyordu. Yani kullanıcı bütçeye ve kendi puanına **hiç dokunmadan**
+kendine kupon basabilirdi — bedava ödül. "IP düşmeden kupon basılamaz"
+testi geçmedi ve kural `budgetCommitted()` + `ipPaid()` şartlarıyla
+kapatıldı (DECISIONS §10.1).
+
+### ⚠️ Bilerek yapılmayanlar
+
+- **`cash_voucher` hiçbir kurumda açık değil.** Kod tam, bayrak kapalı.
+  Cevaplanması gereken altı hukuki soru `docs/LEGAL_OPEN_QUESTIONS.md` §9'a
+  eklendi — bunlar cevaplanmadan bayrak açılmamalı.
+- **PDF kütüphanesi eklenmedi** — rapor CSV olarak iniyor, PDF için tarayıcı
+  yazdırma penceresi kullanılıyor (DECISIONS §10.4).
+- **Bonuslar hâlâ verilmiyor** (Faz 3'ten devam) — Blaze ile gelecek.
+- **Cloud Functions dağıtılmadı.** `functions/src/rewards.ts` yazıldı ve
+  derleniyor.
+
+### Sırlar — proje sahibi çalıştıracak
+
+```
+firebase functions:secrets:set VOUCHER_HMAC_SECRET --project ehrenweg-dev
+firebase functions:secrets:set VOUCHER_HMAC_SECRET --project ehrenweg-prod
+```
+
+Değeri kendin gir, bana gösterme. `openssl rand -base64 48` iyi bir değer üretir.
+Şu an gerekmiyor (Functions dağıtılmadı), Blaze açılınca lazım.
+
+### 🔜 Sıradaki
+
+Faz 5 (P08): Eğitmen kariyer yolu — trainer başvurusu, admin onayı, eğitim
+oturumları, katılımcı geri bildirimi, Learn ekranı.
