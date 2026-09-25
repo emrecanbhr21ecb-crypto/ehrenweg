@@ -26,8 +26,23 @@ const PASSWORD = import.meta.env['VITE_DEMO_PASSWORD'] ?? ''
 let attempted = false
 
 /**
- * Oturum yoksa demo hesabıyla girer. Bir kez denenir: şifre yanlışsa
- * sonsuz döngüye girip Auth kotasını yakmasın.
+ * Otomatik giriş denemesi HENÜZ yapılmadı mı?
+ *
+ * Uygulama açılış perdesini yalnız bu true iken gösterir. Aksi hâlde
+ * kullanıcı "Abmelden" dedikten sonra ekran sonsuza kadar dönerdi —
+ * çıkış da 'signedOut' durumu üretiyor ve ikisi ayırt edilemiyordu.
+ */
+export function demoAutoLoginPending(): boolean {
+  return DEMO_AUTOLOGIN && !attempted
+}
+
+/**
+ * Oturum yoksa demo hesabıyla girer.
+ *
+ * **Yalnızca bir kez** denenir. Bunun iki sebebi var:
+ *   1. şifre yanlışsa sonsuz döngüye girip Auth kotasını yakmasın,
+ *   2. kullanıcı bilerek çıkış yaptığında onu demo hesabına geri
+ *      sürüklemesin — çıkıştan sonra gerçek kayıt/giriş ekranı gelir.
  */
 export async function tryDemoAutoLogin(): Promise<void> {
   if (!DEMO_AUTOLOGIN || attempted) return
