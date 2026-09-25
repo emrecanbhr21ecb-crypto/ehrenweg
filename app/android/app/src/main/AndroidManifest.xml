@@ -38,4 +38,12 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Faz 3: QR yoklama. Kamera etkinlik yerinde kodu okutmak için;
+         konum yalnız kurum "standort prüfen" açtığında ve opsiyonel. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Kamerası olmayan cihazlarda da kurulabilsin: manuel kod yolu var. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>
