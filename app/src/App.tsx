@@ -9,12 +9,14 @@
  *   5. Hepsi tamam                 → alt menülü ana uygulama
  */
 
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 
 import { AppShell } from '@/components/AppShell'
 import { FullPageLoader } from '@/components/ui'
 import { useAuth } from '@/lib/AuthProvider'
+import { DEMO_AUTOLOGIN, tryDemoAutoLogin } from '@/lib/demoAutoLogin'
 import Activities from '@/pages/Activities'
 import ActivityDetail from '@/pages/ActivityDetail'
 import AdminPanel from '@/pages/admin/AdminPanel'
@@ -50,6 +52,12 @@ export default function App(): React.JSX.Element {
   const { t } = useTranslation()
   const location = useLocation()
   const { status, user, profile, profileLoading, claims } = useAuth()
+
+  // Demo yapısı: oturum yoksa hazır hesapla gir (lib/demoAutoLogin.ts).
+  // Bayrak kapalıyken bu etki hiçbir şey yapmaz.
+  useEffect(() => {
+    if (status === 'signedOut') void tryDemoAutoLogin()
+  }, [status])
 
   const isAdmin = claims.role === 'platform_admin'
   if (status === 'loading') {
