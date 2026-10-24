@@ -187,6 +187,70 @@
     "confirmApproveOrg": "Organisation freigeben? Sie kann danach Aktivitäten veröffentlichen.",
     "byOrg": "von {{org}}",
     "preview": "Ansehen",
-    "actionFailed": "Die Aktion ist fehlgeschlagen."
+    "actionFailed": "Die Aktion ist fehlgeschlagen.",
+    "tabStats": "Statistik",
+    "tabFraud": "Auffälligkeiten",
+    "tabAudit": "Protokoll",
+    "tabScoring": "Punkteregeln"
+  },
+  "analytics": {
+    "title": "Analytik",
+    "subtitle": "Bewerbungen, Teilnahme und verteilte Punkte dieser Organisation.",
+    "applications": "Bewerbungen",
+    "attendances": "Teilnahmen",
+    "rate": "Teilnahmequote",
+    "participants": "Teilnehmende",
+    "ipAwarded": "Vergebene Punkte",
+    "vouchersValue": "Gutscheine (Wert)",
+    "byCategory": "Nach Kategorie",
+    "topActivities": "Meistbesuchte Aktivitäten",
+    "print": "Als PDF drucken",
+    "loadFailed": "Analytik konnte nicht geladen werden."
+  },
+  "systemStats": {
+    "title": "System im Überblick",
+    "subtitle": "Grobe Zahlen über die ganze Plattform.",
+    "users": "Nutzer:innen",
+    "organisations": "Organisationen",
+    "verifiedOrganisations": "davon geprüft",
+    "activities": "Aktivitäten",
+    "publishedActivities": "davon veröffentlicht",
+    "participations": "Teilnahmen",
+    "ipAwarded": "Vergebene Punkte",
+    "loadFailed": "Zahlen konnten nicht geladen werden."
+  },
+  "fraud": {
+    "title": "Auffälligkeiten",
+    "subtitle": "Automatische Hinweise, keine Vorwürfe – bitte prüfen, bevor du handelst.",
+    "empty": "Nichts Auffälliges gefunden.",
+    "highAcceptRateTitle": "Ungewöhnlich hohe Annahmequote",
+    "highAcceptRateBody": "{{org}}: {{rate}}% von {{count}} Bewerbungen angenommen (Plattformschnitt {{avg}}%).",
+    "nearCapTitle": "Nahe am Monatslimit",
+    "nearCapBody": "{{uid}} hat {{count}} von {{limit}} möglichen Gutscheinen in diesem Monat bei {{org}} erhalten.",
+    "loadFailed": "Auffälligkeiten konnten nicht berechnet werden."
+  },
+  "audit": {
+    "title": "Protokoll",
+    "subtitle": "Jede manuelle Entscheidung – wer, was, wann (CLAUDE.md Bölüm 7.5).",
+    "empty": "Noch keine Einträge.",
+    "loadFailed": "Protokoll konnte nicht geladen werden.",
+    "reasonLabel": "Grund: {{reason}}"
+  },
+  "scoring": {
+    "title": "Punkteregeln",
+    "subtitle": "Änderungen gelten sofort für neue Punktevergaben. Jede Version bleibt nachvollziehbar.",
+    "version": "Version {{version}}",
+    "maxIpPerActivity": "Höchstpunktzahl pro Aktivität",
+    "ipPerHour": "Punkte pro Stunde (Standard)",
+    "bonusNewCategory": "Bonus: neue Kategorie",
+    "bonusMonthlyFour": "Bonus: 4. Teilnahme im Monat",
+    "bonusTrainerMultiplier": "Trainer-Multiplikator",
+    "penaltyNoShowIp": "Abzug bei Nichterscheinen",
+    "penaltyStreakLimit": "Sperre nach X Nichterscheinen",
+    "penaltyRestrictionDays": "Sperrdauer (Tage)",
+    "save": "Speichern (neue Version)",
+    "saved": "Gespeichert.",
+    "saveFailed": "Speichern fehlgeschlagen.",
+    "loadFailed": "Regeln konnten nicht geladen werden."
   }
 }

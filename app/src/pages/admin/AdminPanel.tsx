@@ -19,6 +19,8 @@ import { reviewOrganization, watchPendingOrganizations } from '@/lib/organizatio
 import { compareBalances, type ConsistencyResult } from '@/lib/ledgerCheck'
 import { db } from '@/lib/firebase'
 import { collection, getDocs, limit, query } from 'firebase/firestore'
+import { FraudSignalsPanel, SystemStatsPanel } from '@/pages/admin/Analytics'
+import { AuditLogPanel, ScoringEditorPanel } from '@/pages/admin/Governance'
 import type { Activity, Organization } from '@/types/activity'
 import type { LedgerEntry } from '@/types/reward'
 import {
@@ -27,7 +29,15 @@ import {
 } from '@/lib/trainer'
 import type { TrainerApplication } from '@/types/trainer'
 
-type Tab = 'organisations' | 'activities' | 'trainers' | 'ledger'
+type Tab =
+  | 'organisations'
+  | 'activities'
+  | 'trainers'
+  | 'ledger'
+  | 'stats'
+  | 'fraud'
+  | 'audit'
+  | 'scoring'
 
 /**
  * Eğitmen başvuru kuyruğu — CLAUDE.md Bölüm 8.
@@ -454,7 +464,7 @@ function ActivityQueue(): React.JSX.Element {
     setBusyId(activity.id)
     setError(null)
     try {
-      await reviewActivity(activity.id, decision, user.uid, note)
+      await reviewActivity(activity.id, decision, user.uid, activity.orgId, note)
       setNotice(decision === 'approve' ? t('admin.approved') : t('admin.rejected'))
     } catch (caught) {
       console.error('[admin] İçerik kararı kaydedilemedi:', caught)
@@ -516,6 +526,10 @@ export default function AdminPanel(): React.JSX.Element {
     { id: 'activities', label: t('admin.tabActivities') },
     { id: 'trainers', label: t('admin.tab', { ns: 'trainer' }) },
     { id: 'ledger', label: t('consistency.title', { ns: 'wallet' }) },
+    { id: 'stats', label: t('admin.tabStats') },
+    { id: 'fraud', label: t('admin.tabFraud') },
+    { id: 'audit', label: t('admin.tabAudit') },
+    { id: 'scoring', label: t('admin.tabScoring') },
   ]
 
   return (
@@ -550,6 +564,10 @@ export default function AdminPanel(): React.JSX.Element {
       {tab === 'activities' && <ActivityQueue />}
       {tab === 'trainers' && <TrainerQueue />}
       {tab === 'ledger' && <LedgerCheck />}
+      {tab === 'stats' && <SystemStatsPanel />}
+      {tab === 'fraud' && <FraudSignalsPanel />}
+      {tab === 'audit' && <AuditLogPanel />}
+      {tab === 'scoring' && <ScoringEditorPanel />}
     </div>
   )
 }

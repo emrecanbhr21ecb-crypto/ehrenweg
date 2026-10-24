@@ -28,6 +28,7 @@ import type { CategoryId, LanguageCode, SkillId } from '@/config/catalog'
 import { callOrLocal } from '@/lib/backend'
 import { db } from '@/lib/firebase'
 import { distanceKm, type GeoPoint } from '@/lib/geo'
+import { writeAudit } from '@/lib/rewards'
 import {
   EMPTY_TEXT,
   pickText,
@@ -221,6 +222,8 @@ export async function reviewActivity(
   activityId: string,
   decision: 'approve' | 'reject',
   reviewer: string,
+  /** Denetim kaydı için (Bölüm 7.5) — çağıran taraf aktiviteyi zaten okumuş olur. */
+  orgId: string,
   note = '',
 ): Promise<void> {
   await callOrLocal('reviewActivity', { activityId, decision, note }, async (input) => {
@@ -233,6 +236,7 @@ export async function reviewActivity(
       reviewNote: input.note,
     })
   })
+  await writeAudit(reviewer, `activity.${decision}d`, activityId, orgId, note)
 }
 
 /** Yayındaki aktiviteyi iptal eder. Başvuranlar listede "iptal" görür. */

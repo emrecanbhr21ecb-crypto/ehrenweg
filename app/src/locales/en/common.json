@@ -129,7 +129,15 @@
     "ringLabel": "Level {{level}}, {{name}}. {{percent}} percent towards the next level.",
     "nextLevel": "{{activities}} more sessions to {{name}}",
     "maxLevel": "Highest level reached.",
-    "emptyHint": "Your passport fills up as soon as you attend your first activity."
+    "emptyHint": "Your passport fills up as soon as you attend your first activity.",
+    "pdfDownload": "Integration passport as PDF",
+    "pdfGenerating": "Preparing …",
+    "pdfFailed": "The PDF could not be created.",
+    "pdfTitle": "{{brand}} Integration Passport",
+    "pdfQrLabel": "QR code to verify this passport online",
+    "pdfQrHint": "Verify online",
+    "shareCard": "Share card",
+    "shareCardFailed": "Sharing failed."
   },
   "levels": {
     "1": "Newcomer",
@@ -158,5 +166,31 @@
   },
   "soon": {
     "learn": "Language courses, application training and workshops from verified trainers – in preparation."
+  },
+  "privacy": {
+    "title": "My data",
+    "exportTitle": "Download data",
+    "exportBody": "Download a copy of all your data as a file (GDPR Art. 20).",
+    "exportButton": "Download data",
+    "exportFailed": "Your data could not be loaded.",
+    "deleteTitle": "Delete account",
+    "deleteBody": "Your profile, organisation memberships and all personal traces are removed. Points and payment entries remain, anonymised – that's a legal bookkeeping requirement.",
+    "deleteButton": "Permanently delete account",
+    "deleteConfirm": "Your account will be deleted permanently. Continue?",
+    "deleteFailed": "Deletion failed. Please try again.",
+    "reauthBody": "For security reasons we need to confirm this once more before deleting your account.",
+    "reauthPassword": "Password",
+    "reauthButton": "Confirm and delete",
+    "reauthGoogleButton": "Confirm with Google",
+    "reauthFailed": "Confirmation failed."
+  },
+  "verify": {
+    "notFoundTitle": "Document not found",
+    "notFoundBody": "This link is invalid or has expired.",
+    "error": "The document could not be loaded.",
+    "validTitle": "Valid Ehrenweg document",
+    "validBody": "This QR code belongs to a genuine Ehrenweg integration passport.",
+    "name": "Name",
+    "snapshotNote": "As of: {{date}}"
   }
 }

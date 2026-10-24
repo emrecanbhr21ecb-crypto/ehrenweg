@@ -365,6 +365,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "applicants",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "orgId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -376,6 +390,16 @@
           "order": "ASCENDING",
           "queryScope": "COLLECTION"
         },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "applicants",
+      "fieldPath": "orgId",
+      "indexes": [
         {
           "order": "ASCENDING",
           "queryScope": "COLLECTION_GROUP"

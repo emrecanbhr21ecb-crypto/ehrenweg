@@ -592,6 +592,108 @@ motor güçlüğü olan kullanıcı yakalayamaz) ve genelde kimse okumuyor.
 
 ---
 
+## 13. DSGVO hesap silme/dışa aktarma ve PDF doğrulama sunucusuz nasıl çalıştı (Faz 7)
+
+**Karar tarihi:** 26 Eylül 2026 · **Durum:** Blaze açılana kadar kalıcı
+
+CLAUDE.md Bölüm 12 bunu `exportMyData`/`deleteMyAccount` Cloud Function'larına
+veriyor. Blaze kapalı, aynı örüntü tekrarlandı: iş istemciye, güvenlik
+`firestore.rules`'a. Mantık `app/src/lib/privacy.ts`te.
+
+### "Ledger anonimleşiyor" aslında hiç yazma gerektirmedi
+
+Bölüm 15 Faz 7 bitti ölçütü: "Hesap silme tüm izleri kaldırıyor, ledger
+anonimleşiyor." İlk bakışta bu, `ledger`/`passportEntries`'e bir
+anonimleştirme YAZMASI gerektirir gibi görünüyor. Değil: bu iki koleksiyon
+Bölüm 5 şemasında **hiçbir zaman** ad/e-posta/foto taşımadı, yalnız `uid`
+referansı var. `users/{uid}` silinince o `uid` zaten hiçbir profile
+çözülemeyen bir işaretçiye düşüyor — Bölüm 10'daki "anonimleştirilir,
+silinmez" şartı buradan, ekstra bir satır yazmadan sağlanıyor.
+`docs/PRIVACY.md`'de tablo hâlinde.
+
+### Dört yerde gerçek bir ad/foto kopyası vardı — dar kurallarla temizlendi
+
+Kurum personeli `users` koleksiyonunu okuyamadığı için (Bölüm 10 veri
+minimizasyonu), dört akış kimlik bilgisini KENDİ belgesine kopyalamıştı:
+
+| Belge                                 | Alan                           | Neden kopyalanmıştı                                       |
+| ------------------------------------- | ------------------------------ | --------------------------------------------------------- |
+| `attendanceRecords`                   | `displayName`                  | Kurum personeli canlı yoklama listesinde isim görsün diye |
+| `activities/{id}/applicants/{uid}`    | `applicantName`                | Kurum başvuran listesinde isim görsün diye                |
+| `vouchers`                            | `holderName`, `holderPhotoURL` | Vezne/partner kimlik eşleştirmesi (Bölüm 7.4)             |
+| `organizations/{orgId}/members/{uid}` | `displayName`, `email`         | Kurum ekip listesi                                        |
+
+Her biri için `firestore.rules`'a dar bir "kendi kaydını boşalt" kuralı
+eklendi — tıpkı Faz 2–6'daki diğer sapmalarda olduğu gibi: yalnız TEK alan,
+yalnız SAHİBİ, yalnız BOŞ değere. `onlyFields([...])` diğer her alanı
+(durum, tutar, tarih) kilitli tutuyor — bir kullanıcı "adımı sil" derken
+yanlışlıkla (ya da kötü niyetle) bir kuponun tutarını ya da bir başvurunun
+durumunu değiştiremiyor. `vouchers` ve `applicants`/`attendanceRecords`
+BELGESİ silinmiyor, yalnız o tek alan — finansal/kontenjan geçmişi bozulmasın
+diye (tıpkı `ledger`'ın asla silinmemesi gibi).
+
+`users/{uid}` belgesinin kendisi ise tam SİLİNİYOR (`allow delete:
+if isSelf(userId);`) — bu, Faz 2–6'daki "stats alanı asla silinemez/yazılamaz"
+kilidinden FARKLI bir karar: profil GDPR Art. 17'nin asıl hedefi, o yüzden
+tam silme burada doğru seçim. Aşağıdaki `get()` çağrıları buna dayanıyordu,
+hepsi önce `exists()` kontrolü yapıyor (silinmiş bir kullanıcıya rastgele bir
+yazma denemesi sessizce reddedilsin, rules motoru çökmesin diye):
+`approvedTrainer()`, `notRestricted()`. `userDocRef(uid).update(...)` ile puan
+yazan akış (kurum geç bir yoklamayı onaylarken) silinmiş bir hesapta
+NOT_FOUND alır — nadir, yakalanıp loglanan bir uç durum, çözümsüz bırakıldı.
+
+### `verifications/{token}` — kişisel veriyi en aza indiren doğrulama sayfası
+
+PDF pasaporttaki QR, bir Ehrenweg hesabı OLMAYAN bir işvereni
+`https://ehrenweg.de/verify/{id}`'e götürür (Bölüm 1A). Bu sayfa
+`App.tsx`'teki `PUBLIC_PATHS`'e eklendi — oturum durumu ne olursa olsun
+(hatta "yükleniyor" ekranından bile ÖNCE) açılıyor.
+
+Belge kimliği `uid` DEĞİL, istemcide üretilen 128 bit rastgele bir token —
+`allow list: if false` ile birleşince kimse koleksiyonu tarayamıyor, yalnız
+elindeki bağlantıyla tek belgeye ulaşılabiliyor. İçerik PDF'in TAMAMI değil,
+özet: ad, seviye, toplam saat, katılım sayısı. Beceri listesi, katılım
+geçmişi ve fotoğraf yalnız PDF'in kendisinde — Bölüm 9 "kişisel veriyi en az
+düzeyde tutsun" şartı burada "sayfanın PDF'den daha az göstermesi" olarak
+uygulandı.
+
+Sahtecilik engeli her zamanki desen: `create` kuralı yazılan `level`/`hours`/
+`activitiesCompleted` değerlerini `get()` ile kullanıcının GERÇEK
+`users/{uid}.stats`'ıyla birebir karşılaştırıyor. Kendine sahte bir "Seviye
+5" belgesi yazılamaz.
+
+Belge bir ANLIK GÖRÜNTÜ — `allow update, delete: if false`. Hesap silinse
+bile üretilmiş bir doğrulama sayfası yaşamaya devam eder; bu bilinçli,
+basılı/paylaşılmış bir PDF'in doğrulaması sonradan "belge bulunamadı"
+göstermemeli.
+
+### PDF ve karne görseli — yine kütüphane YOK
+
+`lib/reconciliation.ts`teki Faz 4 kararının (window.print(), 300 kB'lık bir
+PDF kütüphanesi hedef kitlenin verisine ödettiği gereksiz bedel) aynısı
+tekrarlandı. Yeni olan: `styles/theme.css`'e `.print-area` izolasyon kuralı
+eklendi (`visibility:hidden` + tek blok `visibility:visible`) — Faz 4'teki
+`window.print()` çağrısı AppShell'in üst başlığını ve alt menüsünü de
+yazdırıyordu (küçük bir kusur, Reconciliation ekranında düzeltilmedi, burada
+not düşüldü). Karne görseli `<canvas>` + `navigator.share` ile: `@capacitor/share`
+eklenmedi, Capacitor'ın WebView'ı Web Share API'yi zaten native paylaşım
+sayfasına yönlendiriyor.
+
+### Bulunan ama Faz 7'nin konusu OLMAYAN bir regresyon: App.tsx
+
+Bu fazın `/verify/:id` rotasını eklemek için `App.tsx`'i incelerken, `8162120`
+("refactor(ai): beş AI ucundan dördü kaldırıldı") commit'inin **kazara** tüm
+oturum kapısını (signedOut → /welcome, e-posta doğrulama, profil kurulumu) VE
+`/admin` rotasının `isAdmin` korumasını sildiği görüldü — AI temizliğiyle
+hiçbir ilgisi yok, muhtemelen dosya o commit'te baştan yazılırken eski mantık
+unutuldu. Sonuç: gerçek kullanıcılar kayıt/giriş ekranına hiç ulaşamıyordu
+(demo APK bunu hiç göstermedi çünkü otomatik girişle açılıyor) ve giriş yapmış
+HERHANGİ bir katılımcı adres çubuğuna `/admin` yazarak yönetim panelinin
+arayüzünü görebiliyordu (veri `firestore.rules`teki `isAdmin()` ile korunuyordu,
+yalnız arayüz sızıyordu). Faz 7 kapsamında, bulunduğu anda düzeltildi.
+
+---
+
 ## Değişiklik günlüğü (devam)
 
 - **2026-09-25 (akşam)** — Faz 1 kodlandı: auth (e-posta/şifre + Google),
@@ -627,3 +729,12 @@ motor güçlüğü olan kullanıcı yakalayamaz) ve genelde kimse okumuyor.
 - **2026-09-26 (Faz 6 revizyonu)** — Proje sahibinin kararıyla AI uçlarından
   dördü kaldırıldı; yalnız `aiTranslate` kaldı ve kurum formuna bağlandı.
   Gerekçeler Bölüm 12'de.
+- **2026-10-24 (Faz 7)** — Kurum analitiği + PDF rapor, platform admin
+  paneline sistem istatistiği/şüpheli işlem panosu/audit log/puan kuralları
+  editörü, Integrationspass PDF + `/verify/{id}` doğrulama sayfası,
+  paylaşılabilir karne görseli, DSGVO (`exportMyData`/`deleteMyAccount`
+  istemci karşılığı, rıza Faz 6'dan beri açık). Bölüm 13'teki sapmalar bu
+  sırada verildi. Yol boyunca `App.tsx`'teki oturum kapısını sıfırlayan
+  eski bir regresyon bulundu ve düzeltildi (Bölüm 13 sonu). Kural testleri
+  **145/145 yeşil** (19'u bu fazın DSGVO/doğrulama saldırı senaryoları,
+  `tests/privacy.rules.test.ts`).

@@ -11,15 +11,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Alert, Badge, Card, Spinner } from '@/components/ui'
+import { QrCode } from '@/components/QrCode'
+import { Alert, Badge, Button, Card, Spinner } from '@/components/ui'
+import { BRAND, type Locale } from '@/config/brand'
 import { CATEGORY_META } from '@/config/catalog'
 import { BADGE_EMOJI, earnedBadges, type BadgeId } from '@/config/scoring'
 import { useAuth } from '@/lib/AuthProvider'
 import { formatDate } from '@/lib/format'
+import { fetchOrganization } from '@/lib/organizations'
 import { passportSummary, watchMyPassport } from '@/lib/passport'
+import { renderShareCard, shareCard } from '@/lib/shareCard'
+import { createVerification } from '@/lib/verification'
 import { restrictionEndsAt } from '@/types/user'
 import type { PassportEntry } from '@/types/attendance'
-import type { Locale } from '@/config/brand'
 
 export function PassportDetails(): React.JSX.Element {
   const { t, i18n } = useTranslation(['attendance', 'catalog', 'common'])
@@ -52,6 +56,72 @@ export function PassportDetails(): React.JSX.Element {
 
   const restriction = restrictionEndsAt(profile)
   const noShows = profile?.stats.noShows ?? 0
+
+  // --- PDF pasaport + karne (CLAUDE.md Bölüm 9, Faz 7) ----------------------
+
+  const [pdfBusy, setPdfBusy] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  const [printToken, setPrintToken] = useState<string | null>(null)
+  const [orgNames, setOrgNames] = useState<Map<string, string>>(new Map())
+  const [shareBusy, setShareBusy] = useState(false)
+  const [shareError, setShareError] = useState<string | null>(null)
+
+  const skillsGained = useMemo(() => {
+    const ids = new Set<string>()
+    for (const entry of entries ?? []) {
+      for (const skill of entry.skillsGained) ids.add(skill)
+    }
+    return [...ids]
+  }, [entries])
+
+  async function handleDownloadPdf(): Promise<void> {
+    if (!profile) return
+    setPdfBusy(true)
+    setPdfError(null)
+    try {
+      const [token, names] = await Promise.all([
+        createVerification(profile.displayName, profile.stats, locale),
+        Promise.all(
+          [...new Set((entries ?? []).map((entry) => entry.orgId))].map(
+            async (orgId) =>
+              [orgId, (await fetchOrganization(orgId))?.name ?? ''] as const,
+          ),
+        ),
+      ])
+      setOrgNames(new Map(names))
+      setPrintToken(token)
+      // Yazdırma alanı bir sonraki çizimde DOM'a girer; QR canvas'ının
+      // (QrCode bileşeni) çizilmesi için bir kare bekleniyor.
+      requestAnimationFrame(() => requestAnimationFrame(() => window.print()))
+    } catch (caught) {
+      console.error('[passport] PDF hazırlanamadı:', caught)
+      setPdfError(t('common:passport.pdfFailed'))
+    } finally {
+      setPdfBusy(false)
+    }
+  }
+
+  async function handleShareCard(): Promise<void> {
+    if (!profile) return
+    setShareBusy(true)
+    setShareError(null)
+    try {
+      const blob = await renderShareCard({
+        displayName: profile.displayName,
+        levelName: t(`common:levels.${profile.stats.level}` as 'common:levels.1'),
+        hours: profile.stats.hours,
+        activitiesCompleted: profile.stats.activitiesCompleted,
+        ip: profile.stats.ip,
+        locale,
+      })
+      await shareCard(blob, profile.displayName)
+    } catch (caught) {
+      console.error('[passport] Karne paylaşılamadı:', caught)
+      setShareError(t('common:passport.shareCardFailed'))
+    } finally {
+      setShareBusy(false)
+    }
+  }
 
   if (entries === null) {
     return (
@@ -203,6 +273,132 @@ export function PassportDetails(): React.JSX.Element {
           </Card>
         )}
       </section>
+
+      {/* PDF pasaport + paylaşılabilir karne (Faz 7) */}
+      <section aria-labelledby="pdf-heading" className="print:hidden">
+        <h2 id="pdf-heading" className="mb-3 text-sm font-semibold">
+          {t('common:passport.pdfDownload')}
+        </h2>
+        {pdfError && <Alert tone="error">{pdfError}</Alert>}
+        {shareError && <Alert tone="error">{shareError}</Alert>}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="secondary"
+            loading={pdfBusy}
+            onClick={() => void handleDownloadPdf()}
+          >
+            📄{' '}
+            {pdfBusy
+              ? t('common:passport.pdfGenerating')
+              : t('common:passport.pdfDownload')}
+          </Button>
+          <Button
+            variant="secondary"
+            loading={shareBusy}
+            onClick={() => void handleShareCard()}
+          >
+            📤 {t('common:passport.shareCard')}
+          </Button>
+        </div>
+      </section>
+
+      {/* Yazdırma/"PDF'e kaydet" alanı — ekranda gizli, yalnız print çıktısında
+          görünür (styles/theme.css `.print-area`). */}
+      {printToken && profile && (
+        <div className="print-area hidden p-10 print:block">
+          <div
+            className="flex items-center justify-between border-b-4 pb-4"
+            style={{ borderColor: BRAND.colors.primary }}
+          >
+            <div>
+              <p className="text-2xl font-bold">
+                {t('common:passport.pdfTitle', {
+                  brand: BRAND.name,
+                })}
+              </p>
+              <p className="text-sm text-gray-500">{formatDate(new Date(), locale)}</p>
+            </div>
+            {profile.photoURL && (
+              <img
+                src={profile.photoURL}
+                alt=""
+                className="size-24 rounded-full object-cover"
+              />
+            )}
+          </div>
+
+          <div className="mt-6 grid grid-cols-2 gap-6">
+            <div>
+              <p className="text-xl font-semibold">{profile.displayName}</p>
+              <p className="text-sm text-gray-600">
+                {t(`common:levels.${profile.stats.level}` as 'common:levels.1')}
+              </p>
+
+              <dl className="mt-4 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <dt>{t('common:passport.hours')}</dt>
+                  <dd className="font-semibold">{Math.round(profile.stats.hours)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>{t('common:passport.activities')}</dt>
+                  <dd className="font-semibold">{profile.stats.activitiesCompleted}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>{t('common:passport.ip')}</dt>
+                  <dd className="font-semibold">{profile.stats.ip}</dd>
+                </div>
+              </dl>
+
+              {skillsGained.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-xs font-semibold uppercase text-gray-500">
+                    {t('common:profile.skills')}
+                  </p>
+                  <p className="text-sm">
+                    {skillsGained
+                      .map((id) =>
+                        t(`catalog:skills.${id}` as 'catalog:skills.teamwork'),
+                      )
+                      .join(' · ')}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col items-center justify-start">
+              <QrCode
+                value={`${BRAND.urls.verifyBase}/${printToken}`}
+                size={160}
+                ariaLabel={t('common:passport.pdfQrLabel')}
+              />
+              <p className="mt-2 max-w-[11rem] text-center text-xs text-gray-500">
+                {t('common:passport.pdfQrHint')}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <p className="text-xs font-semibold uppercase text-gray-500">
+              {t('attendance:passport.historyTitle')}
+            </p>
+            <ul className="mt-2 divide-y divide-gray-200 text-sm">
+              {(entries ?? []).map((entry) => (
+                <li key={entry.id} className="flex justify-between py-1.5">
+                  <span>
+                    {entry.activityTitle}
+                    {orgNames.get(entry.orgId) ? ` — ${orgNames.get(entry.orgId)}` : ''}
+                  </span>
+                  <span className="shrink-0 text-gray-500">
+                    {entry.approvedAt
+                      ? formatDate(entry.approvedAt.toDate(), locale)
+                      : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

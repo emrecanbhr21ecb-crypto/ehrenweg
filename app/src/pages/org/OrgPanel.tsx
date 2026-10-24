@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router'
 
 import { ActivityCard } from '@/components/ActivityCard'
+import { OrgAnalyticsPanel } from '@/pages/org/Analytics'
 import { OrgAnnouncements } from '@/pages/org/Announcements'
 import { OrgReconciliation } from '@/pages/org/Reconciliation'
 import { OrgRedeem } from '@/pages/org/Redeem'
@@ -53,7 +54,14 @@ import {
 } from '@/types/activity'
 
 type Tab =
-  'activities' | 'members' | 'news' | 'rewards' | 'redeem' | 'report' | 'profile'
+  | 'activities'
+  | 'members'
+  | 'news'
+  | 'rewards'
+  | 'redeem'
+  | 'report'
+  | 'analytics'
+  | 'profile'
 
 // ---------------------------------------------------------------------------
 
@@ -574,6 +582,7 @@ export default function OrgPanel(): React.JSX.Element {
     { id: 'rewards', label: t('wallet:org.tabRewards') },
     { id: 'redeem', label: t('wallet:org.tabRedeem') },
     { id: 'report', label: t('wallet:org.tabReport') },
+    { id: 'analytics', label: t('manage:analytics.title') },
     { id: 'profile', label: t('manage:org.tabProfile') },
   ]
 
@@ -662,6 +671,13 @@ export default function OrgPanel(): React.JSX.Element {
       {tab === 'report' &&
         (isOrgAdmin ? (
           <OrgReconciliation organization={organization} />
+        ) : (
+          <Alert tone="info">{t('manage:members.onlyAdmin')}</Alert>
+        ))}
+
+      {tab === 'analytics' &&
+        (isOrgAdmin ? (
+          <OrgAnalyticsPanel organization={organization} />
         ) : (
           <Alert tone="info">{t('manage:members.onlyAdmin')}</Alert>
         ))}

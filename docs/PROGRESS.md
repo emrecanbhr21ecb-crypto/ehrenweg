@@ -624,7 +624,107 @@ Bugün **push düşmez** — gönderen taraf yok. Şu an denenebilecekler:
    "Send test message" → yukarıdaki jetonu yapıştır. Bu, uygulamanın ALMA
    tarafının çalıştığını kanıtlar.
 
-### 🔜 Sıradaki
+### 🔜 Sıradaki (Faz 6'nın eski notu — Faz 7 aşağıda tamamlandı)
 
-Faz 7 (P10): kurum/admin analitiği, PDF pasaport, doğrulama sayfası,
-karne görseli, DSGVO (veri indirme, hesap silme, rıza yönetimi).
+---
+
+## Faz 7 — kurum/admin analitiği, PDF pasaport, DSGVO (2026-10-24)
+
+Prompt P10'daki 6 madde uygulandı. Gerekçeler `docs/DECISIONS.md` §13'te.
+
+1. **Kurum analitiği** (`OrgPanel` → yeni "Analytics" sekmesi, yalnız
+   `org_admin`): başvuru/katılım sayısı, katılım oranı, kategori dağılımı,
+   en çok katılım alan 10 aktivite, dağıtılan IP, kupon sayısı+değeri.
+   "PDF rapor indir" → `window.print()` (Faz 4'teki kütüphanesiz kararın
+   aynısı). `lib/orgAnalytics.ts` — katılım sayısı `activity.stats.attendees`
+   DEĞİL `passportEntries`'ten (o sayaç hiç artırılmıyor, bkz. kod içi not).
+2. **Platform admin paneli** — AdminPanel'e 4 yeni sekme:
+   - **Statistik**: kullanıcı/kurum/aktivite/katılım/puan toplamları
+     (`getCountFromServer`/`getAggregateFromServer`, tam belge indirmeden).
+   - **Auffälligkeiten (şüpheli işlem)**: kurum bazında olağandışı yüksek
+     kabul oranı (platform ortalamasından +30 puan, ≥10 başvuru şartıyla),
+     kişi başı aylık kupon sınırına ulaşmış kullanıcılar. Cihaz parmak izi
+     tespiti (Bölüm 7.5) YOK — hiç uygulanmadı, dürüstçe atlandı.
+   - **Protokoll (audit log)**: `auditLog` görüntüleyici. `writeAudit`
+     (zaten vardı, yalnız kupon iptalinde kullanılıyordu) artık kurum
+     doğrulama, içerik moderasyonu ve eğitmen onayı kararlarında da
+     çağrılıyor — "tüm manuel onaylar auditLog'a" (Bölüm 7.5) artık gerçek.
+     ⚠️ Geç tarama onayı ve "katıldım" iddiası kararı HENÜZ audit'e
+     yazmıyor (küçük, sıradaki bir iyileştirme).
+   - **Punkteregeln**: `config/scoring` editörü, sürüm numaralı (kural
+     zaten vardı: `version` her kayıtta artmalı). Üst sınır, bonuslar,
+     cezalar düzenlenebilir; seviye eşikleri ve eğitmen şartları bu
+     sürümde salt okunur.
+3. **Integrationspass PDF + doğrulama sayfası**: `PassportDetails`e "PDF
+   indir" düğmesi — `verifications/{token}` belgesi oluşturur (rastgele
+   128 bit token, GERÇEK `stats`e karşı doğrulanır), `.print-area` CSS
+   izolasyonuyla yazdırır. `/verify/{id}` herkese açık, girişsiz sayfa
+   (`App.tsx` `PUBLIC_PATHS`e eklendi) — ad, seviye, saat, katılım sayısını
+   gösterir; PDF'in tamamını değil (beceri/geçmiş/foto yok).
+4. **Paylaşılabilir karne görseli**: `lib/shareCard.ts`, `<canvas>` ile
+   çizilip `navigator.share` (Web Share API) ile paylaşılıyor; desteklenmiyorsa
+   PNG indiriliyor. `@capacitor/share` eklenmedi — WebView zaten native
+   paylaşım sayfasına yönlendiriyor.
+5. **DSGVO**: `lib/privacy.ts` — `exportMyData` (profil + tüm alt verileri
+   tek JSON), `redactMyTraces` (kendi profilini ve kurum üyeliğini siler;
+   `attendanceRecords`/`applicants`/`vouchers`teki ad/foto kopyalarını
+   boşaltır; `ledger`/`passportEntries`e DOKUNMAZ — zaten PII taşımıyorlardı).
+   `authService.ts`e `reauthenticate()`/`deleteAuthAccount()` eklendi.
+   Profil ekranında "Verilerimi indir" + "Hesabımı sil" (`PrivacyTools.tsx`).
+   Rıza yönetimi zaten Faz 6'dan beri vardı (`analyticsConsent`, varsayılan
+   kapalı). `docs/PRIVACY.md` yazıldı — hangi veri nerede, ne kadar,
+   hesap silinince ne olur.
+6. **Testler** (prompt açıkça istedi, bkz. [[test-yazma-tercihi]] istisnası):
+   `tests/privacy.rules.test.ts`, 19 saldırı senaryosu — kendi izini
+   silebiliyor, başkasınınkini SİLEMİYOR, ledger/passportEntries hiçbir
+   koşulda değiştirilemiyor, doğrulama belgesi sahte sayılarla açılamıyor.
+
+**Kural testleri: 145/145 yeşil** (126 + 19 yeni). `npm run typecheck`,
+`npm run lint`, `npm run check:i18n`, `npm run build` hepsi temiz.
+
+### 🐛 Yol boyunca bulunan regresyon (Faz 7'nin konusu değildi, düzeltildi)
+
+`App.tsx`, `8162120` commit'inde ("AI temizliği") kazara sıfırlanmıştı:
+oturum kapısı (signedOut→/welcome, e-posta doğrulama, profil kurulumu) ve
+`/admin` rotasının `isAdmin` koruması tamamen silinmişti. Gerçek kullanıcılar
+kayıt/giriş ekranına ulaşamıyordu; giriş yapmış herkes `/admin` adresine
+elle giderek yönetim panelinin arayüzünü görebiliyordu (veri kuralla
+korunuyordu, arayüz sızıyordu). Eski (adb6b82) hâliyle birleştirilip
+geri getirildi, `/verify/:id` de herkese açık yol olarak eklendi.
+Ayrıntı: `docs/DECISIONS.md` §13 sonu.
+
+### Sırada ne var
+
+- **Faz 8 (P11)**: Android derleme + imzalama, SHA parmak izleri, App Links.
+- Küçük artık işler (gelecek bir oturuma bırakıldı, acil değil):
+  geç tarama onayı ve "katıldım" iddiası kararının `auditLog`'a yazması;
+  `pendingClaims.photoDataUrl` ve eğitim geri bildirimi yorumunun hesap
+  silmede temizlenmesi (`docs/PRIVACY.md` "Bilinen sınırlar").
+- Reconciliation ekranındaki `window.print()` hâlâ `.print-area` kullanmıyor
+  (AppShell üst başlığı/alt menüsü de yazdırılıyor) — Faz 4'ten kalma, bu
+  fazda dokunulmadı.
+
+### 📱 Şimdi sen dene
+
+1. `npm run dev` ile uygulamayı aç, kurum rolünde oturum aç (ör. demo
+   hesabı `org_admin` ise), **Organisation → Analytics** sekmesine git.
+   Sayılar sıfırsa seed verisi `passportEntries` içermiyor olabilir.
+2. **Profil → Integrationspass als PDF**: indir, çıkan yazdırma penceresinde
+   yalnız pasaportun göründüğünü (üst başlık/alt menü yok) kontrol et.
+   QR'ı telefonla okut, `/verify/{id}` sayfasının **oturum açmadan** (gizli
+   sekmede) açıldığını doğrula.
+3. **Profil → Karte teilen**: telefonda (Android) native paylaşım sayfası
+   açılmalı; masaüstü tarayıcıda PNG inmeli.
+4. **Profil → Meine Daten → Daten herunterladen**: bir JSON dosyası inmeli,
+   içinde profilin ve geçmişinin olduğunu kontrol et.
+5. **Profil → Konto endgültig löschen**: test hesabıyla dene (geri dönüşü
+   yok!). Silme bitince `/welcome`e düşmeli, Firebase Console'da
+   `users/{uid}` belgesinin gittiğini, `ledger`/`passportEntries`in
+   durduğunu gör.
+6. **Admin panelinde** 4 yeni sekmeyi (Statistik, Auffälligkeiten,
+   Protokoll, Punkteregeln) gez; Punkteregeln'de bir sayıyı değiştirip
+   kaydet, sürüm numarasının arttığını gör.
+7. Gerçek kullanıcı kaydı artık çalışıyor olmalı: uygulamayı çıkışlı
+   başlat (ya da `npm run dev`, demo bayrağı kapalıyken), `/welcome`
+   ekranının geldiğini doğrula — bu, bu fazda bulunan regresyonun
+   düzeltmesi.

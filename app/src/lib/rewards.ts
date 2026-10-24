@@ -507,5 +507,43 @@ export async function writeAudit(
   }
 }
 
+export interface AuditEntry {
+  id: string
+  actorUid: string
+  action: string
+  targetId: string
+  orgId: string
+  reason: string
+  createdAt: Timestamp | null
+}
+
+/**
+ * Tüm denetim kaydı — yalnız platform admin (Faz 7, Bölüm 9: "audit log").
+ *
+ * ⚠️ Bugüne kadar yalnız kupon iptali (`voucher.revoked`) bu kayda düşüyordu.
+ * Faz 7'de kurum doğrulama, içerik moderasyonu ve eğitmen onayı kararları da
+ * `writeAudit` çağırmaya başladı (bkz. pages/admin/AdminPanel.tsx) — "tüm
+ * manuel onaylar auditLog'a" (Bölüm 7.5) artık gerçekten doğru.
+ */
+export async function fetchAuditLog(limitCount = 200): Promise<AuditEntry[]> {
+  const q = query(
+    collection(db, AUDIT_LOG),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount),
+  )
+  return (await getDocs(q)).docs.map((snapshot) => {
+    const data = snapshot.data() as Partial<AuditEntry>
+    return {
+      id: snapshot.id,
+      actorUid: data.actorUid ?? '',
+      action: data.action ?? '',
+      targetId: data.targetId ?? '',
+      orgId: data.orgId ?? '',
+      reason: data.reason ?? '',
+      createdAt: data.createdAt ?? null,
+    }
+  })
+}
+
 export { toVoucher, toTemplate }
 export type { RewardKind }

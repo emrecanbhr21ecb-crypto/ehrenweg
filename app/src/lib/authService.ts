@@ -9,8 +9,12 @@
 
 import {
   createUserWithEmailAndPassword,
+  deleteUser,
+  EmailAuthProvider,
   GoogleAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
+  reauthenticateWithPopup,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -167,6 +171,49 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
 export async function signOutUser(): Promise<void> {
   await signOut(auth)
+}
+
+/**
+ * Oturumu tazeler — Firebase hassas işlemler için (hesap silme) "yakın
+ * zamanda giriş yapılmış" ister, yoksa `auth/requires-recent-login` atar.
+ *
+ * E-posta/şifre hesabında şifre tekrar istenir; Google ile girende hesap
+ * seçici tekrar açılır (şifre Firebase'de hiç saklanmaz).
+ */
+export async function reauthenticate(password?: string): Promise<void> {
+  const user = auth.currentUser
+  if (!user) throw new AuthError('auth.notSignedIn', 'auth/no-current-user')
+
+  const providerId = user.providerData[0]?.providerId
+  try {
+    if (providerId === 'google.com') {
+      await reauthenticateWithPopup(user, new GoogleAuthProvider())
+      return
+    }
+    if (!password)
+      throw new AuthError('auth.requiresRecentLogin', 'auth/requires-recent-login')
+    const credential = EmailAuthProvider.credential(user.email ?? '', password)
+    await reauthenticateWithCredential(user, credential)
+  } catch (error) {
+    if (error instanceof AuthError) throw error
+    throw toAuthError(error)
+  }
+}
+
+/**
+ * DSGVO Art. 17 — Auth hesabını siler. Firestore tarafı (profil, kurum
+ * üyeliği, iz bırakan alanlar) ÖNCE `lib/privacy.ts` ile temizlenmelidir:
+ * hesap burada silinince `request.auth` kaybolur ve kalan Firestore
+ * yazmaları artık yapılamaz hâle gelir.
+ */
+export async function deleteAuthAccount(): Promise<void> {
+  const user = auth.currentUser
+  if (!user) throw new AuthError('auth.notSignedIn', 'auth/no-current-user')
+  try {
+    await deleteUser(user)
+  } catch (error) {
+    throw toAuthError(error)
+  }
 }
 
 /**

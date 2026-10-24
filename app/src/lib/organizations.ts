@@ -39,6 +39,7 @@ import {
 } from 'firebase/firestore'
 
 import { db } from '@/lib/firebase'
+import { writeAudit } from '@/lib/rewards'
 import {
   EMPTY_TEXT,
   type OrgApplicationInput,
@@ -209,6 +210,7 @@ export async function reviewOrganization(
     reviewedAt: serverTimestamp(),
     reviewNote: note,
   })
+  await writeAudit(reviewer, `organization.${decision}d`, orgId, orgId, note)
 }
 
 // --- Üyelik ----------------------------------------------------------------

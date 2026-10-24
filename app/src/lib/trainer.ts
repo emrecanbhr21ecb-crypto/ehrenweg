@@ -31,6 +31,7 @@ import {
 
 import { ACTIVITIES } from '@/lib/activities'
 import { db } from '@/lib/firebase'
+import { writeAudit } from '@/lib/rewards'
 import { userDocRef } from '@/lib/userProfile'
 import type {
   TrainerApplication,
@@ -148,6 +149,9 @@ export async function reviewTrainerApplication(
     trainerStatus: approved ? 'approved' : 'rejected',
     roleDisplay: approved ? 'trainer' : 'participant',
   })
+
+  // Platform geneli bir karar — kurum bağlamı yok (Bölüm 7.5, Faz 7).
+  await writeAudit(reviewerUid, `trainer.${decision}d`, uid, '', note)
 }
 
 // --- Eğitim geri bildirimi -------------------------------------------------

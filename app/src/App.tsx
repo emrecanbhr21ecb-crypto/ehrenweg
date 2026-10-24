@@ -1,6 +1,34 @@
-import { Navigate, Route, Routes } from 'react-router'
+/**
+ * Uygulama kabuğu ve yönlendirme.
+ *
+ * Kapı sırası (bozulursa kullanıcı yanlış ekranda kilitlenir):
+ *   1. Oturum çözülüyor            → tam sayfa yükleniyor
+ *   2. Oturum yok                  → /welcome, /signin, /signup, /legal, /verify dışı her şey /welcome'a
+ *   3. E-posta doğrulanmamış       → /verify-email  (Google girişi zaten doğrulanmış gelir)
+ *   4. Profil eksik                → /setup
+ *   5. Hepsi tamam                 → alt menülü ana uygulama
+ *
+ * ⚠️ DÜZELTME (Faz 7, docs/DECISIONS.md §13) — bu dosya `8162120`
+ * ("refactor(ai): beş AI ucundan dördü kaldırıldı") commit'inde kazara
+ * sıfırlanmıştı: tüm bu kapı mantığı ve `/admin` rotasının `isAdmin`
+ * koruması silinmiş, geriye yalnız alt menülü kabuk kalmıştı. Sonucu:
+ * gerçek kullanıcılar kayıt/giriş ekranına hiç ulaşamıyordu (yönlenecek
+ * `/welcome` rotası yoktu) ve adres çubuğuna `/admin` yazan HERHANGİ bir
+ * giriş yapmış kullanıcı admin panelinin arayüzünü görebiliyordu (veri
+ * `firestore.rules` ile korunuyordu ama arayüz sızıyordu). Demo APK bu
+ * hatayı hiç göstermedi çünkü otomatik giriş zaten doğrulanmış/tamamlanmış
+ * bir profille açılıyor. Bu dosya o eski (adb6b82) sürümle birebir
+ * birleştirilerek geri getirildi; aradaki fazlarda eklenen rotalar korundu.
+ */
+
+import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Navigate, Route, Routes, useLocation } from 'react-router'
 
 import { AppShell } from '@/components/AppShell'
+import { FullPageLoader } from '@/components/ui'
+import { useAuth } from '@/lib/AuthProvider'
+import { demoAutoLoginPending, tryDemoAutoLogin } from '@/lib/demoAutoLogin'
 import Activities from '@/pages/Activities'
 import ActivityDetail from '@/pages/ActivityDetail'
 import AdminPanel from '@/pages/admin/AdminPanel'
@@ -14,12 +42,137 @@ import LateScans from '@/pages/org/LateScans'
 import OrgPanel from '@/pages/org/OrgPanel'
 import Learn from '@/pages/Learn'
 import Profile from '@/pages/Profile'
-import Scan from '@/pages/Scan'
-import TrainerApply from '@/pages/TrainerApply'
-import Wallet from '@/pages/Wallet'
 import ProfileEdit from '@/pages/ProfileEdit'
+import ProfileSetup from '@/pages/ProfileSetup'
+import Scan from '@/pages/Scan'
+import SignIn from '@/pages/SignIn'
+import SignUp from '@/pages/SignUp'
+import TrainerApply from '@/pages/TrainerApply'
+import VerifyEmail from '@/pages/VerifyEmail'
+import VerifyPassport from '@/pages/VerifyPassport'
+import Wallet from '@/pages/Wallet'
+import Welcome from '@/pages/Welcome'
+import { isProfileComplete } from '@/types/user'
+
+/**
+ * Oturum gerektirmeyen yollar.
+ *
+ * `/legal` ve altındaki sayfalar bilerek herkese açık: Impressum'a ancak giriş
+ * yaparak ulaşılabilseydi TMG §5'in "kolay erişilebilir" şartı karşılanmazdı.
+ * `/verify` de bilerek herkese açık (Faz 7): PDF pasaporttaki QR'ı okutan bir
+ * işveren veya kurum çalışanının Ehrenweg hesabı olması gerekmez.
+ */
+const PUBLIC_PATHS = ['/welcome', '/signin', '/signup']
+
+function isPublicPath(pathname: string): boolean {
+  return (
+    PUBLIC_PATHS.includes(pathname) ||
+    pathname.startsWith('/legal') ||
+    pathname.startsWith('/verify/')
+  )
+}
 
 export default function App(): React.JSX.Element {
+  const { t } = useTranslation()
+  const location = useLocation()
+  const { status, user, profile, profileLoading, claims } = useAuth()
+
+  // Demo yapısı: oturum yoksa hazır hesapla gir (lib/demoAutoLogin.ts).
+  // Bayrak kapalıyken bu etki hiçbir şey yapmaz.
+  useEffect(() => {
+    if (status === 'signedOut') void tryDemoAutoLogin()
+  }, [status])
+
+  const isAdmin = claims.role === 'platform_admin'
+
+  // `/verify/:id` tüm kapılardan ÖNCE değerlendirilir: oturum durumu ne
+  // olursa olsun (yüklenirken bile) herkese açık kalmalı — bir işveren
+  // uygulamayı hiç kullanmadan, QR'ı okutarak buraya düşer.
+  if (location.pathname.startsWith('/verify/')) {
+    return (
+      <Routes>
+        <Route path="/verify/:id" element={<VerifyPassport />} />
+      </Routes>
+    )
+  }
+
+  // 1. Oturum henüz çözülmedi. Demo yapısında ilk açılıştaki otomatik giriş de
+  //    burada beklenir — kullanıcı bir an karşılama ekranını görüp sonra
+  //    içeri atlamasın. Çıkış yaptıktan sonra `demoAutoLoginPending()` false
+  //    olur ve normal karşılama/kayıt akışı devreye girer; aksi hâlde ekran
+  //    sonsuza kadar dönerdi (çıkış da 'signedOut' durumu üretiyor).
+  if (status === 'loading' || (status === 'signedOut' && demoAutoLoginPending())) {
+    return <FullPageLoader label={t('state.loading')} />
+  }
+
+  const isPublic = isPublicPath(location.pathname)
+
+  // 2. Oturum yok.
+  if (status === 'signedOut' || !user) {
+    if (!isPublic) return <Navigate to="/welcome" replace />
+    return (
+      <Routes>
+        <Route path="/welcome" element={<Welcome />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route
+          path="/legal"
+          element={
+            <div className="mx-auto max-w-2xl px-5 py-8">
+              <LegalIndex />
+            </div>
+          }
+        />
+        <Route
+          path="/legal/:page"
+          element={
+            <div className="mx-auto max-w-2xl px-5 py-8">
+              <LegalPageView />
+            </div>
+          }
+        />
+      </Routes>
+    )
+  }
+
+  // 3. E-posta doğrulanmamış. (Bu kontrol yalnız parola ile kayıt olanlar için
+  //    tetiklenir; Google sağlayıcısı emailVerified=true ile gelir.)
+  if (!user.emailVerified) {
+    if (location.pathname !== '/verify-email') {
+      return <Navigate to="/verify-email" replace />
+    }
+    return (
+      <Routes>
+        <Route path="/verify-email" element={<VerifyEmail />} />
+      </Routes>
+    )
+  }
+
+  // 4. Profil belgesi hâlâ yolda — boş ekran yerine yükleniyor.
+  if (profileLoading && !profile) {
+    return <FullPageLoader label={t('state.loading')} />
+  }
+
+  // 5. Profil eksik → kurulum.
+  if (!isProfileComplete(profile)) {
+    if (location.pathname !== '/setup') return <Navigate to="/setup" replace />
+    return (
+      <Routes>
+        <Route path="/setup" element={<ProfileSetup />} />
+      </Routes>
+    )
+  }
+
+  // 6. Her şey tamam. Giriş/karşılama yollarına dönmeye çalışan kullanıcıyı
+  //    ana sayfaya al — geri tuşuyla kayıt ekranına düşmesin. (Hukuki sayfalar
+  //    hariç: onlara giriş yapmışken de ulaşılabilmeli.)
+  const isEntryPath =
+    PUBLIC_PATHS.includes(location.pathname) ||
+    location.pathname === '/setup' ||
+    location.pathname === '/verify-email'
+
+  if (isEntryPath) return <Navigate to="/" replace />
+
   return (
     <AppShell>
       <Routes>
@@ -34,6 +187,11 @@ export default function App(): React.JSX.Element {
         <Route path="/trainer/apply" element={<TrainerApply />} />
         <Route path="/legal" element={<LegalIndex />} />
         <Route path="/legal/:page" element={<LegalPageView />} />
+
+        {/* Kurum paneli herkese açık bir KAPIDIR: üyesi olmayan kullanıcı
+            burada "organizasyon anmelden" davetini görür. Asıl koruma
+            firestore.rules tarafında — panel görünse bile üye olmayan
+            kullanıcı hiçbir kurum verisini okuyup yazamaz. */}
         <Route path="/org" element={<OrgPanel />} />
         <Route path="/org/apply" element={<OrgApply />} />
         <Route path="/org/activities/new" element={<ActivityForm />} />
@@ -47,7 +205,11 @@ export default function App(): React.JSX.Element {
           element={<AttendanceSession />}
         />
         <Route path="/org/activities/:activityId/late-scans" element={<LateScans />} />
-        <Route path="/admin" element={<AdminPanel />} />
+
+        {/* Yönetim yalnız platform_admin claim'iyle; menüde gizlemek yetmez,
+            adres çubuğuna elle yazan kullanıcı da girememeli. */}
+        {isAdmin && <Route path="/admin" element={<AdminPanel />} />}
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>

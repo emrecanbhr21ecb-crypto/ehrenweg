@@ -129,7 +129,15 @@
     "ringLabel": "Stufe {{level}}, {{name}}. {{percent}} Prozent bis zur nächsten Stufe.",
     "nextLevel": "Noch {{activities}} Teilnahmen bis {{name}}",
     "maxLevel": "Höchste Stufe erreicht.",
-    "emptyHint": "Sobald du an deiner ersten Aktivität teilnimmst, füllt sich dein Pass."
+    "emptyHint": "Sobald du an deiner ersten Aktivität teilnimmst, füllt sich dein Pass.",
+    "pdfDownload": "Integrationspass als PDF",
+    "pdfGenerating": "Wird erstellt …",
+    "pdfFailed": "PDF konnte nicht erstellt werden.",
+    "pdfTitle": "{{brand}} Integrationspass",
+    "pdfQrLabel": "QR-Code zur Online-Bestätigung dieses Passes",
+    "pdfQrHint": "Online bestätigen",
+    "shareCard": "Karte teilen",
+    "shareCardFailed": "Teilen ist fehlgeschlagen."
   },
   "levels": {
     "1": "Neuankömmling",
@@ -158,5 +166,31 @@
   },
   "soon": {
     "learn": "Sprachkurse, Bewerbungstrainings und Workshops von geprüften Trainer:innen – in Vorbereitung."
+  },
+  "privacy": {
+    "title": "Meine Daten",
+    "exportTitle": "Daten herunterladen",
+    "exportBody": "Lade eine Kopie aller deiner Daten als Datei herunter (DSGVO Art. 20).",
+    "exportButton": "Daten herunterladen",
+    "exportFailed": "Deine Daten konnten nicht geladen werden.",
+    "deleteTitle": "Konto löschen",
+    "deleteBody": "Dein Profil, deine Kurszugehörigkeiten und alle persönlichen Spuren werden entfernt. Punkte- und Zahlungsbuchungen bleiben anonymisiert erhalten – das ist gesetzlich vorgeschrieben (Buchführung).",
+    "deleteButton": "Konto endgültig löschen",
+    "deleteConfirm": "Dein Konto wird unwiderruflich gelöscht. Fortfahren?",
+    "deleteFailed": "Löschen ist fehlgeschlagen. Bitte versuche es erneut.",
+    "reauthBody": "Aus Sicherheitsgründen brauchen wir das noch einmal, bevor wir dein Konto löschen.",
+    "reauthPassword": "Passwort",
+    "reauthButton": "Bestätigen und löschen",
+    "reauthGoogleButton": "Mit Google bestätigen",
+    "reauthFailed": "Bestätigung fehlgeschlagen."
+  },
+  "verify": {
+    "notFoundTitle": "Beleg nicht gefunden",
+    "notFoundBody": "Dieser Link ist ungültig oder abgelaufen.",
+    "error": "Beleg konnte nicht geladen werden.",
+    "validTitle": "Gültiger Ehrenweg-Beleg",
+    "validBody": "Dieser QR-Code stammt von einem echten Ehrenweg-Integrationspass.",
+    "name": "Name",
+    "snapshotNote": "Stand: {{date}}"
   }
 }

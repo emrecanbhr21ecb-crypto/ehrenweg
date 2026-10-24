@@ -226,7 +226,18 @@ service cloud.firestore {
                     // orgId hiç gönderilemez — kurum üyeliği yalnız sunucudan.
                     && !('orgId' in request.resource.data);
 
-      allow delete: if false;
+      // ---------------------------------------------------------------
+      // HESAP SİLME — DSGVO Art. 17 (CLAUDE.md Bölüm 10, Faz 7, Bölüm 15
+      // bitti ölçütü: "Hesap silme tüm izleri kaldırıyor").
+      //
+      // Yalnız kendi belgesi. `ledger` / `passportEntries` / `vouchers`
+      // zaten kullanıcı kimliği dışında kişisel veri TAŞIMIYOR (ad,
+      // e-posta, fotoğraf yok — bkz. Bölüm 5 şeması); bu belge silinince
+      // oradaki `uid` artık hiçbir profile çözülemeyen, kimliksiz bir
+      // işaretçiye düşer. Bölüm 10'daki "ledger anonimleştirilir, silinmez"
+      // kuralı böyle sağlanıyor — ayrı bir anonimleştirme yazımı gerekmedi.
+      // ---------------------------------------------------------------
+      allow delete: if isSelf(userId);
 
       // Kullanıcı yalnızca şu alanları değiştirebilir (CLAUDE.md Bölüm 14).
       // stats, trainerStatus, orgId, roleDisplay, createdAt → SUNUCU ALANLARI.
@@ -452,7 +463,13 @@ service cloud.firestore {
                       );
 
         allow update: if consistent() && orgAdmin(orgId);
-        allow delete: if orgAdmin(orgId);
+
+        // Çıkarma yalnız kurum yöneticisinde — ARTI kendi üyeliğini
+        // silebilme (Faz 7 hesap silme akışı, docs/DECISIONS.md §13).
+        // Son yönetici kendini çıkarırsa kurum sahipsiz kalır; bu uç durum
+        // istemcide (OrgPanel "son admin" uyarısı) önlenir, burada değil —
+        // hesabını silen kişinin zaten geri dönüşü yok.
+        allow delete: if orgAdmin(orgId) || isSelf(memberUid);
       }
     }
 
@@ -672,6 +689,14 @@ service cloud.firestore {
                       && request.resource.data.status in ['accepted', 'rejected']
                       && request.resource.data.decidedBy == uid();
 
+        // HESAP SİLME — `applicantName` izini sil (Faz 7, DECISIONS §13).
+        // Aynı gerekçe: kurum personeli `users` koleksiyonunu okuyamadığı
+        // için başvuruya ad kopyalanmış. Yalnız bu TEK alan, yalnız boş
+        // dizgeye — kontenjan sayacını besleyen `status` dokunulmaz kalır.
+        allow update: if isSelf(applicantUid)
+                      && onlyFields(['applicantName'])
+                      && request.resource.data.applicantName == '';
+
         // Başvuru silinmez: kontenjan sayacı silinen belgeyi kanıtlayamaz
         // ve kurumun "kaç kişi vazgeçti" görünürlüğü kaybolur.
         allow delete: if false;
@@ -820,7 +845,12 @@ service cloud.firestore {
                                    || orgStaff(resource.data.orgId)
                                    || isAdmin());
       // Kurum kendi oturumunun/aktivitesinin kayıtlarını listeler.
-      allow list: if signedIn() && (isAdmin() || orgStaff(resource.data.orgId));
+      // Kullanıcı kendi kayıtlarını da listeleyebilir (Faz 7, DSGVO Art. 20
+      // `exportMyData` — docs/DECISIONS.md §13): verisini indirmek için
+      // tek tek belge kimliğini bilmesi gerekmemeli.
+      allow list: if signedIn() && (isAdmin()
+                                    || orgStaff(resource.data.orgId)
+                                    || resource.data.uid == uid());
 
       // -----------------------------------------------------------------
       // `submitScan` — CLAUDE.md Bölüm 12 hata kodlarının kural karşılığı:
@@ -882,6 +912,21 @@ service cloud.firestore {
       allow update: if orgStaff(resource.data.orgId)
                     && onlyFields(['awarded'])
                     && request.resource.data.awarded == true;
+
+      // -----------------------------------------------------------------
+      // HESAP SİLME — `displayName` izini sil (Faz 7, docs/DECISIONS.md §13)
+      //
+      // Bu belge kurum personelinin canlı yoklama listesinde isim görmesi
+      // için `displayName` KOPYASI taşıyor (orgStaff `users` koleksiyonunu
+      // okuyamaz). `users/{uid}` silindiğinde bu kopya geride kalan tek
+      // isim izi olurdu. Kullanıcı yalnız KENDİ kaydındaki bu TEK alanı,
+      // yalnız boş dizgeye çevirebilir — tarih, durum, puan gibi hiçbir
+      // şeye dokunamaz.
+      // -----------------------------------------------------------------
+      allow update: if signedIn()
+                    && resource.data.uid == uid()
+                    && onlyFields(['displayName'])
+                    && request.resource.data.displayName == '';
 
       // Kayıt SİLİNMEZ: pasaport girdisinin dayanağı bu belge.
       allow delete: if false;
@@ -1228,6 +1273,19 @@ service cloud.firestore {
                     && request.resource.data.status == 'expired'
                     && request.time > resource.data.expiresAt;
 
+      // HESAP SİLME — kimlik eşleştirme alanlarını sil (Faz 7, DECISIONS §13)
+      //
+      // `holderName`/`holderPhotoURL` vezne ekranı için kopyalanmıştı
+      // (Bölüm 7.4). Kupon belgesi finansal kayıt olduğu için KALIR
+      // (ledger'daki gibi — Bölüm 10: "anonimleştirilir, silinmez"), ama bu
+      // iki kimlik alanı durumdan BAĞIMSIZ, boşa çevrilebilir. Tutar,
+      // tarih, durum gibi muhasebe alanlarına dokunulamaz.
+      allow update: if signedIn()
+                    && resource.data.uid == uid()
+                    && onlyFields(['holderName', 'holderPhotoURL'])
+                    && request.resource.data.holderName == ''
+                    && request.resource.data.holderPhotoURL == null;
+
       // Kupon SİLİNMEZ: defterin karşılığı bu belge.
       allow delete: if false;
 
@@ -1361,7 +1419,11 @@ service cloud.firestore {
                     && request.resource.data.status in ['approved', 'rejected']
                     && request.resource.data.reviewedBy == uid();
 
-      allow delete: if false;
+      // Hesap silme (Faz 7, docs/DECISIONS.md §13): başvuru metni ve
+      // dil belgesi kişisel içerik taşıyor, kendi başvurusunu silebilir.
+      // `trainerStatus` zaten `users/{uid}`de tutuluyor, bu belgenin
+      // varlığına bağlı değil — silinmesi trainer yetkisini etkilemez.
+      allow delete: if isSelf(userId);
     }
 
     // ---------------------------------------------------------------------
@@ -1448,6 +1510,48 @@ service cloud.firestore {
                     && request.resource.data.version is int
                     && request.resource.data.version > resource.data.get('version', 0);
       allow delete: if false;
+    }
+
+    // ---------------------------------------------------------------------
+    // verifications — PDF Integrationspass doğrulama sayfası (Faz 7)
+    //
+    // CLAUDE.md Bölüm 1A: "PDF pasaport: doğrulama adresi
+    // https://ehrenweg.de/verify/{id}". O sayfa OTURUMSUZ açılır (bir
+    // işveren uygulamayı hiç kullanmıyor olabilir) — bu yüzden `get`
+    // herkese açık. `list` KAPALI: belge kimliği istemcide üretilen 128
+    // bit'lik rastgele bir token, tahmin edilemez; birisi yalnız elindeki
+    // bağlantıyla belgeye ulaşabilir, kimse koleksiyonu tarayamaz.
+    //
+    // Belge içeriği PDF'in TAMAMI değil, özeti: ad, seviye, toplam saat,
+    // katılım sayısı, çıkarılma tarihi. Beceri listesi, katılım geçmişi ve
+    // fotoğraf yalnız PDF'in kendisinde kalır (Bölüm 9: "kişisel veriyi en
+    // az düzeyde tutsun").
+    //
+    // Sahtecilik engeli: değerler client'ın uydurduğu sayılar DEĞİL,
+    // `get()` ile kullanıcının GERÇEK `users/{uid}.stats`'ına eşit olmak
+    // zorunda — tıpkı diğer tüm "Blaze kapalı" sapmalarında olduğu gibi.
+    // ---------------------------------------------------------------------
+    match /verifications/{token} {
+      allow get: if true;
+      allow list: if false;
+
+      function myStats() {
+        return get(/databases/$(database)/documents/users/$(uid())).data.stats;
+      }
+
+      allow create: if signedIn()
+                    && request.resource.data.displayName is string
+                    && request.resource.data.displayName.size() <= 80
+                    && request.resource.data.locale in ['de', 'en']
+                    && request.resource.data.level == myStats().level
+                    && request.resource.data.hours == myStats().hours
+                    && request.resource.data.activitiesCompleted
+                         == myStats().activitiesCompleted
+                    && request.resource.data.issuedAt == request.time;
+
+      // Belge bir anlık görüntü (snapshot): yeniden indirme yeni bir token
+      // üretir, eskisi geçmişte doğru olduğunu göstermeye devam eder.
+      allow update, delete: if false;
     }
 
     // ---------------------------------------------------------------------

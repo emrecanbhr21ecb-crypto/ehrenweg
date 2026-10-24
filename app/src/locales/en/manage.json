@@ -187,6 +187,70 @@
     "confirmApproveOrg": "Approve this organisation? It will be able to publish activities afterwards.",
     "byOrg": "by {{org}}",
     "preview": "View",
-    "actionFailed": "The action failed."
+    "actionFailed": "The action failed.",
+    "tabStats": "Statistics",
+    "tabFraud": "Anomalies",
+    "tabAudit": "Audit log",
+    "tabScoring": "Scoring rules"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "subtitle": "Applications, attendance and points distributed by this organisation.",
+    "applications": "Applications",
+    "attendances": "Attendances",
+    "rate": "Attendance rate",
+    "participants": "Participants",
+    "ipAwarded": "Points awarded",
+    "vouchersValue": "Vouchers (value)",
+    "byCategory": "By category",
+    "topActivities": "Most attended activities",
+    "print": "Print as PDF",
+    "loadFailed": "Analytics could not be loaded."
+  },
+  "systemStats": {
+    "title": "System overview",
+    "subtitle": "Rough numbers across the whole platform.",
+    "users": "Users",
+    "organisations": "Organisations",
+    "verifiedOrganisations": "of which verified",
+    "activities": "Activities",
+    "publishedActivities": "of which published",
+    "participations": "Participations",
+    "ipAwarded": "Points awarded",
+    "loadFailed": "Numbers could not be loaded."
+  },
+  "fraud": {
+    "title": "Anomalies",
+    "subtitle": "Automatic hints, not accusations – please check before acting.",
+    "empty": "Nothing unusual found.",
+    "highAcceptRateTitle": "Unusually high acceptance rate",
+    "highAcceptRateBody": "{{org}}: {{rate}}% of {{count}} applications accepted (platform average {{avg}}%).",
+    "nearCapTitle": "Close to the monthly cap",
+    "nearCapBody": "{{uid}} received {{count}} of {{limit}} possible vouchers this month at {{org}}.",
+    "loadFailed": "Anomalies could not be computed."
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitle": "Every manual decision – who, what, when (CLAUDE.md section 7.5).",
+    "empty": "No entries yet.",
+    "loadFailed": "The log could not be loaded.",
+    "reasonLabel": "Reason: {{reason}}"
+  },
+  "scoring": {
+    "title": "Scoring rules",
+    "subtitle": "Changes apply immediately to new point awards. Every version stays traceable.",
+    "version": "Version {{version}}",
+    "maxIpPerActivity": "Max points per activity",
+    "ipPerHour": "Points per hour (default)",
+    "bonusNewCategory": "Bonus: new category",
+    "bonusMonthlyFour": "Bonus: 4th session this month",
+    "bonusTrainerMultiplier": "Trainer multiplier",
+    "penaltyNoShowIp": "Deduction for no-show",
+    "penaltyStreakLimit": "Restriction after X no-shows",
+    "penaltyRestrictionDays": "Restriction length (days)",
+    "save": "Save (new version)",
+    "saved": "Saved.",
+    "saveFailed": "Saving failed.",
+    "loadFailed": "Rules could not be loaded."
   }
 }
