@@ -98,5 +98,11 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     css: true,
+    // Proje kararı: otomatik birim test YAZILMIYOR (çalışan özellik önceliği,
+    // bkz. docs/DECISIONS.md). Güvenlik Firestore kural testleriyle
+    // kanıtlanıyor (tests/*.rules.test.ts). Vitest hiç .test. dosyası
+    // yoksa varsayılan olarak exit code 1 veriyor ve CI'ı kırıyordu —
+    // bu proje tercihiyle çelişen bir davranış, burada kapatıldı.
+    passWithNoTests: true,
   },
 })
