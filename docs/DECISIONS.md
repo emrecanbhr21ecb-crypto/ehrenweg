@@ -21,12 +21,28 @@ Son güncelleme: 2026-09-25
 | Android applicationId               | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) |                                                                                                            |
 | iOS bundle ID                       | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) |                                                                                                            |
 
-**AÇIK (P11 / Faz 8'e ertelendi, 25 Eyl 2026):** İmza anahtarındaki
-(`keytool -dname`) tam yasal ad ve şehir. Proje sahibi "keystore üretilirken
-sorarsın" dedi — anahtar zaten o fazda üretiliyor, şimdi üretmenin faydası yok.
-Anahtar üretildikten sonra bu alanlar **değiştirilemez** (10.000 gün geçerli).
-Ülke kodu hesabın ülkesine göre **`C=TR`** olacak (CLAUDE.md Bölüm 16.1'deki
-örnek `C=DE` diyor; hesap Türkiye'den açıldığı için tutarlılık adına TR).
+**ÇÖZÜLDÜ (26 Eki 2026, Faz 8 başında):** İmza anahtarındaki `keytool -dname`:
+`CN=Ehrenweg, O=Emre Can Buhur, L=Diyarbakır, C=TR`. Ülke kodu hesabın
+ülkesine göre **`C=TR`** (CLAUDE.md Bölüm 16.1'deki örnek `C=DE` diyor; hesap
+Türkiye'den açıldığı için tutarlılık adına TR). `L=` ve `O=` alanları
+sertifikanın görünmeyen teknik içeriği — Play Store'da, uygulamada hiçbir
+yerde gösterilmez; Play Console'un herkese görünen "geliştirici adı" AYRI bir
+alan ve P13'te (Play'e yükleme) ayrıca kararlaştırılacak.
+
+**AÇIK (P13'e ertelendi):** Play Console geliştirici hesabı **Şahıs** kalacak
+(kimlik doğrulaması Emre Can Buhur adına), ama mağazada görünen "Geliştirici
+adı" metni gerçek ada değil Ehrenweg/entegrasyon temalı bir isme çekilecek —
+tam metin P13'te netleşir. Play Store uygulama listeleme başlığı da marka +
+kısa alt başlık olacak (örn. "Ehrenweg – Ehrenamt & Integration"), ad tek
+başına "göçmen entegrasyonu" gibi bir şeye DEĞİŞMEYECEK (CLAUDE.md Bölüm 1A:
+ad her dilde aynı kalır).
+
+**Diyarbakır merkezli bir şirket aracılığıyla yayınlama fikri
+DEĞERLENDİRİLDİ, Faz 8 başında vazgeçildi:** Şahıs hesabından farkı yok —
+ikisi de "Türkiye" kökenli görünüyor (yukarıdaki "iki sonuç" notu), şirket
+hesabı ayrıca daha fazla evrak (vergi no, bazen D-U-N-S) istiyor ve
+Ehrenweg'le ilgisiz bir şirketin adı mağazada görünmesi güven açısından daha
+sorgulanabilir olabilirdi. Şahıs kararı (Bölüm 1) korundu.
 
 ### ⚠️ Türkiye'den açılan hesabın iki sonucu (P13'te ele alınacak)
 
