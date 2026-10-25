@@ -10,6 +10,7 @@
 Sen bu projenin **baş mimarı ve baş geliştiricisisin**. Proje sahibiyle **Türkçe** konuş; uygulamanın arayüz dili **Almanca (varsayılan) ve İngilizce**.
 
 Kurallar:
+
 1. **Fazlara böl, her fazın sonunda dur.** Ne yaptığını 5–10 satırla özetle, neyi test ettiğini söyle, onay almadan sonraki faza geçme.
 2. **Para veya geri dönüşü olmayan işlemlerden önce mutlaka sor:** Firebase Blaze plana geçiş, fatura hesabı bağlama, proje silme, prod veritabanına yazma, mağazaya yükleme.
 3. **Konsolda elle yapılması gereken adımlarda** (ör. Auth sağlayıcısı açma, faturalandırma, Play Console) dur, kullanıcıya adım adım ne tıklayacağını yaz, "tamam" demesini bekle.
@@ -26,6 +27,7 @@ Kurallar:
 **Referans uygulama: BazaltGo** (Bazalt Gençlik Derneği). Orada dernek projeler yayınlar, gençler başvurur/katılır, katılım QR yoklamayla "Gönüllü Pasaportu"na işlenir, seviye ve rozet kazanılır.
 
 **Bizim uygulama:** Aynı mantık, farklı hedef kitle ve amaç:
+
 - **Kullanıcılar:** Almanya'daki (sonra tüm Avrupa'daki) mülteciler ve göçmenler.
 - **İçerik:** Belediyeler, valilikler, resmi kurumlar ve onaylı STK'lar **gönüllülük aktiviteleri** ve **eğitimler** yayınlar (bahçe/park temizliği, yaşlılara yardım, Almanca/İngilizce dersi, mahalle etkinlikleri vb.).
 - **Katılım:** Kullanıcı aktiviteye başvurur, gider, yerinde QR ile yoklama verir → katılım profiline işlenir.
@@ -35,32 +37,32 @@ Kurallar:
   3. **Parasal kuponlar** — kurumun bütçesinden, belediye/valilik/devlet tarafından paraya veya ayni yardıma çevrilebilir.
 - **Kariyer yolu:** Yeterli geçmişe sahip kullanıcılar başvurur, admin onaylarsa **Eğitmen (Trainer)** olur ve kendisi eğitim açabilir.
 
-
 ## 1A. Marka ve kimlik: **Ehrenweg**
 
-Uygulamanın adı **Ehrenweg**'dir ("Ehrenamt" = gönüllülük + "Weg" = yol → *gönüllülükle entegrasyon yolu*). Ad **her dilde aynı kalır, çevrilmez.**
+Uygulamanın adı **Ehrenweg**'dir ("Ehrenamt" = gönüllülük + "Weg" = yol → _gönüllülükle entegrasyon yolu_). Ad **her dilde aynı kalır, çevrilmez.**
 
-| Alan | Değer |
-|---|---|
-| Görünen ad (tüm dillerde) | `Ehrenweg` |
-| Slogan DE | *Dein Weg durchs Ehrenamt – mitten in die Gesellschaft.* |
-| Slogan EN | *Your path through volunteering – into the heart of the community.* |
-| Android `applicationId` (prod) | `de.ehrenweg.app` |
-| Android `applicationId` (dev) | `de.ehrenweg.app.dev` (aynı cihaza ikisi birden kurulabilsin; dev adı `Ehrenweg Dev`) |
-| iOS Bundle ID | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`) |
-| Firebase projeleri | `ehrenweg-dev`, `ehrenweg-prod` |
-| Cloud Functions bölgesi | `europe-west3` |
-| Web / PWA | `ehrenweg.de` (öneri; alan adını kullanıcı alır), kurum paneli `app.ehrenweg.de` |
-| Destek e-postası | `support@ehrenweg.de` (yer tutucu, kullanıcıya sor) |
-| Deep link | `ehrenweg://` şeması + App Links / Universal Links: `https://ehrenweg.de/a/{activityId}` |
-| QR içerik ön eki | `EHRENWEG:ATT:` (yoklama), `EHRENWEG:VCH:` (kupon); başka uygulamanın QR'ı okutulursa anlaşılır hata ver |
-| Tema rengi | Ana renk petrol yeşili `#0F766E`, vurgu amber `#F59E0B`, koyu arka plan `#0B1220` (BazaltGo'nun indigo paletinden ayrışsın) |
-| Tipografi | Inter (BazaltGo'daki gibi); ileride Arapça için Noto Sans Arabic |
-| İkon | Soyut yol + el/kalp motifi; tek SVG'den `@capacitor/assets` ile tüm boyutlar (adaptive icon, splash, PWA 192/512/maskable) |
+| Alan                           | Değer                                                                                                                       |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| Görünen ad (tüm dillerde)      | `Ehrenweg`                                                                                                                  |
+| Slogan DE                      | _Dein Weg durchs Ehrenamt – mitten in die Gesellschaft._                                                                    |
+| Slogan EN                      | _Your path through volunteering – into the heart of the community._                                                         |
+| Android `applicationId` (prod) | `de.ehrenweg.app`                                                                                                           |
+| Android `applicationId` (dev)  | `de.ehrenweg.app.dev` (aynı cihaza ikisi birden kurulabilsin; dev adı `Ehrenweg Dev`)                                       |
+| iOS Bundle ID                  | `de.ehrenweg.app` (dev: `de.ehrenweg.app.dev`)                                                                              |
+| Firebase projeleri             | `ehrenweg-dev`, `ehrenweg-prod`                                                                                             |
+| Cloud Functions bölgesi        | `europe-west3`                                                                                                              |
+| Web / PWA                      | `ehrenweg.de` (öneri; alan adını kullanıcı alır), kurum paneli `app.ehrenweg.de`                                            |
+| Destek e-postası               | `support@ehrenweg.de` (yer tutucu, kullanıcıya sor)                                                                         |
+| Deep link                      | `ehrenweg://` şeması + App Links / Universal Links: `https://ehrenweg.de/a/{activityId}`                                    |
+| QR içerik ön eki               | `EHRENWEG:ATT:` (yoklama), `EHRENWEG:VCH:` (kupon); başka uygulamanın QR'ı okutulursa anlaşılır hata ver                    |
+| Tema rengi                     | Ana renk petrol yeşili `#0F766E`, vurgu amber `#F59E0B`, koyu arka plan `#0B1220` (BazaltGo'nun indigo paletinden ayrışsın) |
+| Tipografi                      | Inter (BazaltGo'daki gibi); ileride Arapça için Noto Sans Arabic                                                            |
+| İkon                           | Soyut yol + el/kalp motifi; tek SVG'den `@capacitor/assets` ile tüm boyutlar (adaptive icon, splash, PWA 192/512/maskable)  |
 
 Adın geçtiği her şey tek kaynaktan gelir: `app/src/config/brand.ts` (ad, slogan, renkler, URL'ler, e-posta). Ad bir gün değişirse yalnız bu dosya ve native kimlikler değişir.
 
 Ad aşağıdaki yerlerin **hepsinde** ayarlanır:
+
 - `capacitor.config.ts` → `appId: 'de.ehrenweg.app'`, `appName: 'Ehrenweg'`
 - `android/app/build.gradle` → `productFlavors { dev { applicationIdSuffix ".dev"; resValue "string","app_name","Ehrenweg Dev" } prod { resValue "string","app_name","Ehrenweg" } }`
 - `android/app/src/main/res/values/strings.xml` → `app_name` tanımını kaldır (flavor'daki `resValue` ile çakışmasın), `title_activity_main` = Ehrenweg
@@ -80,22 +82,22 @@ Ad aşağıdaki yerlerin **hepsinde** ayarlanır:
 
 APK incelemesinde tespit edilenler:
 
-| Alan | BazaltGo'da olan | Bizde karşılığı |
-|---|---|---|
-| Teknoloji | React + Vite + TypeScript, Capacitor (Android/iOS), PWA (service worker, manifest) | Aynısı |
-| Backend | Firebase Auth, Firestore, FCM, App Check (reCAPTCHA Enterprise) + Cloud Run'da Node API (`europe-west1`) | Aynısı, ama **bölge `europe-west3` (Frankfurt)** — Alman veri yerleşimi |
-| Capacitor eklentileri | app, camera, filesystem, geolocation, local-notifications, push-notifications, share, badge, calendar, App Check | Aynısı |
-| Sekmeler | HOME, PROJECTS, ACADEMY, PROFILE, ADMIN, UPLOADER | HOME, ACTIVITIES, LEARN, PROFILE, ORG (kurum paneli), ADMIN |
-| Koleksiyonlar | `kullaniciPasaportu`, `bekleyenOnaylar`, `bekleyenProjeYuklemeleri`, `duyurular`, `sertifikalar`, `akademiGonderileri`, `feedback`, `slider`, `kullaniciAyarlari`, `yetkililer`, `yoklamaOturumlari`, `yoklamaKodlari`, `yoklamaKayitlari` | Bölüm 5'teki İngilizce şema |
-| Roller | `admin`, `ekleyici` (içerik yükleyici), üye | Bölüm 4'teki genişletilmiş roller |
-| Yoklama | Yönetici "yoklamayı başlat" der, ekranda **periyodik değişen QR** çıkar; üye okutur; hata kodları `wrong-code / expired / inactive / project-missing`; QR okutamayana **manuel kod**; internet yoksa tarama **çevrimdışı kuyruğa** alınır, gelince gönderilir; kod süresi geçmişse yönetici **elle onaylar** | Aynısı + GPS mesafe kontrolü (opsiyonel, kurum açar) |
-| Pasaport | "Gönüllü Pasaportu": katılımlar, gönüllülük saati (QR'lı etkinliklerden birikir), PDF pasaport, paylaşılabilir "karne" görseli | "Integration Passport / Integrationspass" |
-| Seviyeler | Katılım sayısına göre: 1 → GÖNÜLLÜ, 3 → AKTİF GÖNÜLLÜ, 6 → PROJE ELÇİSİ, 12 → KIDEMLİ ELÇİ, 25 → BAZALT LİDERİ | Bölüm 6 |
-| Rozetler | İlk proje, 3/10/20 proje, 3/5 farklı kategori, uluslararası vb. | Bölüm 6 |
-| Onay akışı | Üyenin kendi eklediği katılım → `bekleyenOnaylar` → admin onaylar → pasaporta `source:"admin", status:"completed"` batch yazımı; ekleyicinin yüklediği proje → `bekleyenProjeYuklemeleri` → admin yayına alır | Aynısı |
-| Başvuru takibi | "Başvurdun mu?" → sonucu (kabul/red/cevap gelmedi) → katıldı/katılmadı; admin analitiği: başvuru→katılım oranı, kategori dağılımı, PDF rapor | Aynısı |
-| AI uçları | `/api/ai/chat` (danışman sohbet), `/api/ai/match` (ilgi alanına göre proje önerisi + gerekçe), `/api/ai/motivation-letter`, `/api/ai/karne-tanitim`, `/api/parse-news` (link'ten başlık/görsel/açıklama otomatik doldurma) | Aynısı; motivasyon mektubu yerine "başvuru mesajı taslağı" + **basit dil (Leichte Sprache) çevirisi** |
-| Diğer | Push ile duyuru gönderme (`/api/push/send`), son başvuru hatırlatıcıları, takvime ekleme, karanlık/aydınlık tema, hesap silme (`/api/hesabimi-sil`), çevrimdışı önbellek | Aynısı |
+| Alan                  | BazaltGo'da olan                                                                                                                                                                                                                                                                                             | Bizde karşılığı                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Teknoloji             | React + Vite + TypeScript, Capacitor (Android/iOS), PWA (service worker, manifest)                                                                                                                                                                                                                           | Aynısı                                                                                                |
+| Backend               | Firebase Auth, Firestore, FCM, App Check (reCAPTCHA Enterprise) + Cloud Run'da Node API (`europe-west1`)                                                                                                                                                                                                     | Aynısı, ama **bölge `europe-west3` (Frankfurt)** — Alman veri yerleşimi                               |
+| Capacitor eklentileri | app, camera, filesystem, geolocation, local-notifications, push-notifications, share, badge, calendar, App Check                                                                                                                                                                                             | Aynısı                                                                                                |
+| Sekmeler              | HOME, PROJECTS, ACADEMY, PROFILE, ADMIN, UPLOADER                                                                                                                                                                                                                                                            | HOME, ACTIVITIES, LEARN, PROFILE, ORG (kurum paneli), ADMIN                                           |
+| Koleksiyonlar         | `kullaniciPasaportu`, `bekleyenOnaylar`, `bekleyenProjeYuklemeleri`, `duyurular`, `sertifikalar`, `akademiGonderileri`, `feedback`, `slider`, `kullaniciAyarlari`, `yetkililer`, `yoklamaOturumlari`, `yoklamaKodlari`, `yoklamaKayitlari`                                                                   | Bölüm 5'teki İngilizce şema                                                                           |
+| Roller                | `admin`, `ekleyici` (içerik yükleyici), üye                                                                                                                                                                                                                                                                  | Bölüm 4'teki genişletilmiş roller                                                                     |
+| Yoklama               | Yönetici "yoklamayı başlat" der, ekranda **periyodik değişen QR** çıkar; üye okutur; hata kodları `wrong-code / expired / inactive / project-missing`; QR okutamayana **manuel kod**; internet yoksa tarama **çevrimdışı kuyruğa** alınır, gelince gönderilir; kod süresi geçmişse yönetici **elle onaylar** | Aynısı + GPS mesafe kontrolü (opsiyonel, kurum açar)                                                  |
+| Pasaport              | "Gönüllü Pasaportu": katılımlar, gönüllülük saati (QR'lı etkinliklerden birikir), PDF pasaport, paylaşılabilir "karne" görseli                                                                                                                                                                               | "Integration Passport / Integrationspass"                                                             |
+| Seviyeler             | Katılım sayısına göre: 1 → GÖNÜLLÜ, 3 → AKTİF GÖNÜLLÜ, 6 → PROJE ELÇİSİ, 12 → KIDEMLİ ELÇİ, 25 → BAZALT LİDERİ                                                                                                                                                                                               | Bölüm 6                                                                                               |
+| Rozetler              | İlk proje, 3/10/20 proje, 3/5 farklı kategori, uluslararası vb.                                                                                                                                                                                                                                              | Bölüm 6                                                                                               |
+| Onay akışı            | Üyenin kendi eklediği katılım → `bekleyenOnaylar` → admin onaylar → pasaporta `source:"admin", status:"completed"` batch yazımı; ekleyicinin yüklediği proje → `bekleyenProjeYuklemeleri` → admin yayına alır                                                                                                | Aynısı                                                                                                |
+| Başvuru takibi        | "Başvurdun mu?" → sonucu (kabul/red/cevap gelmedi) → katıldı/katılmadı; admin analitiği: başvuru→katılım oranı, kategori dağılımı, PDF rapor                                                                                                                                                                 | Aynısı                                                                                                |
+| AI uçları             | `/api/ai/chat` (danışman sohbet), `/api/ai/match` (ilgi alanına göre proje önerisi + gerekçe), `/api/ai/motivation-letter`, `/api/ai/karne-tanitim`, `/api/parse-news` (link'ten başlık/görsel/açıklama otomatik doldurma)                                                                                   | Aynısı; motivasyon mektubu yerine "başvuru mesajı taslağı" + **basit dil (Leichte Sprache) çevirisi** |
+| Diğer                 | Push ile duyuru gönderme (`/api/push/send`), son başvuru hatırlatıcıları, takvime ekleme, karanlık/aydınlık tema, hesap silme (`/api/hesabimi-sil`), çevrimdışı önbellek                                                                                                                                     | Aynısı                                                                                                |
 
 ---
 
@@ -109,6 +111,7 @@ APK incelemesinde tespit edilenler:
 - **Test:** Vitest (birim), `@firebase/rules-unit-testing` (Firestore kuralları — **zorunlu**), Playwright (kritik akışlar için e2e).
 - **Kalite:** ESLint, Prettier, Husky pre-commit, GitHub Actions CI (lint + test + build).
 - **Monorepo yapısı:**
+
 ```
 /app            → React + Capacitor istemci
 /functions      → Cloud Functions (TS)
@@ -123,15 +126,15 @@ APK incelemesinde tespit edilenler:
 
 Roller **Firebase Auth custom claims** ile tutulur (Firestore'daki alan yalnızca görüntüleme içindir; yetki kontrolü claim'den yapılır). Claim'leri yalnızca Cloud Function değiştirebilir.
 
-| Rol | Kim | Yapabildikleri |
-|---|---|---|
-| `participant` | Mülteci/göçmen kullanıcı (varsayılan) | Aktivite görme, başvurma, QR ile katılım, profil, ödül görme/kullanma, trainer başvurusu |
-| `trainer` | Admin onaylı katılımcı | + Eğitim oturumu önerme (kurum veya admin onayıyla yayınlanır), kendi eğitiminde yoklama başlatma |
-| `org_staff` | Belediye/kurum çalışanı | Kendi kurumu adına aktivite oluşturma, yoklama başlatma, katılımcı listesi, elle katılım onayı |
-| `org_admin` | Kurumun yöneticisi | + Kurum personeli ekleme/çıkarma, kurum bütçesi ve ödül tanımlama, kurum analitiği |
-| `redemption_officer` | Belediye veznesi/sosyal hizmet görevlisi | Parasal kuponu tarama ve "ödendi" olarak işaretleme (yalnızca kendi kurumunun kuponları) |
-| `partner` | Kafe/mağaza (indirim veren) | Kendi indirim kuponunu doğrulama/kullanıldı işaretleme |
-| `platform_admin` | Sen / proje sahibi | Her şey: kurum doğrulama, trainer onayı, içerik moderasyonu, puan kuralları, dolandırıcılık incelemesi |
+| Rol                  | Kim                                      | Yapabildikleri                                                                                         |
+| -------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `participant`        | Mülteci/göçmen kullanıcı (varsayılan)    | Aktivite görme, başvurma, QR ile katılım, profil, ödül görme/kullanma, trainer başvurusu               |
+| `trainer`            | Admin onaylı katılımcı                   | + Eğitim oturumu önerme (kurum veya admin onayıyla yayınlanır), kendi eğitiminde yoklama başlatma      |
+| `org_staff`          | Belediye/kurum çalışanı                  | Kendi kurumu adına aktivite oluşturma, yoklama başlatma, katılımcı listesi, elle katılım onayı         |
+| `org_admin`          | Kurumun yöneticisi                       | + Kurum personeli ekleme/çıkarma, kurum bütçesi ve ödül tanımlama, kurum analitiği                     |
+| `redemption_officer` | Belediye veznesi/sosyal hizmet görevlisi | Parasal kuponu tarama ve "ödendi" olarak işaretleme (yalnızca kendi kurumunun kuponları)               |
+| `partner`            | Kafe/mağaza (indirim veren)              | Kendi indirim kuponunu doğrulama/kullanıldı işaretleme                                                 |
+| `platform_admin`     | Sen / proje sahibi                       | Her şey: kurum doğrulama, trainer onayı, içerik moderasyonu, puan kuralları, dolandırıcılık incelemesi |
 
 **Kurum doğrulama:** Bir kurum kendi başına kayıt olamaz. `organizations` başvurusu yapar → `platform_admin` resmi belge/e-posta alan adı kontrolüyle onaylar (ör. `@berlin.de`). Onaylı kurumların profilinde doğrulanmış rozeti görünür.
 
@@ -232,13 +235,13 @@ config/scoring                               puan kuralları (admin değiştirir
 - **Cezalar:** başvurup kabul edilip gelmeme (no-show) → −5 IP ve `noShows++`; 3 ardışık no-show → 14 gün başvuru kısıtı (kullanıcıya nazikçe açıklanır).
 - **Seviyeler** (BazaltGo eşik mantığı, katılım sayısı + saat birlikte):
 
-| Seviye | DE | EN | Eşik |
-|---|---|---|---|
-| 1 | Neuankömmling | Newcomer | 0 |
-| 2 | Engagiert | Engaged | 3 katılım |
-| 3 | Brückenbauer:in | Bridge Builder | 8 katılım, 20 saat |
-| 4 | Mentor:in | Mentor | 15 katılım, 50 saat, 3 kategori |
-| 5 | Botschafter:in | Ambassador | 30 katılım, 120 saat |
+| Seviye | DE              | EN             | Eşik                            |
+| ------ | --------------- | -------------- | ------------------------------- |
+| 1      | Neuankömmling   | Newcomer       | 0                               |
+| 2      | Engagiert       | Engaged        | 3 katılım                       |
+| 3      | Brückenbauer:in | Bridge Builder | 8 katılım, 20 saat              |
+| 4      | Mentor:in       | Mentor         | 15 katılım, 50 saat, 3 kategori |
+| 5      | Botschafter:in  | Ambassador     | 30 katılım, 120 saat            |
 
 - **Rozetler:** İlk Adım (1), Düzenli (3), Kıdemli (10), Efsane (25); Kaşif (3 kategori), Çok Yönlü (5 kategori); Dil Köprüsü (dil eğitimine 5 kez katılım veya ders verme); Mahalle Kahramanı (aynı ilçede 10 katılım); Eğitmen (trainer onayı).
 - **Ay sonu:** zamanlanmış fonksiyon (`onSchedule`, her ayın 1'i 03:00 Europe/Berlin) aylık özet üretir, push ile "Bu ay X saat, Y IP" bildirimi atar, kurumların tanımladığı aylık ödül kurallarını çalıştırır.
@@ -273,6 +276,7 @@ Bu bölüm gerçek para içerdiği için **güvenlik ve denetlenebilirlik birinc
 ## 9. Ekranlar
 
 **Katılımcı:**
+
 - **Onboarding:** dil seçimi (DE/EN, ilk ekran), kısa tanıtım (3 kart), kayıt (e-posta+şifre, Google, Apple), e-posta doğrulama, ilgi alanları ve konuştuğu diller, konum izni (opsiyonel, "yakınımdakiler" için).
 - **Home:** selamlama (saat dilimine göre), duyuru slider'ı, "Sana uygun" AI önerileri, yaklaşan başvurularım, bu ayki özet (IP/saat), hava durumu (Open-Meteo, BazaltGo'daki gibi).
 - **Activities:** liste + harita görünümü, filtre (kategori, tarih, mesafe, dil, online), detay sayfası (Leichte Sprache anahtarı, takvime ekle, paylaş, başvur, hatırlatma kur).
@@ -372,18 +376,18 @@ Faz 0'da sırayla:
 
 ## 15. Geliştirme fazları (her faz sonunda DUR)
 
-| Faz | İçerik | Bitti sayılma ölçütü |
-|---|---|---|
-| **0** | Ortam, Firebase projeleri, monorepo iskeleti, CI, emülatör, seed | `npm run dev` + emülatörde seed verisiyle boş uygulama açılıyor |
-| **1** | Auth, onboarding, DE/EN i18n, profil düzenleme, tema, roller/claim altyapısı | Kayıt→doğrulama→profil akışı DE ve EN'de çalışıyor, kural testleri yeşil |
-| **2** | Kurumlar ve aktiviteler: oluşturma, moderasyon, liste/harita/detay, başvuru, takvim, hatırlatma | Kurum aktivite yayınlıyor, katılımcı başvuruyor, admin onaylıyor |
-| **3** | QR yoklama (dönen kod, manuel kod, çevrimdışı kuyruk, geç onay), pasaport, IP, seviye, rozet, no-show | İki cihazla uçtan uca: yoklama → pasaporta işlendi → IP arttı |
-| **4** | Cüzdan: ödül şablonları, bütçe, ledger, IP ile ödül alma, imzalı kupon QR, vezne/partner tarama, mutabakat raporu | Ledger tutarlılık scripti hatasız; ekran görüntüsüyle ikinci kullanım reddediliyor |
-| **5** | Trainer yolu, eğitim oturumları, geri bildirim | Şartları sağlayan kullanıcı başvuruyor, admin onaylıyor, eğitim açıyor |
-| **6** | Push, duyurular, ay sonu özeti, AI uçları (eşleştirme, çeviri, Leichte Sprache, sohbet, link çözümleme) | Bildirimler cihaza düşüyor; AI anahtarı yalnız sunucuda |
-| **7** | Admin/kurum analitiği, PDF raporlar, PDF pasaport, karne görseli, DSGVO (silme, dışa aktarma, rıza, Impressum) | Hesap silme tüm izleri kaldırıyor, ledger anonimleşiyor |
-| **8** | Capacitor Android derleme, Ehrenweg ikon/splash, izin metinleri, **Bölüm 16'daki imzalama**, Play Integrity, iç test kanalı | İmzalı AAB üretildi (yükleme kullanıcı onayıyla) |
-| **9** | Sertleştirme: performans, erişilebilirlik denetimi, e2e testler, prod projesine deploy, izleme (Crashlytics rızalı) | Pilot kuruma teslim edilebilir durum |
+| Faz   | İçerik                                                                                                                      | Bitti sayılma ölçütü                                                               |
+| ----- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **0** | Ortam, Firebase projeleri, monorepo iskeleti, CI, emülatör, seed                                                            | `npm run dev` + emülatörde seed verisiyle boş uygulama açılıyor                    |
+| **1** | Auth, onboarding, DE/EN i18n, profil düzenleme, tema, roller/claim altyapısı                                                | Kayıt→doğrulama→profil akışı DE ve EN'de çalışıyor, kural testleri yeşil           |
+| **2** | Kurumlar ve aktiviteler: oluşturma, moderasyon, liste/harita/detay, başvuru, takvim, hatırlatma                             | Kurum aktivite yayınlıyor, katılımcı başvuruyor, admin onaylıyor                   |
+| **3** | QR yoklama (dönen kod, manuel kod, çevrimdışı kuyruk, geç onay), pasaport, IP, seviye, rozet, no-show                       | İki cihazla uçtan uca: yoklama → pasaporta işlendi → IP arttı                      |
+| **4** | Cüzdan: ödül şablonları, bütçe, ledger, IP ile ödül alma, imzalı kupon QR, vezne/partner tarama, mutabakat raporu           | Ledger tutarlılık scripti hatasız; ekran görüntüsüyle ikinci kullanım reddediliyor |
+| **5** | Trainer yolu, eğitim oturumları, geri bildirim                                                                              | Şartları sağlayan kullanıcı başvuruyor, admin onaylıyor, eğitim açıyor             |
+| **6** | Push, duyurular, ay sonu özeti, AI uçları (eşleştirme, çeviri, Leichte Sprache, sohbet, link çözümleme)                     | Bildirimler cihaza düşüyor; AI anahtarı yalnız sunucuda                            |
+| **7** | Admin/kurum analitiği, PDF raporlar, PDF pasaport, karne görseli, DSGVO (silme, dışa aktarma, rıza, Impressum)              | Hesap silme tüm izleri kaldırıyor, ledger anonimleşiyor                            |
+| **8** | Capacitor Android derleme, Ehrenweg ikon/splash, izin metinleri, **Bölüm 16'daki imzalama**, Play Integrity, iç test kanalı | İmzalı AAB üretildi (yükleme kullanıcı onayıyla)                                   |
+| **9** | Sertleştirme: performans, erişilebilirlik denetimi, e2e testler, prod projesine deploy, izleme (Crashlytics rızalı)         | Pilot kuruma teslim edilebilir durum                                               |
 
 ---
 
@@ -421,12 +425,13 @@ Faz 0'da sırayla:
 
 - Apple Developer Program üyeliği (kurum adına alınacaksa D-U-N-S numarası gerekir; kullanıcıya erkenden hatırlat).
 - Bundle ID `de.ehrenweg.app` (ve `.dev`) kaydı; yetenekler: Push Notifications, Associated Domains (`applinks:ehrenweg.de`), App Attest (App Check).
-- Xcode'da *Automatically manage signing*, Team'i kullanıcı seçer; iki scheme: `Ehrenweg Dev`, `Ehrenweg`.
+- Xcode'da _Automatically manage signing_, Team'i kullanıcı seçer; iki scheme: `Ehrenweg Dev`, `Ehrenweg`.
 - FCM için **APNs Auth Key (.p8)** oluşturulur ve Firebase Console → Cloud Messaging'e yüklenir (kullanıcı yapar).
 - `apple-app-site-association` dosyası Hosting'den yayınlanır.
 - TestFlight ile iç test; App Store Connect'te ad "Ehrenweg", DE + EN açıklamalar; gizlilik etiketinin taslağını sen hazırla.
 
 ### 16.3 Mağaza metinleri
+
 `docs/store/de/` ve `docs/store/en/` altında: kısa açıklama (80 karakter), uzun açıklama, anahtar kelimeler, ekran görüntüsü planı (seed verisiyle, gerçek kişi fotoğrafı olmadan), "Neler yeni" şablonu.
 
 ---

@@ -81,7 +81,10 @@ export default defineConfig({
         // Firebase SDK büyük; ilk açılışı yavaşlatmasın diye ayrı parçaya al.
         // Rollup 5 nesne biçimini kaldırdı, fonksiyon biçimi kullanılıyor.
         manualChunks(id) {
-          if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
+          if (
+            id.includes('node_modules/firebase') ||
+            id.includes('node_modules/@firebase')
+          ) {
             return 'firebase'
           }
           return undefined
